@@ -34,8 +34,8 @@ All 22 unit tests pass on Hardhat, verifying role enforcement, duplicate PCAP ha
 ### Item 3: Zero-Hash Validations
 - `CaseRegistry.sol` explicitly reverts if `pcapHash == bytes32(0)`, `reportHash == bytes32(0)`, `imageDigest == bytes32(0)`, or `rulesetHash == bytes32(0)`.
 - While `docs/ARCHITECTURE.md` does not explicitly mandate zero-hash revert guards, this is standard defensive smart contract design to prevent uninitialized storage collisions.
-- **Finding**: Documented as an approved defensive design choice (see Section 3 Findings below).
-- **Status**: **COMPLIANT (APPROVED DEFENSIVE PATTERN)**
+- **Resolution**: Formally documented in `docs/decisions/003-zero-hash-restrictions.md`.
+- **Status**: **COMPLIANT (DOCUMENTED DECISION)**
 
 ### Item 4: Quorum Interface & Lifecycle Compatibility
 - `CaseRegistry.sol` provides:
@@ -72,6 +72,7 @@ All 22 unit tests pass on Hardhat, verifying role enforcement, duplicate PCAP ha
 
 ### Item 9: Documented Decisions
 - `docs/decisions/002-admin-simplification.md`: Formalizes granting `ADMIN_ROLE` directly to the deployer as a demo simplification for the course project.
+- `docs/decisions/003-zero-hash-restrictions.md`: Formalizes defensive rejection of uninitialized `bytes32(0)` inputs.
 - **Status**: **COMPLIANT**
 
 ### Item 10: `AGENT_RULES.md` Compliance
@@ -86,9 +87,9 @@ All 22 unit tests pass on Hardhat, verifying role enforcement, duplicate PCAP ha
 
 ## 3. Findings and Observations
 
-| ID | Severity | File & Line | Requirement | Observed Behavior | Recommended Resolution |
+| ID | Severity | File & Line | Requirement | Observed Behavior | Resolution |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **OBS-01** | Low (Defensive) | `CaseRegistry.sol:111, 137, 151` | Sec 6.1 / 6.2 (Hash parameters) | Contract reverts on zero hashes (`bytes32(0)`). Not explicitly mandated in ARCHITECTURE.md. | Standard Solidity safety practice. Record in `docs/decisions/003-zero-hash-validation.md` or accept as standard defensive programming. |
+| **OBS-01** | Low (Defensive) | `CaseRegistry.sol:111, 137, 151` | Sec 6.1 / 6.2 (Hash parameters) | Contract reverts on zero hashes (`bytes32(0)`). Not explicitly mandated in ARCHITECTURE.md. | **Resolved**. Documented in `docs/decisions/003-zero-hash-restrictions.md`. Validated that no genuine SHA-256 hash is excluded. |
 | **OBS-02** | Low (Initialization) | `CaseRegistry.sol:120` | Sec 6.3 (Case lifecycle) | Initial `round` is set to `1` on `openCase`. | Appropriate for 1-based round counting in ValidationQuorum. Aligned with Prompt 2.2. |
 
 ---
@@ -97,4 +98,4 @@ All 22 unit tests pass on Hardhat, verifying role enforcement, duplicate PCAP ha
 
 **PASS WITH DOCUMENTED DECISIONS**
 
-The Prompt 2.1 implementation strictly complies with `AGENT_RULES.md` and `docs/ARCHITECTURE.md` (Sections 6.1, 6.2, 6.3, 6.7, and 6.8). All access controls are active and verified by tests, the validator array and role states remain synchronized, and the contract interface is prepared for integration with `ValidationQuorum.sol`.
+The Prompt 2.1 implementation strictly complies with `AGENT_RULES.md` and `docs/ARCHITECTURE.md` (Sections 6.1, 6.2, 6.3, 6.7, and 6.8). All access controls are active and verified by tests, the validator array and role states remain synchronized, the contract interface is prepared for integration with `ValidationQuorum.sol`, and all implementation decisions (`002-admin-simplification.md`, `003-zero-hash-restrictions.md`) are formally recorded.
