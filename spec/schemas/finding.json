@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Finding",
+  "type": "object",
+  "required": [
+    "findingId",
+    "ruleId",
+    "severity",
+    "serverEndpoint",
+    "sortedSessionIds",
+    "sessionCount",
+    "evidence",
+    "details"
+  ],
+  "properties": {
+    "findingId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ruleId": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["Critical", "High", "Medium", "Low", "Info"]
+    },
+    "serverEndpoint": {
+      "type": "string"
+    },
+    "sortedSessionIds": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "sessionCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sessionId", "packetNumber", "note"],
+        "properties": {
+          "sessionId": { "type": "integer", "minimum": 0 },
+          "packetNumber": { "type": "integer", "minimum": 1 },
+          "note": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "details": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

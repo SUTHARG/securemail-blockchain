@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SessionRecord",
+  "type": "object",
+  "required": [
+    "sessionId",
+    "clientEndpoint",
+    "serverEndpoint",
+    "protocol",
+    "protocolSource",
+    "transportMode",
+    "streamComplete",
+    "firstPacketTs",
+    "starttls",
+    "cleartextAuth",
+    "tls",
+    "certificates"
+  ],
+  "properties": {
+    "sessionId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "clientEndpoint": {
+      "type": "string"
+    },
+    "serverEndpoint": {
+      "type": "string"
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["smtp", "imap", "pop3"]
+    },
+    "protocolSource": {
+      "type": "string",
+      "enum": ["content", "port"]
+    },
+    "transportMode": {
+      "type": "string",
+      "enum": ["plaintext", "starttls", "implicitTls"]
+    },
+    "streamComplete": {
+      "type": "boolean"
+    },
+    "firstPacketTs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "starttls": {
+      "type": "object",
+      "required": ["offered", "attempted", "outcome"],
+      "properties": {
+        "offered": { "type": "boolean" },
+        "attempted": { "type": "boolean" },
+        "outcome": {
+          "type": "string",
+          "enum": ["succeeded", "refused", "ignored", "notOffered"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "cleartextAuth": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["mechanism", "packetNumber"],
+        "properties": {
+          "mechanism": { "type": "string" },
+          "packetNumber": { "type": "integer", "minimum": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tls": {
+      "type": ["object", "null"],
+      "properties": {
+        "version": { "type": ["string", "null"] },
+        "cipherSuiteCode": { "type": ["integer", "null"] },
+        "cipherSuiteName": { "type": ["string", "null"] },
+        "kxType": { "type": ["string", "null"] },
+        "kxGroupOrDhBits": { "type": ["integer", "string", "null"] },
+        "forwardSecrecy": { "type": ["boolean", "null"] },
+        "resumed": { "type": ["boolean", "null"] },
+        "ja3": { "type": ["string", "null"] },
+        "ja3s": { "type": ["string", "null"] },
+        "sni": { "type": ["string", "null"] },
+        "certObservable": { "type": "boolean" },
+        "certNotObservableReason": { "type": ["string", "null"] }
+      },
+      "required": ["certObservable"],
+      "additionalProperties": false
+    },
+    "certificates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "sha256",
+          "subject",
+          "issuer",
+          "notBefore",
+          "notAfter",
+          "keyAlgorithm",
+          "keySize",
+          "signatureAlgorithm",
+          "san",
+          "isCa",
+          "verdicts"
+        ],
+        "properties": {
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "subject": { "type": "string" },
+          "issuer": { "type": "string" },
+          "notBefore": { "type": "integer" },
+          "notAfter": { "type": "integer" },
+          "keyAlgorithm": { "type": "string" },
+          "keySize": { "type": "integer", "minimum": 0 },
+          "signatureAlgorithm": { "type": "string" },
+          "san": { "type": "array", "items": { "type": "string" } },
+          "isCa": { "type": "boolean" },
+          "verdicts": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

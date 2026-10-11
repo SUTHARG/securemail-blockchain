@@ -1,0 +1,82 @@
+{
+  "finding_id": [
+    {
+      "ruleId": "R01",
+      "serverEndpoint": "192.168.1.10:25",
+      "expectedHex": "193d2f027acd5f45f4e6332b04e4e6d9c919646f2bb5d4eda7201ed029b9151a"
+    },
+    {
+      "ruleId": "R06",
+      "serverEndpoint": "[2001:db8::1]:25",
+      "expectedHex": "34781347dcb1a82f7de94b6a94b70a096bcb260297391e9327d42011e00754b9"
+    },
+    {
+      "ruleId": "R11",
+      "serverEndpoint": "192.168.1.10:25",
+      "expectedHex": "4082a9381cc5961ea7b1989250c69330c9cba664f0ebd4317fb3b6d528a3b7fe"
+    }
+  ],
+  "findings_digest": [
+    {
+      "inputFindingIds": [],
+      "expectedDigestHex": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "inputFindingIds": [
+        "193d2f027acd5f45f4e6332b04e4e6d9c919646f2bb5d4eda7201ed029b9151a"
+      ],
+      "expectedDigestHex": "31876ca07bfb3f586318f609a5e848cb266aaf1e66b4aef81cd44d2bc5b3d46d"
+    },
+    {
+      "inputFindingIds": [
+        "4082a9381cc5961ea7b1989250c69330c9cba664f0ebd4317fb3b6d528a3b7fe",
+        "193d2f027acd5f45f4e6332b04e4e6d9c919646f2bb5d4eda7201ed029b9151a",
+        "34781347dcb1a82f7de94b6a94b70a096bcb260297391e9327d42011e00754b9"
+      ],
+      "expectedDigestHex": "4317f5946f1f80918a61a0b2ddb57956fdf7f90b962d99eb0e3e7d6223d79eef"
+    }
+  ],
+  "host_id": [
+    {
+      "orgSecretHex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+      "serverEndpoint": "192.168.1.10:25",
+      "expectedHostIdHex": "edefad951ebaacc3c2431e157810aca48e7427e2a57e326dd9a2ad7672f00520"
+    },
+    {
+      "orgSecretHex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+      "serverEndpoint": "[2001:db8::1]:25",
+      "expectedHostIdHex": "fa2a614822159ee746a73191599e12321757dcc61c15f2f1acad5d3c31f1b936"
+    }
+  ],
+  "finding_leaf": [
+    {
+      "canonicalUtf8": "{\"details\":{\"mechanism\":\"PLAIN\"},\"evidence\":[{\"note\":\"AUTH PLAIN observed\",\"packetNumber\":4,\"sessionId\":1}],\"findingId\":\"193d2f027acd5f45f4e6332b04e4e6d9c919646f2bb5d4eda7201ed029b9151a\",\"ruleId\":\"R01\",\"serverEndpoint\":\"192.168.1.10:25\",\"sessionCount\":1,\"severity\":\"Critical\",\"sortedSessionIds\":[1]}",
+      "expectedLeafHex": "f5e83e6f85e88bf6b691e42538f7f025e168b95ee8a84326c30e06cefeb6c01a"
+    },
+    {
+      "canonicalUtf8": "{\"details\":{\"version\":\"TLS 1.0\"},\"evidence\":[{\"note\":\"TLS 1.0 negotiated\",\"packetNumber\":12,\"sessionId\":2}],\"findingId\":\"34781347dcb1a82f7de94b6a94b70a096bcb260297391e9327d42011e00754b9\",\"ruleId\":\"R06\",\"serverEndpoint\":\"[2001:db8::1]:25\",\"sessionCount\":1,\"severity\":\"High\",\"sortedSessionIds\":[2]}",
+      "expectedLeafHex": "97e9185554aedde10fa556663465863b8cdf211c900371231d7b5f1ea7ca47da"
+    }
+  ],
+  "host_score_leaf": [
+    {
+      "hostIdHex": "edefad951ebaacc3c2431e157810aca48e7427e2a57e326dd9a2ad7672f00520",
+      "findingsDigestHex": "31876ca07bfb3f586318f609a5e848cb266aaf1e66b4aef81cd44d2bc5b3d46d",
+      "score": 60,
+      "expectedLeafHex": "3352947624006ed9db6b78d8efc9737a31cbf9a5ec06791fd5eadb83cdc7c70c"
+    },
+    {
+      "hostIdHex": "fa2a614822159ee746a73191599e12321757dcc61c15f2f1acad5d3c31f1b936",
+      "findingsDigestHex": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "score": 100,
+      "expectedLeafHex": "f946d7df5f3034a0dcfd507ba57103a228eddf2725bde694afb0a12e64367f6c"
+    }
+  ],
+  "node": [
+    {
+      "aHex": "1111111111111111111111111111111111111111111111111111111111111111",
+      "bHex": "2222222222222222222222222222222222222222222222222222222222222222",
+      "expectedNodeHex": "1d8f52d3ec81ac02cd97cb3281523be47af850c0f0295af866f04bc245f46bbf"
+    }
+  ]
+}

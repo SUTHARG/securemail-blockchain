@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CaseManifest",
+  "type": "object",
+  "required": [
+    "caseId",
+    "pcapSha256",
+    "engineVersion",
+    "rulesetHash",
+    "resultRoot",
+    "findingCount",
+    "hostCount",
+    "reportHash",
+    "txHashes"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string"
+    },
+    "pcapSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "engineVersion": {
+      "type": "string"
+    },
+    "rulesetHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "resultRoot": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "findingCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hostCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reportHash": {
+      "type": ["string", "null"]
+    },
+    "txHashes": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
