@@ -1,0 +1,39 @@
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.pk
+*id_rsa*
+*private_key*
+
+# Dependency directories
+node_modules/
+
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.hypothesis/
+
+# Lab artifacts and state
+lab/ca/out/
+data/
+validator_state/
+
+# Large captures (> 50 MB)
+lab/captures/*.pcap
+
+# Hardhat build artifacts
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+
+# OS specific files
+.DS_Store
+Thumbs.db
