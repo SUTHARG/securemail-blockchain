@@ -1,10 +1,11 @@
 """Configuration settings for SecureMailScope backend API."""
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(REPO_ROOT / ".env")
+try:
+    from dotenv import load_dotenv
+    load_dotenv(REPO_ROOT / ".env")
+except ImportError:
+    pass
 DATA_DIR = Path(os.environ.get("DATA_DIR", REPO_ROOT / "data"))
 CASES_DIR = DATA_DIR / "cases"
 DB_PATH = Path(os.environ.get("DB_PATH", DATA_DIR / "smscope.db"))
