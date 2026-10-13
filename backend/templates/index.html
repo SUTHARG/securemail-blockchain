@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}SecureMailScope - Cases & Ingestion{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1>Network Traffic Assessment Cases</h1>
+  <p class="lead">Upload PCAP traffic captures for deterministic cryptographic audit and blockchain posture ledger anchoring.</p>
+</div>
+
+<div class="grid" style="grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+  <!-- Upload Form -->
+  <div class="card">
+    <h2>Ingest PCAP Capture</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+      Select an Ethernet or Linux cooked PCAP/PCAP-NG file up to 100 MB.
+    </p>
+    <form action="/cases/upload-form" method="post" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="pcap_file">Traffic Capture (.pcap):</label>
+        <input type="file" id="pcap_file" name="file" accept=".pcap,.bin,.cap" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Upload & Ingest Capture
+      </button>
+    </form>
+  </div>
+
+  <!-- Cases List -->
+  <div class="card">
+    <h2>Registered Assessment Cases</h2>
+    {% if cases %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Case ID</th>
+          <th>PCAP SHA-256</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in cases %}
+        <tr>
+          <td>
+            <a href="/cases/{{ c.case_id }}" class="mono" style="font-weight: 600; color: #58a6ff;">
+              {{ c.case_id[:12] }}...
+            </a>
+          </td>
+          <td class="mono" style="font-size: 0.8rem; color: var(--text-muted);">
+            {{ c.pcap_sha256[:16] }}...
+          </td>
+          <td>
+            <span class="badge badge-Info">{{ c.status }}</span>
+          </td>
+          <td style="font-size: 0.85rem; color: var(--text-muted);">
+            {{ c.created_at }}
+          </td>
+          <td>
+            <a href="/cases/{{ c.case_id }}" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+              View Case
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--text-muted); padding: 1rem 0;">No cases registered yet. Upload a PCAP capture to get started.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

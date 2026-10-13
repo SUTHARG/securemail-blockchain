@@ -1,0 +1,1 @@
+[{"details":{"kxType":"RSA"},"evidence":[{"note":"Non-forward-secret key exchange: RSA","packetNumber":1,"sessionId":0}],"findingId":"f60d8921b20d760cef3963ad4695abbef738ecf460378f7c6b60f4b90c78aeb7","ruleId":"R09","serverEndpoint":"172.28.0.10:25","sessionCount":1,"severity":"Medium","sortedSessionIds":[0]}]

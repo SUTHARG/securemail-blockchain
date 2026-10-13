@@ -1,0 +1,54 @@
+services:
+  mailserver:
+    build:
+      context: ./mailserver
+    image: securemailscope-lab-mailserver:latest
+    container_name: lab-mailserver
+    environment:
+      - SCENARIO=${SCENARIO:-S01a}
+    volumes:
+      - ./scenarios:/scenarios:ro
+      - ./ca/out:/ca/out:ro
+    networks:
+      lab:
+        ipv4_address: 172.28.0.10
+
+  client:
+    build:
+      context: ./client
+    image: securemailscope-lab-client:latest
+    container_name: lab-client
+    depends_on:
+      - mailserver
+    volumes:
+      - ./ca/out:/ca/out:ro
+    networks:
+      lab:
+        ipv4_address: 172.28.0.20
+
+  capture:
+    build:
+      context: ./capture
+    image: securemailscope-lab-capture:latest
+    container_name: lab-capture
+    network_mode: "service:mailserver"
+    depends_on:
+      - mailserver
+    volumes:
+      - ./captures:/captures
+    command: >
+      -i eth0
+      -U
+      -s 0
+      -w /captures/${SCENARIO:-S01a}.pcap
+      "tcp port 25 or tcp port 465 or tcp port 587"
+
+networks:
+  lab:
+    name: lab
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1

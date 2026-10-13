@@ -1,0 +1,47 @@
+category,target,patterns_checked,hits,status,details
+Engine Outputs & Reports,data/cases/a9f69efc1c50491f8f9b947030d64f2b/findings.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs & Reports,data/cases/a9f69efc1c50491f8f9b947030d64f2b/sessions.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs & Reports,data/cases/a9f69efc1c50491f8f9b947030d64f2b/report.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs & Reports,data/cases/a9f69efc1c50491f8f9b947030d64f2b/report.html,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs & Reports,data/cases/b9f6e2767e2e404ba7925eed951e3a5b/findings.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs & Reports,data/cases/b9f6e2767e2e404ba7925eed951e3a5b/sessions.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/a9f69efc1c50491f8f9b947030d64f2b/host_proofs.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/a9f69efc1c50491f8f9b947030d64f2b/host_scores.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/a9f69efc1c50491f8f9b947030d64f2b/manifest.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/a9f69efc1c50491f8f9b947030d64f2b/result.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/b9f6e2767e2e404ba7925eed951e3a5b/host_proofs.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/b9f6e2767e2e404ba7925eed951e3a5b/host_scores.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/b9f6e2767e2e404ba7925eed951e3a5b/manifest.json,7,0,PASS (ZERO LEAK),Clean
+Engine Outputs,data/cases/b9f6e2767e2e404ba7925eed951e3a5b/result.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/0x70997970c51812dc3a010c7d01b50e0d17dc79c8.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/0x90f79bf6eb2c4f870365e785982e1f101e93b906.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/0xedd14257db78f70fb0037f6b7192bd68591d304e.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/0xf83414a833a796557c45602e38c6969ba8dd577f.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/1.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/2.json,7,0,PASS (ZERO LEAK),Clean
+Validator State,validator_state/3.json,7,0,PASS (ZERO LEAK),Clean
+Validator Inbox Outputs,validator_inbox/3/98969c9935e95b95dc8419b764719255bfd8c790f2e676be484de17d79bd6bab/onchain_case_id.txt,7,0,PASS (ZERO LEAK),Clean
+Validator Inbox Outputs,validator_inbox/3/a9f69efc1c50491f8f9b947030d64f2b/onchain_case_id.txt,7,0,PASS (ZERO LEAK),Clean
+Validator Inbox Outputs,validator_inbox/2/98969c9935e95b95dc8419b764719255bfd8c790f2e676be484de17d79bd6bab/onchain_case_id.txt,7,0,PASS (ZERO LEAK),Clean
+Validator Inbox Outputs,validator_inbox/2/a9f69efc1c50491f8f9b947030d64f2b/onchain_case_id.txt,7,0,PASS (ZERO LEAK),Clean
+Validator Inbox Outputs,validator_inbox/1/98969c9935e95b95dc8419b764719255bfd8c790f2e676be484de17d79bd6bab/onchain_case_id.txt,7,0,PASS (ZERO LEAK),Clean
+Validator Inbox Outputs,validator_inbox/1/a9f69efc1c50491f8f9b947030d64f2b/onchain_case_id.txt,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e1_parsing_agreement.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e1_parsing_agreement.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e2_detection_accuracy.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e2_detection_accuracy.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e3_baseline_comparison.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e3_baseline_comparison.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e4_determinism.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e4_determinism.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e5_chain_tests.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e5_chain_tests.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e6_gas.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e6_gas.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e8_anomaly.csv,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/e8_anomaly.md,7,0,PASS (ZERO LEAK),Clean
+Evaluation Results,eval/results/gas_measurements_raw.json,7,0,PASS (ZERO LEAK),Clean
+Database Audit Tables,data/smscope.db,7,0,PASS (ZERO LEAK),"All tables & columns clean (cases, audit_logs, host_scores)"
+Active Engine S05 Outputs (Cleartext Session),temp/findings.json,7,0,PASS (ZERO LEAK),Clean: streams & packet numbers only
+Active Engine S05 Outputs (Cleartext Session),temp/sessions.json,7,0,PASS (ZERO LEAK),Clean: streams & packet numbers only

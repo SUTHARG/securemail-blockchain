@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}Advisory Anomaly Flags - Case {{ case_id }} - SecureMailScope{% endblock %}
+
+{% block content %}
+<div class="card" style="border-left: 4px solid var(--medium); background: rgba(210, 153, 34, 0.08);">
+  <div style="display: flex; gap: 1rem; align-items: flex-start;">
+    <div style="font-size: 1.8rem;">⚠️</div>
+    <div>
+      <h2 style="margin-top: 0; color: #e3b341;">Advisory Anomaly Detection Layer</h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        <strong>Non-Consensus Advisory Notice:</strong> Anomaly scores and deviation flags are computed offline using an unsupervised Isolation Forest model trained against baseline network captures.
+        This layer is <em>strictly non-consensus</em>: its outputs are not included in the cryptographic Merkle leaf set, not submitted to validator quorums, and do not alter on-chain smart contract state.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3>Flagged Anomaly Sessions ({{ anomalies|length }})</h3>
+      <p class="lead" style="margin-bottom: 0;">
+        Sessions exhibiting behavioral, cryptographic, or fingerprint divergence from baseline models.
+      </p>
+    </div>
+    <div>
+      <a href="/cases/{{ case_id }}/sessions" class="btn btn-secondary" style="font-size: 0.85rem;">View All Sessions</a>
+    </div>
+  </div>
+
+  {% if anomalies %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Session</th>
+        <th>Server Endpoint</th>
+        <th>Anomaly Score</th>
+        <th>Status</th>
+        <th>Top Deviating Features</th>
+        <th>Inspect</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in anomalies %}
+      <tr>
+        <td class="mono"><strong>#{{ a.sessionId }}</strong></td>
+        <td class="mono">{{ a.serverEndpoint }}</td>
+        <td class="mono">
+          <strong style="color: {% if a.flagged %}#f85149{% else %}#3fb950{% endif %};">
+            {{ a.anomalyScore }}
+          </strong>
+        </td>
+        <td>
+          {% if a.flagged %}
+            <span class="badge badge-fail">Anomalous</span>
+          {% else %}
+            <span class="badge badge-pass">Baseline</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if a.topDeviatingFeatures %}
+            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+              {% for feat in a.topDeviatingFeatures %}
+                <span class="badge badge-High" style="font-size: 0.75rem;">{{ feat }}</span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <span style="color: var(--text-muted);">None (within baseline variance)</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="/cases/{{ case_id }}/sessions?host={{ a.serverEndpoint }}" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+            Examine Session
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+    <p>Zero anomalous sessions detected. All mail traffic aligns with baseline behavioral parameters.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

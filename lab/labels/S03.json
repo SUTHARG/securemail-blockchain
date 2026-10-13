@@ -1,0 +1,13 @@
+{
+  "scenario": "S03",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R08"
+    },
+    {
+      "ruleId": "R09"
+    }
+  ],
+  "comment": "3DES cipher suite negotiated; static RSA key exchange lacks forward secrecy"
+}

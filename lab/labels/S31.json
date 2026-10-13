@@ -1,0 +1,13 @@
+{
+  "scenario": "S31",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R05"
+    },
+    {
+      "ruleId": "R07"
+    }
+  ],
+  "comment": "Negotiated SSL 3.0 and NULL cipher suite (TLS_RSA_WITH_NULL_MD5)"
+}

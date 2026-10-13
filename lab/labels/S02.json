@@ -1,0 +1,13 @@
+{
+  "scenario": "S02",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R06"
+    },
+    {
+      "ruleId": "R09"
+    }
+  ],
+  "comment": "TLS 1.0 negotiated; static RSA key exchange lacks forward secrecy"
+}

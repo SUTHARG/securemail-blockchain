@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}Certificates - {{ case_id[:12] }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1>Observed X.509 Certificates</h1>
+  <p class="lead">Certificates observed during cleartext/TLS 1.2 handshakes, with expiration, key algorithm, and trust verdicts.</p>
+</div>
+
+{% if certificates %}
+<div class="card" style="padding: 0; overflow-x: auto;">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Subject (CN)</th>
+        <th>Issuer (CA)</th>
+        <th>Public Key</th>
+        <th>Signature Alg</th>
+        <th>Validity Window</th>
+        <th>Subject Alt Names (SAN)</th>
+        <th>Validation Verdicts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cert in certificates %}
+      <tr>
+        <td class="mono" style="font-weight: 600; color: #58a6ff;">{{ cert.subject }}</td>
+        <td class="mono" style="font-size: 0.8rem; color: var(--text-muted);">{{ cert.issuer }}</td>
+        <td>{{ cert.keyAlgorithm }} <span style="font-weight: 600;">{{ cert.keySize }} bits</span></td>
+        <td class="mono" style="font-size: 0.85rem;">{{ cert.signatureAlgorithm }}</td>
+        <td style="font-size: 0.8rem; color: var(--text-muted);">
+          <div>From: {{ cert.notBefore }}</div>
+          <div>To: {{ cert.notAfter }}</div>
+        </td>
+        <td style="font-size: 0.8rem;">
+          {% for san in cert.san %}
+            <span class="mono" style="display: inline-block; background: rgba(255,255,255,0.05); padding: 0.1rem 0.3rem; border-radius: 4px; margin: 0.1rem;">{{ san }}</span>
+          {% else %}
+            <span style="color: var(--text-muted);">&mdash;</span>
+          {% endfor %}
+        </td>
+        <td>
+          {% for v in cert.verdicts %}
+            <span class="badge badge-{% if 'expired' in v or 'self_signed' in v or 'weak' in v or 'md5' in v or 'sha1' in v %}High{% else %}Info{% endif %}" style="margin: 0.1rem;">
+              {{ v }}
+            </span>
+          {% else %}
+            <span class="badge badge-pass">VALID</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <h3>No Certificates Observable</h3>
+  <p style="color: var(--text-muted); margin-top: 0.5rem;">
+    Zero X.509 certificates were observable in this traffic capture.
+  </p>
+  <ul style="color: var(--text-muted); font-size: 0.85rem; margin: 1rem 0 0 1.5rem;">
+    <li>In <strong>TLS 1.3</strong> handshakes, Certificate and CertificateVerify messages are encrypted per RFC 8446.</li>
+    <li>In <strong>Resumed</strong> sessions, session tickets bypass certificate transmission entirely.</li>
+    <li>In cleartext SMTP without STARTTLS, no encryption or certificate handshake takes place.</li>
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

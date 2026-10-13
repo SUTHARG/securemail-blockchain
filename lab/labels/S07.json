@@ -1,0 +1,10 @@
+{
+  "scenario": "S07",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R09"
+    }
+  ],
+  "comment": "Static RSA key exchange (AES256-GCM-SHA384) without forward secrecy"
+}

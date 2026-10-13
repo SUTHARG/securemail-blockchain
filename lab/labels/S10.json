@@ -1,0 +1,10 @@
+{
+  "scenario": "S10",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R16"
+    }
+  ],
+  "comment": "Self-signed leaf certificate"
+}

@@ -1,0 +1,6 @@
+{
+  "scenario": "S25",
+  "serverEndpoint": "172.28.0.10:995",
+  "expectedFindings": [],
+  "comment": "POP3 implicit TLS on 995; clean session"
+}

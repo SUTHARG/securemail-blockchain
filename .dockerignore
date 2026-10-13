@@ -1,0 +1,49 @@
+# Secrets and environment configurations
+.env
+.env*
+*.key
+*.pem
+*.pk
+*id_rsa*
+*private_key*
+
+# Version control and caches
+.git
+.github
+__pycache__
+*.py[cod]
+.venv
+venv
+env
+.pytest_cache
+.hypothesis
+*.egg-info
+
+# Working directories, build artifacts, and databases
+node_modules
+/data
+data
+/validator_state
+validator_state
+/validator_inbox
+validator_inbox
+*.db
+*.sqlite3
+
+# Lab private keys and test harnesses not required in engine image
+/lab/ca/out/*.key
+/lab/ca/demoCA
+lab/ca/out/*.key
+lab/ca/demoCA
+lab/captures
+lab/mailserver
+lab/client
+lab/capture
+
+# Auxiliary services outside engine
+contracts
+backend
+eval
+docs
+tests
+scripts

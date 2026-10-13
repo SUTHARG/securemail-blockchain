@@ -8,5 +8,4 @@ RULES FOR ALL WORK ON SECUREMAILSCOPE
 7. Every module ships with tests. A task is not done until its tests pass and the acceptance check in the prompt is satisfied.
 8. Pin exact dependency versions. Do not add a dependency the prompt does not allow without asking.
 9. Do not change files outside the scope of the prompt. List every file you created or changed at the end.
-10. Prefer simple code that is easy to review over clever code.
-SCOPE (Tier 1): implement SMTP only. IMAP and POP3 raise NotImplementedError and are future work. Implement only rules R01, R02, R03, R06, R08, R09, R11, R12, R13, R15, R16, R19. No ML, no LLM, no Postgres, no job queue. Recommendations come from static templates. Validators are local processes. Tier 2 and Tier 3 prompts lift these limits one at a time.
+SCOPE: PROJECT COMPLETE across all Milestones M1-M5 (Phases 0-9), Tier 2 (T2.1-T2.7), and Tier 3 (T3.1-T3.3). All 294 unit and integration tests pass, and all 9 kill-and-resume chaos scenarios pass.

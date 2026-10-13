@@ -1,0 +1,57 @@
+{
+  "baseline_ja3_counts": {
+    "540dcee67bb2a015ca11f380c2173d7f": 50,
+    "996d666ae99b004729cdcb5682b477f5": 50,
+    "dd7a5b0aca46400f86399f56e0886ed0": 50,
+    "ee667f9393eaaba8847cad32c9de705f": 50,
+    "ef5144fc683f0aaab38aed23885453ee": 50
+  },
+  "baseline_server_certs": {
+    "172.28.0.10:25": "e86111e5eb221bba7769f2cc71c3fc679872846ca75a58ff1211223590d3716b"
+  },
+  "feature_distributions": {
+    "cert_differs_from_baseline": {
+      "0": 250
+    },
+    "cipher_suite_code": {
+      "157": 50,
+      "49195": 50,
+      "49199": 100,
+      "49200": 50
+    },
+    "handshake_size_bucket": {
+      "4": 250
+    },
+    "ja3_rarity_bucket": {
+      "3": 250
+    },
+    "resumed_flag": {
+      "0": 250
+    },
+    "starttls_offered": {
+      "1": 250
+    },
+    "starttls_used": {
+      "1": 250
+    },
+    "tls_version": {
+      "5": 250
+    }
+  },
+  "feature_names": [
+    "tls_version",
+    "cipher_suite_code",
+    "ja3_rarity_bucket",
+    "cert_differs_from_baseline",
+    "handshake_size_bucket",
+    "resumed_flag",
+    "starttls_offered",
+    "starttls_used"
+  ],
+  "ja3_count": 5,
+  "random_state": 42,
+  "server_endpoint_count": 1,
+  "session_count": 250,
+  "sklearn_version": "1.7.2",
+  "threshold": 0.0
+}

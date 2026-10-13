@@ -1,0 +1,13 @@
+{
+  "scenario": "S21",
+  "serverEndpoint": "172.28.0.10:143",
+  "expectedFindings": [
+    {
+      "ruleId": "R01"
+    },
+    {
+      "ruleId": "R02"
+    }
+  ],
+  "comment": "IMAP cleartext LOGIN, no TLS"
+}

@@ -1,0 +1,484 @@
+[
+  {
+    "sessionId": 0,
+    "clientEndpoint": "192.168.1.100:50000",
+    "serverEndpoint": "192.168.1.10:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "plaintext",
+    "streamComplete": true,
+    "firstPacketTs": 1700000000,
+    "starttls": {
+      "offered": false,
+      "attempted": false,
+      "outcome": "notOffered"
+    },
+    "cleartextAuth": [
+      {
+        "mechanism": "PLAIN",
+        "packetNumber": 4
+      }
+    ],
+    "tls": null,
+    "certificates": []
+  },
+  {
+    "sessionId": 1,
+    "clientEndpoint": "192.168.1.100:50001",
+    "serverEndpoint": "192.168.1.10:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "plaintext",
+    "streamComplete": true,
+    "firstPacketTs": 1700000010,
+    "starttls": {
+      "offered": false,
+      "attempted": false,
+      "outcome": "notOffered"
+    },
+    "cleartextAuth": [],
+    "tls": null,
+    "certificates": []
+  },
+  {
+    "sessionId": 2,
+    "clientEndpoint": "192.168.1.100:50002",
+    "serverEndpoint": "192.168.1.10:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "plaintext",
+    "streamComplete": true,
+    "firstPacketTs": 1700000020,
+    "starttls": {
+      "offered": true,
+      "attempted": false,
+      "outcome": "ignored"
+    },
+    "cleartextAuth": [],
+    "tls": null,
+    "certificates": []
+  },
+  {
+    "sessionId": 3,
+    "clientEndpoint": "192.168.1.100:50003",
+    "serverEndpoint": "192.168.1.10:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000030,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.0",
+      "cipherSuiteCode": 5,
+      "cipherSuiteName": "TLS_RSA_WITH_RC4_128_SHA",
+      "kxType": "RSA",
+      "kxGroupOrDhBits": null,
+      "forwardSecrecy": false,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "subject": "CN=mail.example.com",
+        "issuer": "CN=Example CA",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "mail.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "valid"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 4,
+    "clientEndpoint": "192.168.1.100:50004",
+    "serverEndpoint": "192.168.1.10:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000040,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 10,
+      "cipherSuiteName": "TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+      "kxType": "RSA",
+      "kxGroupOrDhBits": null,
+      "forwardSecrecy": false,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "subject": "CN=mail.example.com",
+        "issuer": "CN=Example CA",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "mail.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "valid"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 5,
+    "clientEndpoint": "[2001:db8::100]:50005",
+    "serverEndpoint": "[2001:db8::1]:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000050,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 49199,
+      "cipherSuiteName": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "secp256r1",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail6.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000",
+        "subject": "CN=mail6.example.com",
+        "issuer": "CN=Example Root CA",
+        "notBefore": 1672531200,
+        "notAfter": 1609459200,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "mail6.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "expired"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 6,
+    "clientEndpoint": "[2001:db8::100]:50006",
+    "serverEndpoint": "[2001:db8::1]:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000060,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 49199,
+      "cipherSuiteName": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "secp256r1",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail6.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "22223333444455556666777788889999aaaabbbbccccddddeeeeffff00001111",
+        "subject": "CN=mail6.example.com",
+        "issuer": "CN=Example Root CA",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 1024,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "mail6.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "weakKey"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 7,
+    "clientEndpoint": "[2001:db8::100]:50007",
+    "serverEndpoint": "[2001:db8::1]:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000070,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 49199,
+      "cipherSuiteName": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "secp256r1",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail6.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "3333444455556666777788889999aaaabbbbccccddddeeeeffff000011112222",
+        "subject": "CN=mail6.example.com",
+        "issuer": "CN=Example Intermediate CA",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha1WithRSAEncryption",
+        "san": [
+          "mail6.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "weakSignature"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 8,
+    "clientEndpoint": "[2001:db8::100]:50008",
+    "serverEndpoint": "[2001:db8::1]:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000080,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 49199,
+      "cipherSuiteName": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "secp256r1",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail6.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "444455556666777788889999aaaabbbbccccddddeeeeffff0000111122223333",
+        "subject": "CN=mail6.example.com",
+        "issuer": "CN=Unknown Private CA",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "mail6.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "unknownIssuer"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 9,
+    "clientEndpoint": "[2001:db8::100]:50009",
+    "serverEndpoint": "[2001:db8::1]:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000090,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 49199,
+      "cipherSuiteName": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "secp256r1",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "mail6.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "55556666777788889999aaaabbbbccccddddeeeeffff00001111222233334444",
+        "subject": "CN=mail6.example.com",
+        "issuer": "CN=mail6.example.com",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "mail6.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "selfSigned"
+        ]
+      }
+    ]
+  },
+  {
+    "sessionId": 10,
+    "clientEndpoint": "192.168.1.100:50010",
+    "serverEndpoint": "192.168.1.20:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000100,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.3",
+      "cipherSuiteCode": 4865,
+      "cipherSuiteName": "TLS_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "x25519",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "secure.example.com",
+      "certObservable": false,
+      "certNotObservableReason": "TLS 1.3"
+    },
+    "certificates": []
+  },
+  {
+    "sessionId": 11,
+    "clientEndpoint": "192.168.1.100:50011",
+    "serverEndpoint": "192.168.1.20:25",
+    "protocol": "smtp",
+    "protocolSource": "content",
+    "transportMode": "starttls",
+    "streamComplete": true,
+    "firstPacketTs": 1700000110,
+    "starttls": {
+      "offered": true,
+      "attempted": true,
+      "outcome": "succeeded"
+    },
+    "cleartextAuth": [],
+    "tls": {
+      "version": "TLS 1.2",
+      "cipherSuiteCode": 49199,
+      "cipherSuiteName": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "kxType": "ECDHE",
+      "kxGroupOrDhBits": "secp256r1",
+      "forwardSecrecy": true,
+      "resumed": false,
+      "ja3": "b32309a26951912be7dba376398abc3b",
+      "ja3s": "a2444636951d3b0066d9255ab99a83d7",
+      "sni": "secure.example.com",
+      "certObservable": true,
+      "certNotObservableReason": null
+    },
+    "certificates": [
+      {
+        "sha256": "6666777788889999aaaabbbbccccddddeeeeffff000011112222333344445555",
+        "subject": "CN=secure.example.com",
+        "issuer": "CN=Let's Encrypt Authority X3",
+        "notBefore": 1672531200,
+        "notAfter": 1735689600,
+        "keyAlgorithm": "RSA",
+        "keySize": 2048,
+        "signatureAlgorithm": "sha256WithRSAEncryption",
+        "san": [
+          "secure.example.com"
+        ],
+        "isCa": false,
+        "verdicts": [
+          "valid"
+        ]
+      }
+    ]
+  }
+]

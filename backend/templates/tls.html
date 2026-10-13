@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+
+{% block title %}TLS Metrics - Case {{ case_id[:12] }} - SecureMailScope{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1>Cryptographic Protocol & Cipher Metrics</h1>
+  <p class="lead">Distribution of negotiated TLS protocol versions and cipher suites observed across capture traffic.</p>
+</div>
+
+<div class="grid">
+  <!-- TLS Protocol Versions with Inline SVG -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2>TLS Protocol Versions</h2>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Inline SVG</span>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+      Proportion of sessions by negotiated TLS specification version.
+    </p>
+
+    {% if version_svg %}
+      <div style="margin-bottom: 1.5rem; overflow-x: auto;">
+        {{ version_svg | safe }}
+      </div>
+    {% endif %}
+
+    {% for ver, count in tls_versions.items() %}
+      {% set pct = (count * 100 // total_sessions) if total_sessions > 0 else 0 %}
+      <div style="margin-bottom: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.2rem;">
+          <span class="mono" style="font-weight: 600;">{{ ver }}</span>
+          <span>{{ count }} sessions ({{ pct }}%)</span>
+        </div>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted);">No sessions recorded.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Forward Secrecy Share -->
+  <div class="card">
+    <h2>Forward Secrecy Share</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+      Percentage of TLS traffic protected with ephemeral key exchange (ECDHE / DHE).
+    </p>
+
+    {% for endpoint, data in fs_share.items() %}
+      <div style="margin-bottom: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+          <span class="mono" style="font-weight: 600;">
+            <a href="/cases/{{ case_id }}/hosts/{{ endpoint }}" style="color: #58a6ff;">{{ endpoint }}</a>
+          </span>
+          <span>{{ data.sharePercent }}% ({{ data.forwardSecrecyCount }}/{{ data.totalTls }})</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width: {{ data.sharePercent }}%; {% if data.sharePercent < 100 %}background: var(--medium);{% endif %}"></div>
+        </div>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted);">No TLS sessions recorded.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Cipher Suites Bar Chart with Inline SVG -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>Negotiated Cipher Suites Distribution</h2>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">Inline SVG Visualizer</span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+    Frequency of symmetric encryption and key exchange suites selected by servers.
+  </p>
+
+  {% if cipher_svg %}
+    <div style="overflow-x: auto; margin-bottom: 1.5rem;">
+      {{ cipher_svg | safe }}
+    </div>
+  {% endif %}
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Cipher Suite</th>
+        <th>Sessions</th>
+        <th>Share</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cipher, count in cipher_suites.items() %}
+      {% set pct = (count * 100 // total_tls) if total_tls > 0 else 0 %}
+      <tr>
+        <td class="mono" style="color: #58a6ff;">{{ cipher }}</td>
+        <td>{{ count }}</td>
+        <td>{{ pct }}%</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="3" style="text-align: center; color: var(--text-muted);">No cipher suites recorded.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

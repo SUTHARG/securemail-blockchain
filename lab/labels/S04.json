@@ -1,0 +1,10 @@
+{
+  "scenario": "S04",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R11"
+    }
+  ],
+  "comment": "Expired certificate at capture time"
+}

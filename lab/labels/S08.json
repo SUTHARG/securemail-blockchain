@@ -1,0 +1,10 @@
+{
+  "scenario": "S08",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R12"
+    }
+  ],
+  "comment": "Weak RSA 1024-bit public key"
+}

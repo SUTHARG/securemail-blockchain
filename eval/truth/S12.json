@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "pcapFile": "S12.pcap",
+    "pcapSha256": "90f0ebcf9befa3ff45ac8d403ffbb9ebc6adcbf38969ccab834c2000f4af53ff",
+    "tsharkVersion": "TShark (Wireshark) 4.6.4.",
+    "connectionCount": 1
+  },
+  "connections": {
+    "172.28.0.20:45000->172.28.0.10:25#1": {
+      "clientEndpoint": "172.28.0.20:45000",
+      "serverEndpoint": "172.28.0.10:25",
+      "firstFrame": 1,
+      "clientInferred": false,
+      "clientBytesHex": "45484c4f206d61696c2e6c61622e6c6f63616c0d0a5354415254544c530d0a160303006a010000660303aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2077777777777777777777777777777777777777777777777777777777777777770002c02f0100001b00000010000e00000b3137322e32382e302e3130002b0003020303",
+      "serverBytesHex": "323230206d61696c7365727665722e6c61622e6c6f63616c2045534d545020506f73746669780d0a3235302d6d61696c7365727665722e6c61622e6c6f63616c0d0a3235302d5354415254544c530d0a32353020454e48414e434544535441545553434f4445530d0a32323020322e302e3020526561647920746f20737461727420544c530d0a160303004a020000460303bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb207777777777777777777777777777777777777777777777777777777777777777c02f0016030300040e000000",
+      "smtp": {
+        "commands": [
+          "EHLO mail.lab.local",
+          "STAR TLS"
+        ],
+        "replyCodes": [
+          220,
+          250,
+          220
+        ]
+      },
+      "tls": {
+        "handshakeTypes": [
+          1,
+          2,
+          14
+        ],
+        "clientHelloVersion": "0x0303",
+        "supportedVersions": [
+          "0x0303"
+        ],
+        "offeredCiphers": [
+          49199
+        ],
+        "sni": "172.28.0.10",
+        "selectedCipher": 49199,
+        "selectedVersion": "0x0303",
+        "ja3": "ac93e283435b78e5d4a355213e32fb1c",
+        "ja3s": "174e7e4992a63f6d419626d97363adb8",
+        "certFingerprints": []
+      }
+    }
+  }
+}

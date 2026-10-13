@@ -1,0 +1,6 @@
+{
+  "scenario": "S01a",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [],
+  "comment": "Valid TLS 1.2 with ECDHE and valid 2048-bit certificate; clean session"
+}

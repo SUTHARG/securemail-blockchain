@@ -1,0 +1,6 @@
+{
+  "scenario": "S13",
+  "serverEndpoint": "172.28.0.10:465",
+  "expectedFindings": [],
+  "comment": "Implicit TLS on port 465, TLS 1.2, valid certificate; clean session"
+}

@@ -1,0 +1,227 @@
+{% extends "layout.html" %}
+
+{% block title %}Host Details - {{ host.serverEndpoint }} - SecureMailScope{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/cases/{{ case_id }}/hosts" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">← Back to Host Posture</a>
+</div>
+
+<div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <h1 style="margin-bottom: 0;">{{ host.serverEndpoint }}</h1>
+      <span class="badge-grade grade-{{ host.grade }}">{{ host.grade }}</span>
+    </div>
+    <div class="mono" style="color: var(--text-muted); margin-top: 0.5rem;">
+      Host ID (Pseudonymized HMAC): {{ host.hostId }}
+    </div>
+    <div class="mono" style="color: var(--text-muted); font-size: 0.8rem;">
+      Findings Digest: {{ host.findingsDigest }}
+    </div>
+  </div>
+  <div style="text-align: right;">
+    <div style="font-size: 2.2rem; font-weight: 800; color: #fff;">{{ host.score }}<span style="font-size: 1.2rem; color: var(--text-muted);">/100</span></div>
+    <div style="font-size: 0.85rem; color: var(--text-muted);">Cryptographic Posture Score</div>
+  </div>
+</div>
+
+<!-- Forward Secrecy Share Section -->
+<div class="card">
+  <h3>Forward Secrecy Share</h3>
+  <p class="lead" style="margin-bottom: 0.75rem;">
+    Proportion of TLS sessions negotiating Ephemeral Diffie-Hellman key exchange (DHE / ECDHE) preserving forward secrecy.
+  </p>
+  <div style="display: flex; align-items: center; gap: 1.5rem;">
+    <div style="flex: 1;">
+      <div class="progress-bar-container" style="height: 16px;">
+        <div class="progress-bar-fill" style="width: {{ fs_share.sharePercent }}%;"></div>
+      </div>
+    </div>
+    <div style="font-size: 1.1rem; font-weight: 700; min-width: 140px; text-align: right;">
+      {{ fs_share.sharePercent }}% <span style="font-size: 0.85rem; color: var(--text-muted);">({{ fs_share.forwardSecrecyCount }}/{{ fs_share.totalTls }} TLS)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Posture Chain Section -->
+<div class="card">
+  <h3>Host Posture Chain Record</h3>
+  <p class="lead" style="margin-bottom: 1rem;">
+    On-chain chronological verification ledger for this host. Proofs can be independently audited on-chain.
+  </p>
+  {% if posture_records %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Record Hash</th>
+        <th>Merkle Leaf</th>
+        <th>Score</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rec in posture_records %}
+      <tr>
+        <td class="mono">{{ rec.recordHash }}</td>
+        <td class="mono">{{ rec.leafHash }}</td>
+        <td><strong>{{ rec.score }}</strong></td>
+        <td><span class="badge badge-pass">Anchored</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border);">
+    <span class="badge badge-pending">Local Evaluation</span>
+    <span style="color: var(--text-muted); margin-left: 0.5rem;">Leaf hash <span class="mono">{{ host.leafHash }}</span> included in Case Merkle tree root.</span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Findings on this Host -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h3>Cryptographic Findings ({{ findings|length }})</h3>
+  </div>
+  {% if findings %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Severity</th>
+        <th>Rule</th>
+        <th>Description</th>
+        <th>Sessions</th>
+        <th>Actionable Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in findings %}
+      <tr>
+        <td><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span></td>
+        <td class="mono"><strong>{{ f.ruleId }}</strong></td>
+        <td>{{ f.title }}</td>
+        <td>{{ f.sessionCount }}</td>
+        <td>
+          <details style="cursor: pointer;">
+            <summary style="color: var(--accent); font-weight: 600; outline: none;">View {{ f.evidence|length }} Evidence Item(s)</summary>
+            <div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--code-bg); border-radius: 6px; font-size: 0.85rem;" class="mono">
+              {% for ev in f.evidence %}
+              <div style="margin-bottom: 0.25rem;">
+                &bull; Session <a href="/cases/{{ case_id }}/sessions?host={{ host.serverEndpoint }}" style="color: #58a6ff;">#{{ ev.sessionId }}</a> | Packet #{{ ev.packetNumber }} | {{ ev.note }}
+              </div>
+              {% endfor %}
+            </div>
+          </details>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: var(--text-muted);">No cryptographic vulnerabilities or posture violations detected on this endpoint.</p>
+  {% endif %}
+</div>
+
+<!-- Observed Sessions on this Host -->
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h3>Observed Mail Sessions ({{ sessions|length }})</h3>
+  </div>
+  {% if sessions %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Session ID</th>
+        <th>Client Endpoint</th>
+        <th>Protocol</th>
+        <th>TLS Version</th>
+        <th>Cipher Suite</th>
+        <th>STARTTLS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr>
+        <td class="mono"><strong>#{{ s.sessionId }}</strong></td>
+        <td class="mono">{{ s.clientEndpoint }}</td>
+        <td><span class="badge badge-Info">{{ s.protocol|upper }}</span></td>
+        <td>
+          {% if s.tls %}
+            <span class="badge badge-pass">{{ s.tls.version or 'Unknown' }}</span>
+          {% else %}
+            <span class="badge badge-fail">Plaintext</span>
+          {% endif %}
+        </td>
+        <td class="mono" style="font-size: 0.8rem;">
+          {% if s.tls %}{{ s.tls.cipherSuiteName or '-' }}{% else %}-{% endif %}
+        </td>
+        <td>
+          {% if s.starttls %}
+            {% if s.starttls.outcome == 'succeeded' %}
+              <span class="badge badge-pass">Succeeded</span>
+            {% elif s.starttls.outcome == 'refused' %}
+              <span class="badge badge-fail">Refused</span>
+            {% else %}
+              <span class="badge badge-pending">{{ s.starttls.outcome }}</span>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted);">Implicit TLS / N/A</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color: var(--text-muted);">No sessions recorded for this host.</p>
+  {% endif %}
+</div>
+
+<!-- Certificate Chain on this Host -->
+<div class="card">
+  <h3>Observed X.509 Certificate Chain</h3>
+  <p class="lead" style="margin-bottom: 1rem;">
+    Certificates presented by {{ host.serverEndpoint }} during TLS handshakes.
+  </p>
+  {% if certificates %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Fingerprint (SHA-256)</th>
+        <th>Subject (CN / Org)</th>
+        <th>Issuer</th>
+        <th>Key & Algorithm</th>
+        <th>Verdicts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cert in certificates %}
+      <tr>
+        <td class="mono">{{ cert.fingerprintSha256[:16] }}…</td>
+        <td>{{ cert.subject }}</td>
+        <td>{{ cert.issuer }}</td>
+        <td class="mono">{{ cert.keyAlgorithm }} {{ cert.keySize }} bits</td>
+        <td>
+          {% for v in cert.verdicts %}
+            {% if v == 'valid' %}
+              <span class="badge badge-pass">valid</span>
+            {% elif v in ['expired', 'weakKey', 'weakSignature', 'hostnameMismatch'] %}
+              <span class="badge badge-fail">{{ v }}</span>
+            {% else %}
+              <span class="badge badge-pending">{{ v }}</span>
+            {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
+    <span class="badge badge-pending">Not Observable</span>
+    <span style="color: var(--text-muted); margin-left: 0.5rem;">Certificates were encrypted (TLS 1.3) or session was cleartext.</span>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

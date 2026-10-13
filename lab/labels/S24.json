@@ -1,0 +1,13 @@
+{
+  "scenario": "S24",
+  "serverEndpoint": "172.28.0.10:110",
+  "expectedFindings": [
+    {
+      "ruleId": "R01"
+    },
+    {
+      "ruleId": "R02"
+    }
+  ],
+  "comment": "POP3 cleartext USER and PASS, no TLS"
+}

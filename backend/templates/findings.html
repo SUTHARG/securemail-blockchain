@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block title %}Findings - Case {{ case_id[:12] }} - SecureMailScope{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <h1>Cryptographic Security Findings</h1>
+  <p class="lead">Prioritized by severity and exposure factor, linking to stream evidence and configuration fixes.</p>
+</div>
+
+<!-- Filter and Sort Bar (Usable without JavaScript) -->
+<div class="card" style="padding: 1rem 1.5rem;">
+  <form method="get" action="/cases/{{ case_id }}/findings" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+    <div style="flex: 1; min-width: 140px;">
+      <label for="severity-select">Severity</label>
+      <select id="severity-select" name="severity">
+        <option value="">All Severities</option>
+        {% for sev in ['Critical', 'High', 'Medium', 'Low', 'Info'] %}
+        <option value="{{ sev }}" {% if selected_severity == sev %}selected{% endif %}>{{ sev }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex: 1; min-width: 180px;">
+      <label for="host-select">Server Endpoint</label>
+      <select id="host-select" name="host">
+        <option value="">All Endpoints</option>
+        {% for ep in all_hosts %}
+        <option value="{{ ep }}" {% if selected_host == ep %}selected{% endif %}>{{ ep }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex: 1; min-width: 140px;">
+      <label for="sort-select">Sort By</label>
+      <select id="sort-select" name="sort_by">
+        <option value="severity" {% if sort_by == 'severity' %}selected{% endif %}>Severity</option>
+        <option value="ruleId" {% if sort_by == 'ruleId' %}selected{% endif %}>Rule ID</option>
+        <option value="sessionCount" {% if sort_by == 'sessionCount' %}selected{% endif %}>Session Count</option>
+      </select>
+    </div>
+    <div style="flex: 1; min-width: 120px;">
+      <label for="order-select">Order</label>
+      <select id="order-select" name="sort_order">
+        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
+        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
+      </select>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1rem;">Filter</button>
+      <a href="/cases/{{ case_id }}/findings" class="btn btn-secondary" style="padding: 0.6rem 1rem;">Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- Findings List -->
+{% if findings %}
+  {% for f in findings %}
+  <div class="card" style="border-left: 4px solid {% if f.severity == 'Critical' %}var(--critical){% elif f.severity == 'High' %}var(--high){% elif f.severity == 'Medium' %}var(--medium){% elif f.severity == 'Low' %}var(--low){% else %}var(--info){% endif %};">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+        <span class="mono" style="font-weight: 700; font-size: 1.1rem; color: #fff;">{{ f.ruleId }}</span>
+        <span style="font-weight: 600; font-size: 1.1rem;">{{ f.title }}</span>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        Host: <a href="/cases/{{ case_id }}/hosts/{{ f.serverEndpoint }}" class="mono" style="color: #58a6ff;">{{ f.serverEndpoint }}</a> &bull; Affected Sessions: <span style="font-weight: 700; color: #fff;">{{ f.sessionCount }}</span>
+      </div>
+    </div>
+
+    <!-- Evidence references (collapsible without JS via HTML5 details) -->
+    <div style="margin-bottom: 1.25rem;">
+      <details open style="cursor: pointer;">
+        <summary style="font-size: 0.95rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; outline: none;">
+          Actionable Evidence References ({{ f.evidence|length }} packet frames):
+        </summary>
+        <table class="data-table" style="background: rgba(0, 0, 0, 0.2); margin-top: 0.5rem;">
+          <thead>
+            <tr>
+              <th style="width: 140px;">Session ID</th>
+              <th style="width: 140px;">Packet Frame #</th>
+              <th>Inspection Evidence Note</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ev in f.evidence %}
+            <tr>
+              <td class="mono">
+                <a href="/cases/{{ case_id }}/sessions?host={{ f.serverEndpoint }}&finding={{ f.ruleId }}" style="color: #58a6ff;">
+                  Session #{{ ev.sessionId }}
+                </a>
+              </td>
+              <td class="mono" style="font-weight: 700; color: #58a6ff;">Packet #{{ ev.packetNumber }}</td>
+              <td style="color: var(--text-muted);">{{ ev.note }}</td>
+              <td>
+                <a href="/cases/{{ case_id }}/sessions?host={{ f.serverEndpoint }}&finding={{ f.ruleId }}" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">
+                  View Session
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+    </div>
+
+    <!-- Remediation guidance -->
+    {% if f.recommendation %}
+    <div style="background: rgba(56, 139, 253, 0.06); border-radius: 8px; border: 1px solid rgba(56, 139, 253, 0.2); padding: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <strong style="color: #58a6ff;">Remediation Directive: {{ f.recommendation.component }}</strong>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Parameters: {{ f.recommendation.parameters | join(', ') }}</span>
+      </div>
+      <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #c9d1d9;">{{ f.recommendation.explanation }}</p>
+      <pre style="background: #0d1117; padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid var(--border); overflow-x: auto;">{{ f.recommendation.configuration_fix }}</pre>
+      <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+        <span style="color: var(--text-muted);">Official Documentation:</span>
+        {% for url in f.recommendation.documentation_urls %}
+          <a href="{{ url }}" target="_blank" rel="noopener noreferrer" style="color: #58a6ff; margin-left: 0.5rem;">{{ url }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card">
+    <p style="color: var(--text-muted);">No security findings matching the filter criteria.</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{
+  "scenario": "S09",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R13"
+    }
+  ],
+  "comment": "Weak SHA-1 signature algorithm on certificate"
+}

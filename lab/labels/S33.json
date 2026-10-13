@@ -1,0 +1,10 @@
+{
+  "scenario": "S33",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R14"
+    }
+  ],
+  "comment": "Client SNI (unmatched.example.com) does not match certificate SAN"
+}

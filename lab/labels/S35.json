@@ -1,0 +1,10 @@
+{
+  "scenario": "S35",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R18"
+    }
+  ],
+  "comment": "Server presented two distinct leaf certificate fingerprints for same server endpoint"
+}

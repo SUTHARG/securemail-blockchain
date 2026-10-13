@@ -1,0 +1,10 @@
+{
+  "scenario": "S12",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R19"
+    }
+  ],
+  "comment": "TLS 1.3 only; encrypted certificates not observable"
+}

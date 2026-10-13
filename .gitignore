@@ -20,19 +20,20 @@ venv/
 env/
 .pytest_cache/
 .hypothesis/
+*.egg-info/
 
 # Lab artifacts and state
-lab/ca/out/
-data/
-validator_state/
-
-# Large captures (> 50 MB)
-lab/captures/*.pcap
+/lab/ca/out/*
+!/lab/ca/out/*.crt
+!/lab/ca/out/*.der
+/data/
+/validator_state/
 
 # Hardhat build artifacts
 contracts/artifacts/
 contracts/cache/
 contracts/typechain-types/
+contracts/*.log
 
 # OS specific files
 .DS_Store

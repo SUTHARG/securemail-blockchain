@@ -1,0 +1,10 @@
+{
+  "scenario": "S30",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R04"
+    }
+  ],
+  "comment": "STARTTLS refused by server with 454 and session continued in plaintext"
+}

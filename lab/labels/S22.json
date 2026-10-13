@@ -1,0 +1,6 @@
+{
+  "scenario": "S22",
+  "serverEndpoint": "172.28.0.10:993",
+  "expectedFindings": [],
+  "comment": "IMAP implicit TLS on 993; clean session"
+}

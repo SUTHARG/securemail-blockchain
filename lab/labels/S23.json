@@ -1,0 +1,6 @@
+{
+  "scenario": "S23",
+  "serverEndpoint": "172.28.0.10:110",
+  "expectedFindings": [],
+  "comment": "POP3 STLS, TLS 1.2, valid certificate; clean session"
+}

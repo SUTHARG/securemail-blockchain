@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureMailScope Posture Report - {{ report.caseId[:12] }}</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --heading: #f0f6fc;
+      --primary: #58a6ff;
+      --critical: #f85149;
+      --high: #db61a2;
+      --medium: #d29922;
+      --low: #3fb950;
+      --info: #8b949e;
+      --pass: #2ea043;
+      --fail: #f85149;
+      --pending: #d29922;
+      --code-bg: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 { color: var(--heading); font-size: 2rem; margin-bottom: 0.5rem; }
+    h2 { color: var(--heading); font-size: 1.4rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    h3 { color: var(--heading); font-size: 1.1rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .badge-Critical { background: rgba(248,81,73,0.15); color: var(--critical); border: 1px solid var(--critical); }
+    .badge-High { background: rgba(219,97,162,0.15); color: var(--high); border: 1px solid var(--high); }
+    .badge-Medium { background: rgba(210,153,34,0.15); color: var(--medium); border: 1px solid var(--medium); }
+    .badge-Low { background: rgba(63,185,80,0.15); color: var(--low); border: 1px solid var(--low); }
+    .badge-Info { background: rgba(139,148,158,0.15); color: var(--info); border: 1px solid var(--info); }
+    .badge-pass { background: rgba(46,160,67,0.15); color: var(--pass); border: 1px solid var(--pass); }
+    .badge-fail { background: rgba(248,81,73,0.15); color: var(--fail); border: 1px solid var(--fail); }
+    .badge-pending { background: rgba(210,153,34,0.15); color: var(--pending); border: 1px solid var(--pending); }
+    .badge-grade {
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+    }
+    .grade-A { background: rgba(46,160,67,0.2); color: #3fb950; border: 2px solid #3fb950; }
+    .grade-B { background: rgba(88,166,255,0.2); color: #58a6ff; border: 2px solid #58a6ff; }
+    .grade-C { background: rgba(210,153,34,0.2); color: #d29922; border: 2px solid #d29922; }
+    .grade-D { background: rgba(219,97,162,0.2); color: #db61a2; border: 2px solid #db61a2; }
+    .grade-F { background: rgba(248,81,73,0.2); color: #f85149; border: 2px solid #f85149; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    .meta-table { width: 100%; border-collapse: collapse; }
+    .meta-table th, .meta-table td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-table th { color: var(--text-muted); width: 220px; font-weight: 500; }
+    .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 0.85rem; word-break: break-all; }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table.data-table th, table.data-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    table.data-table th { background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+    .finding-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .finding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .recommendation-box {
+      margin-top: 1rem;
+      background: rgba(88,166,255,0.05);
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #e6edf3;
+      margin: 0.5rem 0;
+    }
+    .evidence-list { list-style: none; margin: 0.5rem 0; }
+    .evidence-list li {
+      padding: 0.4rem 0.6rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .verification-step {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .verification-step:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>SecureMailScope Posture Assessment Report</h1>
+    <p style="color: var(--text-muted);">Cryptographic and Protocol Hygiene Analysis for Email Communications</p>
+  </header>
+
+  <!-- 1. Metadata and Case Identity -->
+  <div class="grid">
+    <div class="card" style="grid-column: 1 / -1;">
+      <h3>Case Identity & Chain Integrity</h3>
+      <table class="meta-table">
+        <tr><th>Case ID</th><td class="mono">{{ report.caseId }}</td></tr>
+        <tr><th>PCAP SHA-256</th><td class="mono">{{ report.pcapHash }}</td></tr>
+        <tr><th>Engine Version</th><td class="mono">{{ report.engineVersion }}</td></tr>
+        <tr><th>Ruleset Hash</th><td class="mono">{{ report.rulesetHash }}</td></tr>
+        <tr><th>Merkle Result Root</th><td class="mono">{{ report.resultRoot }}</td></tr>
+        <tr><th>Anchored Report Hash</th><td class="mono">{{ report.onChainState.reportHash or 'Pending Anchor' }}</td></tr>
+        <tr><th>On-Chain Status</th><td><span class="badge badge-Info">{{ report.onChainState.status }}</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. Independent Verifier Steps -->
+  <h2>Section 8: Independent Verification Suite</h2>
+  <div class="card" style="padding: 0;">
+    {% for step in report.verifierSteps %}
+    <div class="verification-step">
+      <div>
+        <strong>Step {{ step.step }}: {{ step.name }}</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">{{ step.details }}</div>
+      </div>
+      <div>
+        {% if step.status == 'PASS' %}
+          <span class="badge badge-pass">PASS</span>
+        {% elif step.status == 'FAIL' %}
+          <span class="badge badge-fail">FAIL</span>
+        {% else %}
+          <span class="badge badge-pending">{{ step.status }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 3. Host Posture Scores -->
+  <h2>Host Posture Scores</h2>
+  <div class="grid">
+    {% for host in report.hostScores %}
+    <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <h3 class="mono">{{ host.serverEndpoint }}</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">
+          Host ID: <span class="mono">{{ host.hostId[:16] }}...</span>
+        </p>
+        <p style="font-size: 1.1rem; font-weight: 600;">Score: {{ host.score }}/100</p>
+      </div>
+      <div>
+        <span class="badge-grade grade-{{ host.grade }}">{{ host.grade }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- 4. Prioritized Findings -->
+  <h2>Prioritized Cryptographic Findings</h2>
+  {% if report.findings %}
+    {% for f in report.findings %}
+    <div class="finding-card">
+      <div class="finding-header">
+        <div>
+          <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+          <span class="mono" style="font-weight: 700; margin-left: 0.5rem;">{{ f.ruleId }}</span>: {{ f.title }}
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Endpoint: <span class="mono">{{ f.serverEndpoint }}</span> | Sessions Affected: {{ f.sessionCount }}
+        </div>
+      </div>
+
+      <!-- Evidence references -->
+      <div>
+        <strong>Evidence Packet References:</strong>
+        <ul class="evidence-list">
+          {% for ev in f.evidence %}
+          <li>
+            Session <strong>#{{ ev.sessionId }}</strong> &mdash;
+            Packet <strong>#{{ ev.packetNumber }}</strong>:
+            <span style="color: var(--text-muted);">{{ ev.note }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Static Remediation Template -->
+      {% if f.recommendation %}
+      <div class="recommendation-box">
+        <strong style="color: var(--heading);">Remediation Guidance ({{ f.recommendation.component }}):</strong>
+        <p style="font-size: 0.9rem; margin-top: 0.25rem;">{{ f.recommendation.explanation }}</p>
+        <pre>{{ f.recommendation.configuration_fix }}</pre>
+        <div style="font-size: 0.8rem; margin-top: 0.5rem;">
+          <strong>Documentation:</strong>
+          {% for url in f.recommendation.documentation_urls %}
+            <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a>{% if not loop.last %} &bull; {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Advisory Generated Remediation (Prompt T3.2) -->
+      {% if f.advisoryRecommendation %}
+      <div class="recommendation-box" style="border-left-color: #d29922; background: rgba(210,153,34,0.06); margin-top: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+          <strong style="color: #d29922;">Advisory Generated Remediation</strong>
+          <span class="badge" style="background: rgba(210,153,34,0.2); color: #d29922; border: 1px solid rgba(210,153,34,0.4); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">ADVISORY (NON-CONSENSUS)</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-top: 0.25rem;">{{ f.advisoryRecommendation.summary }}</p>
+        <ul style="font-size: 0.85rem; margin: 0.5rem 0 0.5rem 1.25rem; color: #e6edf3;">
+          {% for step in f.advisoryRecommendation.steps %}
+          <li>{{ step }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="card"><p>No security findings identified in this capture.</p></div>
+  {% endif %}
+
+  <!-- 5. Session and TLS Traffic Summary -->
+  <h2>Session & Protocol Distribution</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Protocols</h3>
+      <table class="meta-table">
+        {% for proto, count in report.sessionSummary.protocols.items() %}
+        <tr><th>{{ proto }}</th><td>{{ count }} sessions</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="card">
+      <h3>TLS Versions</h3>
+      <table class="meta-table">
+        {% for ver, count in report.sessionSummary.tlsVersions.items() %}
+        <tr><th>{{ ver }}</th><td>{{ count }} sessions</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="card">
+      <h3>Cipher Suites</h3>
+      <table class="meta-table">
+        {% for cipher, count in report.sessionSummary.cipherSuites.items() %}
+        <tr><th class="mono">{{ cipher }}</th><td>{{ count }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div class="card">
+      <h3>Forward Secrecy Share</h3>
+      <table class="meta-table">
+        {% for endpoint, data in report.sessionSummary.forwardSecrecyShare.items() %}
+        <tr><th class="mono">{{ endpoint }}</th><td>{{ data.sharePercent }}% ({{ data.forwardSecrecyCount }}/{{ data.totalTls }})</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. Observed Certificates -->
+  <h2>Observed X.509 Certificates</h2>
+  {% if report.certificates %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>Issuer</th>
+        <th>Key</th>
+        <th>Signature</th>
+        <th>Valid To</th>
+        <th>Verdicts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cert in report.certificates %}
+      <tr>
+        <td class="mono">{{ cert.subject }}</td>
+        <td class="mono">{{ cert.issuer }}</td>
+        <td>{{ cert.keyAlgorithm }} {{ cert.keySize }}b</td>
+        <td>{{ cert.signatureAlgorithm }}</td>
+        <td>{{ cert.notAfter }}</td>
+        <td>
+          {% for v in cert.verdicts %}
+            <span class="badge badge-Info">{{ v }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="card"><p>No X.509 certificates observable in this capture (e.g. cleartext sessions or TLS 1.3 encrypted handshakes).</p></div>
+  {% endif %}
+
+  <!-- 7. Visibility Limitations -->
+  <h2>Visibility Limitations</h2>
+  <div class="card">
+    <p>{{ report.visibilityLimits.summary }}</p>
+    <table class="meta-table">
+      <tr><th>TLS 1.3 Sessions (Encrypted Handshakes)</th><td>{{ report.visibilityLimits.tls13Count }}</td></tr>
+      <tr><th>Resumed Sessions (Tickets/Cache)</th><td>{{ report.visibilityLimits.resumedCount }}</td></tr>
+      <tr><th>Sessions Missing SNI</th><td>{{ report.visibilityLimits.noSniCount }}</td></tr>
+      <tr><th>Incomplete / Truncated TCP Streams</th><td>{{ report.visibilityLimits.incompleteStreamsCount }}</td></tr>
+      <tr><th>Parse Errors Encountered</th><td>{{ report.visibilityLimits.parseErrorsCount }}</td></tr>
+    </table>
+  </div>
+
+  <!-- 8. Advisory Anomaly Detection (Non-Consensus / Off-Chain) -->
+  {% if report.advisory %}
+  <h2>Advisory Anomaly Detection <span class="badge badge-pending">Non-Consensus / Off-Chain</span></h2>
+  <div class="card">
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+      <strong>Notice:</strong> {{ report.advisory.disclaimer }}
+      Isolation Forest evaluates multidimensional feature isolation and does not provide intrinsic feature attribution;
+      listed deviating features reflect an empirical baseline frequency heuristic.
+    </p>
+    <p><strong>Flagged Anomalous Sessions:</strong> {{ report.advisory.flaggedCount }} of {{ report.advisory.totalSessions }} total sessions</p>
+
+    {% if report.advisory.flaggedSessions %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Session ID</th>
+          <th>Server Endpoint</th>
+          <th>Anomaly Score</th>
+          <th>Top Deviating Features (< 5% Baseline Freq)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in report.advisory.flaggedSessions %}
+        <tr>
+          <td class="mono">#{{ a.sessionId }}</td>
+          <td class="mono">{{ a.serverEndpoint }}</td>
+          <td><span class="badge badge-High">{{ a.anomalyScore }}</span></td>
+          <td>
+            {% if a.topDeviatingFeatures %}
+              <ul style="padding-left: 1.2rem; margin: 0; font-size: 0.85rem;">
+                {% for dev in a.topDeviatingFeatures %}
+                  <li>{{ dev }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <span style="color: var(--text-muted);">Multivariate boundary isolation (no individual feature < 5%)</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--pass); margin-top: 0.5rem;">✓ No sessions flagged as anomalous by advisory Isolation Forest model.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

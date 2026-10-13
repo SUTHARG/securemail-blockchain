@@ -1,0 +1,6 @@
+{
+  "scenario": "S20",
+  "serverEndpoint": "172.28.0.10:143",
+  "expectedFindings": [],
+  "comment": "IMAP STARTTLS, TLS 1.2, valid certificate; clean session"
+}

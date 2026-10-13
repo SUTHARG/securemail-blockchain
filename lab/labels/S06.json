@@ -1,0 +1,10 @@
+{
+  "scenario": "S06",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R03"
+    }
+  ],
+  "comment": "STARTTLS offered but client ignored and continued in plaintext"
+}

@@ -1,0 +1,6 @@
+{
+  "scenario": "X02",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [],
+  "comment": "Stress capture with TCP MSS clamped to 100; clean session"
+}

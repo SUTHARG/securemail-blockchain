@@ -1,0 +1,50 @@
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir               = ./lab/ca/demoCA
+database          = $dir/index.txt
+new_certs_dir     = $dir/newcerts
+certificate       = $dir/ca.crt
+serial            = $dir/serial
+private_key       = $dir/ca.key
+default_days      = 365
+default_md        = sha256
+policy            = policy_anything
+email_in_dn       = no
+copy_extensions   = copy
+
+[ policy_anything ]
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+default_bits        = 2048
+default_md          = sha256
+distinguished_name  = req_distinguished_name
+prompt              = no
+
+[ req_distinguished_name ]
+CN = 172.28.0.10
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ v3_server ]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = mail.lab.local
+DNS.2 = mailserver
+IP.1 = 172.28.0.10

@@ -1,0 +1,13 @@
+{
+  "scenario": "S05",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R01"
+    },
+    {
+      "ruleId": "R02"
+    }
+  ],
+  "comment": "No STARTTLS offered and cleartext authentication used"
+}

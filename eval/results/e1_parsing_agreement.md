@@ -1,0 +1,23 @@
+# Experiment E1: Parsing Agreement vs. Ground Truth
+
+**Overall Agreement Rate:** **100.00%** (73/73 fields matched)
+
+| Scenario | Evaluated Fields | Matched Fields | Agreement Rate | Mismatches |
+|---|---|---|---|---|
+| S01a | 5 | 5 | 100.0% | None |
+| S01b | 4 | 4 | 100.0% | None |
+| S02 | 5 | 5 | 100.0% | None |
+| S03 | 5 | 5 | 100.0% | None |
+| S04 | 5 | 5 | 100.0% | None |
+| S05 | 1 | 1 | 100.0% | None |
+| S06 | 1 | 1 | 100.0% | None |
+| S07 | 5 | 5 | 100.0% | None |
+| S08 | 5 | 5 | 100.0% | None |
+| S09 | 5 | 5 | 100.0% | None |
+| S10 | 5 | 5 | 100.0% | None |
+| S11 | 5 | 5 | 100.0% | None |
+| S12 | 4 | 4 | 100.0% | None |
+| S13 | 5 | 5 | 100.0% | None |
+| X01 | 4 | 4 | 100.0% | None |
+| X02 | 5 | 5 | 100.0% | None |
+| X03 | 4 | 4 | 100.0% | None |

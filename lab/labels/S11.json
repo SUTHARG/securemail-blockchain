@@ -1,0 +1,10 @@
+{
+  "scenario": "S11",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R15"
+    }
+  ],
+  "comment": "Unknown issuer / certificate from CA absent from trust store"
+}

@@ -1,0 +1,13 @@
+{
+  "scenario": "S34",
+  "serverEndpoint": "172.28.0.10:25",
+  "expectedFindings": [
+    {
+      "ruleId": "R02"
+    },
+    {
+      "ruleId": "R17"
+    }
+  ],
+  "comment": "Proxy removed STARTTLS from EHLO response in session 2, triggering inconsistent advertisement (R17) and unencrypted mail (R02)"
+}

@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+{% block title %}Sessions - {{ case_id[:12] }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1>Email Session Explorer</h1>
+  <p class="lead">Per-session protocol tracking, transport negotiation, TLS parameters, and certificate validation verdicts.</p>
+</div>
+
+<!-- Filters Bar (Works with pure HTML form and optional inline JS) -->
+<div class="card" style="padding: 1rem 1.5rem;">
+  <form method="get" action="/cases/{{ case_id }}/sessions" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 200px;">
+      <label for="host_filter">Filter by Host:</label>
+      <select id="host_filter" name="host" onchange="this.form.submit()">
+        <option value="">-- All Hosts --</option>
+        {% for h in all_hosts %}
+        <option value="{{ h }}" {% if selected_host == h %}selected{% endif %}>{{ h }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="flex: 1; min-width: 200px;">
+      <label for="finding_filter">Filter by Finding Rule:</label>
+      <select id="finding_filter" name="finding" onchange="this.form.submit()">
+        <option value="">-- All Findings --</option>
+        {% for f in all_rules %}
+        <option value="{{ f }}" {% if selected_finding == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <button type="submit" class="btn btn-secondary">Apply Filter</button>
+      <a href="/cases/{{ case_id }}/sessions" class="btn btn-secondary" style="margin-left: 0.5rem;">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Sessions Table -->
+<div class="card" style="padding: 0; overflow-x: auto;">
+  <table class="data-table" id="sessions_table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Endpoints</th>
+        <th>Protocol</th>
+        <th>Transport</th>
+        <th>STARTTLS</th>
+        <th>TLS Version</th>
+        <th>Cipher Suite</th>
+        <th>FS</th>
+        <th>Cert Verdicts</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr>
+        <td class="mono" style="font-weight: 700; color: #58a6ff;">#{{ s.sessionId }}</td>
+        <td class="mono" style="font-size: 0.8rem;">
+          <div>Client: {{ s.clientEndpoint }}</div>
+          <div style="color: #58a6ff;">Server: {{ s.serverEndpoint }}</div>
+        </td>
+        <td>
+          <span class="badge badge-Info">{{ s.protocol }}</span>
+          {% if not s.streamComplete %}
+          <div style="font-size: 0.75rem; color: var(--critical); margin-top: 0.2rem;">
+            Not evaluable (Incomplete / truncated TCP stream)
+          </div>
+          {% endif %}
+        </td>
+        <td style="font-size: 0.85rem;">{{ s.transportMode }}</td>
+        <td style="font-size: 0.85rem;">
+          {% if s.starttls.offered %}
+            <span style="color: #3fb950;">Offered</span>
+            {% if s.starttls.attempted %}
+              &rarr; <span style="font-weight: 600;">{{ s.starttls.outcome }}</span>
+            {% else %}
+              &rarr; <span style="color: var(--medium);">Not Attempted</span>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted);">Not Offered</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.tls and s.tls.version %}
+            <span class="mono" style="font-weight: 600;">{{ s.tls.version }}</span>
+            {% if s.tls.version == 'TLS 1.3' %}
+              <div style="font-size: 0.75rem; color: var(--info);">
+                Not observable (TLS 1.3 encrypted handshake per RFC 8446)
+              </div>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted);">Cleartext (None)</span>
+          {% endif %}
+        </td>
+        <td class="mono" style="font-size: 0.8rem;">
+          {% if s.tls and s.tls.cipherSuiteName %}
+            {{ s.tls.cipherSuiteName }}
+            {% if s.tls.resumed %}
+              <div style="font-size: 0.75rem; color: var(--medium);">
+                Not observable (Resumed session using tickets/cache)
+              </div>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted);">&mdash;</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.tls %}
+            {% if s.tls.forwardSecrecy is true %}
+              <span class="badge badge-pass">YES</span>
+            {% elif s.tls.forwardSecrecy is false %}
+              <span class="badge badge-fail">NO</span>
+            {% else %}
+              <span style="color: var(--text-muted);">&mdash;</span>
+            {% endif %}
+          {% else %}
+            <span style="color: var(--text-muted);">&mdash;</span>
+          {% endif %}
+        </td>
+        <td style="font-size: 0.8rem;">
+          {% if s.certificates %}
+            {% for c in s.certificates %}
+              {% for v in c.verdicts %}
+                <span class="badge badge-Info" style="margin: 0.1rem;">{{ v }}</span>
+              {% endfor %}
+            {% endfor %}
+          {% elif s.tls and s.tls.certNotObservableReason %}
+            <span style="color: var(--info); font-size: 0.75rem;">
+              Not observable ({{ s.tls.certNotObservableReason }})
+            </span>
+          {% else %}
+            <span style="color: var(--text-muted);">None observable</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+          No sessions match the selected filters.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

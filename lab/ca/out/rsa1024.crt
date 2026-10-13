@@ -1,0 +1,73 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 3 (0x3)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, O=SecureMailScope Lab, CN=SecureMailScope Root CA
+        Validity
+            Not Before: Oct 11 08:53:14 2026 GMT
+            Not After : Oct 11 08:53:14 2027 GMT
+        Subject: O=RSA1024 Lab, CN=172.28.0.10
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:ac:92:44:26:1a:b6:e1:ed:dc:05:23:ca:3f:4a:
+                    a9:b6:bb:82:fe:07:e9:ba:1c:56:44:ae:d9:11:a1:
+                    28:5d:bf:5a:5f:02:a2:97:be:ca:93:64:48:b3:8d:
+                    47:09:fe:6a:b8:e9:5e:e3:4c:28:40:65:3c:24:b5:
+                    60:08:16:ba:bc:80:e2:0c:3c:12:3f:5c:e3:e5:da:
+                    82:d1:0e:98:72:61:e8:25:36:d4:6b:3e:59:9e:3d:
+                    f4:09:09:64:2a:6c:0d:f7:3c:37:f4:df:0c:3d:f3:
+                    d5:d3:56:b2:dc:86:d8:b8:1e:6b:0b:fe:70:68:d8:
+                    e8:e1:a9:f3:ea:eb:93:e0:b9
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Subject Alternative Name: 
+                DNS:mail.lab.local, DNS:mailserver, IP Address:172.28.0.10
+            X509v3 Subject Key Identifier: 
+                09:9C:C4:6D:6B:AD:4C:6F:4D:DA:51:DE:E1:9C:95:06:3C:09:07:1D
+            X509v3 Authority Key Identifier: 
+                18:67:3C:24:FB:1E:EE:D8:F7:CA:65:E1:C7:23:87:57:ED:F7:4A:E9
+    Signature Algorithm: sha256WithRSAEncryption
+    Signature Value:
+        7d:cb:f9:80:1e:08:b5:cb:a6:5a:5b:e7:5f:a0:83:fa:62:20:
+        32:eb:7d:89:e2:65:66:e7:b0:2a:d5:3c:0e:7e:98:d0:82:7e:
+        41:4e:0d:22:fc:9d:2e:0c:b4:5f:1a:0b:59:7a:d1:06:3a:72:
+        5f:b3:6c:9d:35:7b:bc:e1:9b:07:21:1b:b5:3a:cd:42:97:2d:
+        64:e7:72:08:9b:d3:6a:82:f5:04:a8:43:be:76:eb:96:c4:19:
+        ca:e6:a6:6f:af:8e:43:33:f1:50:df:96:96:ac:e6:fb:e8:88:
+        e4:79:75:80:d2:c6:45:1d:7e:eb:50:0d:20:e5:ed:ce:f6:da:
+        11:f1:0a:28:75:6e:2f:21:9e:52:0c:74:b3:75:d7:e2:99:4b:
+        f8:e5:d7:a9:6d:81:30:a7:f6:4e:79:bb:bc:07:7f:7b:99:28:
+        79:33:71:e3:28:1d:2f:de:ce:b6:2e:21:8e:86:e0:d0:44:10:
+        27:ec:94:3b:a8:1f:60:5f:84:bf:8f:1e:ff:5f:b7:16:b3:0d:
+        f0:7b:d0:0e:d3:f8:6f:92:fe:bf:79:2c:ec:61:5d:9c:e8:50:
+        17:44:91:ba:17:f3:17:ce:75:36:a9:fe:19:ab:d6:bb:57:87:
+        af:44:5d:03:db:cd:48:7c:18:82:e1:de:d4:df:5a:06:48:01:
+        43:55:14:c3
+-----BEGIN CERTIFICATE-----
+MIIDDjCCAfagAwIBAgIBAzANBgkqhkiG9w0BAQsFADBNMQswCQYDVQQGEwJVUzEc
+MBoGA1UECgwTU2VjdXJlTWFpbFNjb3BlIExhYjEgMB4GA1UEAwwXU2VjdXJlTWFp
+bFNjb3BlIFJvb3QgQ0EwHhcNMjYxMDExMDg1MzE0WhcNMjcxMDExMDg1MzE0WjAs
+MRQwEgYDVQQKDAtSU0ExMDI0IExhYjEUMBIGA1UEAwwLMTcyLjI4LjAuMTAwgZ8w
+DQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKySRCYatuHt3AUjyj9Kqba7gv4H6boc
+VkSu2RGhKF2/Wl8Cope+ypNkSLONRwn+arjpXuNMKEBlPCS1YAgWuryA4gw8Ej9c
+4+XagtEOmHJh6CU21Gs+WZ499AkJZCpsDfc8N/TfDD3z1dNWstyG2Lgeawv+cGjY
+6OGp8+rrk+C5AgMBAAGjgZ0wgZowCQYDVR0TBAIwADALBgNVHQ8EBAMCBaAwEwYD
+VR0lBAwwCgYIKwYBBQUHAwEwKwYDVR0RBCQwIoIObWFpbC5sYWIubG9jYWyCCm1h
+aWxzZXJ2ZXKHBKwcAAowHQYDVR0OBBYEFAmcxG1rrUxvTdpR3uGclQY8CQcdMB8G
+A1UdIwQYMBaAFBhnPCT7Hu7Y98pl4ccjh1ft90rpMA0GCSqGSIb3DQEBCwUAA4IB
+AQB9y/mAHgi1y6ZaW+dfoIP6YiAy632J4mVm57Aq1TwOfpjQgn5BTg0i/J0uDLRf
+GgtZetEGOnJfs2ydNXu84ZsHIRu1Os1Cly1k53IIm9NqgvUEqEO+duuWxBnK5qZv
+r45DM/FQ35aWrOb76IjkeXWA0sZFHX7rUA0g5e3O9toR8QoodW4vIZ5SDHSzddfi
+mUv45depbYEwp/ZOebu8B397mSh5M3HjKB0v3s62LiGOhuDQRBAn7JQ7qB9gX4S/
+jx7/X7cWsw3we9AO0/hvkv6/eSzsYV2c6FAXRJG6F/MXznU2qf4Zq9a7V4evRF0D
+281IfBiC4d7U31oGSAFDVRTD
+-----END CERTIFICATE-----

@@ -1,0 +1,8 @@
+operation,contract,caller_role,gas_n3,gas_n5,delta_gas,description
+openCase,CaseRegistry,Analyst,137596,137596,0,Initializes case with pcapHash and analyst tracking
+submitClaim,ValidationQuorum,Analyst,315711,409795,"+94,084",Submits claim and snapshots active validator set (scales with N)
+commit,ValidationQuorum,Validator,82240,82240,0,Records keccak256 commitment of result root and secret salt
+reveal,ValidationQuorum,Validator,139195,139195,0,"Reveals root, salt, and verified pinned engine/ruleset hashes"
+finalize,ValidationQuorum,Permissionless,74007,74007,0,Evaluates revealed quorum threshold and marks Finalized
+recordPosture,PostureLedger,Analyst,224268,224268,0,Verifies inclusion Merkle proof against finalized root and appends record
+anchorReport,CaseRegistry,Analyst,51293,51293,0,Anchors canonical report.json SHA-256 digest on-chain

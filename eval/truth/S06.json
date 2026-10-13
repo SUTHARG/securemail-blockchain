@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "pcapFile": "S06.pcap",
+    "pcapSha256": "0e2ad27aea59de97c37ecd2f66c3e337e8b0bb8fed16cfb6a08d8fc9f48d645a",
+    "tsharkVersion": "TShark (Wireshark) 4.6.4.",
+    "connectionCount": 1
+  },
+  "connections": {
+    "172.28.0.20:45000->172.28.0.10:25#1": {
+      "clientEndpoint": "172.28.0.20:45000",
+      "serverEndpoint": "172.28.0.10:25",
+      "firstFrame": 1,
+      "clientInferred": false,
+      "clientBytesHex": "45484c4f206d61696c2e6c61622e6c6f63616c0d0a4d41494c2046524f4d3a3c73656e646572406c61622e6c6f63616c3e0d0a5243505420544f3a3c726563697069656e74406c61622e6c6f63616c3e0d0a515549540d0a",
+      "serverBytesHex": "323230206d61696c7365727665722e6c61622e6c6f63616c2045534d545020506f73746669780d0a3235302d6d61696c7365727665722e6c61622e6c6f63616c0d0a3235302d504950454c494e494e470d0a3235302d5354415254544c530d0a32353020454e48414e434544535441545553434f4445530d0a32353020322e312e30204f6b0d0a32353020322e312e35204f6b0d0a32323120322e302e30204279650d0a",
+      "smtp": {
+        "commands": [
+          "EHLO mail.lab.local",
+          "MAIL FROM:<sender@lab.local>",
+          "RCPT TO:<recipient@lab.local>",
+          "QUIT"
+        ],
+        "replyCodes": [
+          220,
+          250,
+          250,
+          250,
+          221
+        ]
+      },
+      "tls": {
+        "handshakeTypes": [],
+        "clientHelloVersion": null,
+        "supportedVersions": [],
+        "offeredCiphers": [],
+        "sni": null,
+        "selectedCipher": null,
+        "selectedVersion": null,
+        "ja3": null,
+        "ja3s": null,
+        "certFingerprints": []
+      }
+    }
+  }
+}

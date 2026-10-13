@@ -1,0 +1,77 @@
+rules:
+  - id: R01
+    title: Cleartext credentials sent before encryption
+    severity: Critical
+    enabled: true
+  - id: R02
+    title: Mail session with no encryption and STARTTLS not offered
+    severity: High
+    enabled: true
+  - id: R03
+    title: STARTTLS offered but never attempted
+    severity: High
+    enabled: true
+  - id: R04
+    title: STARTTLS attempted, refused, session continued in plaintext
+    severity: High
+    enabled: true
+  - id: R05
+    title: SSL 3.0 or older negotiated
+    severity: Critical
+    enabled: true
+  - id: R06
+    title: TLS 1.0 or 1.1 negotiated
+    severity: High
+    enabled: true
+  - id: R07
+    title: NULL, EXPORT, or anonymous cipher suite
+    severity: Critical
+    enabled: true
+  - id: R08
+    title: RC4, DES, or 3DES cipher suite
+    severity: High
+    enabled: true
+  - id: R09
+    title: No forward secrecy (static RSA or static DH)
+    severity: Medium
+    enabled: true
+  - id: R10
+    title: DHE prime below 2048 bits
+    severity: Medium
+    enabled: true
+  - id: R11
+    title: Certificate expired at capture time
+    severity: High
+    enabled: true
+  - id: R12
+    title: RSA key below 2048 bits or EC key below 224 bits
+    severity: High
+    enabled: true
+  - id: R13
+    title: MD5 or SHA-1 signature on a non-root certificate in the chain
+    severity: High
+    enabled: true
+  - id: R14
+    title: Certificate name does not match SNI
+    severity: Medium
+    enabled: true
+  - id: R15
+    title: Unknown issuer or incomplete chain
+    severity: Low
+    enabled: true
+  - id: R16
+    title: Self-signed leaf certificate
+    severity: Medium
+    enabled: true
+  - id: R17
+    title: STARTTLS advertised to one server in some sessions and not in others
+    severity: Medium
+    enabled: true
+  - id: R18
+    title: Different leaf certificate for the same server endpoint within the capture
+    severity: Medium
+    enabled: true
+  - id: R19
+    title: Certificate not observable (TLS 1.3 or resumed)
+    severity: Info
+    enabled: true

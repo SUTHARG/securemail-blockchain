@@ -1,0 +1,20 @@
+{
+  "N3": {
+    "openCase": 137596,
+    "submitClaim": 315711,
+    "commit": 82240,
+    "reveal": 139195,
+    "finalize": 74007,
+    "recordPosture": 224268,
+    "anchorReport": 51293
+  },
+  "N5": {
+    "openCase": 137596,
+    "submitClaim": 409795,
+    "commit": 82240,
+    "reveal": 139195,
+    "finalize": 74007,
+    "recordPosture": 224268,
+    "anchorReport": 51293
+  }
+}

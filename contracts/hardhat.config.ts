@@ -11,6 +11,11 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
+  },
   paths: {
     sources: "./contracts",
     tests: "./test",
