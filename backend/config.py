@@ -1,6 +1,7 @@
 """Configuration settings for SecureMailScope backend API."""
 import os
 from pathlib import Path
+REPO_ROOT = Path(__file__).resolve().parents[1]
 try:
     from dotenv import load_dotenv
     load_dotenv(REPO_ROOT / ".env")
