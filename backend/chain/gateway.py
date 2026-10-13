@@ -93,6 +93,10 @@ def load_contract_artifact(deployment_file: Path, abi_rel_path: str) -> list:
         repo_root = config.REPO_ROOT
         abi_path = repo_root / "contracts" / abi_rel_path
     if not abi_path.exists():
+        fallback = deployment_file.parent / "abi" / Path(abi_rel_path).name
+        if fallback.exists():
+            abi_path = fallback
+    if not abi_path.exists():
         raise FileNotFoundError(f"Contract artifact not found at {abi_path}")
     with open(abi_path, "r", encoding="utf-8") as f:
         artifact = json.load(f)
