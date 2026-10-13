@@ -1054,35 +1054,64 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
     step4_match = False
     step5_match = False
 
-    try:
-        gw = get_gateway()
-        chain_info = gw.get_chain_status(case_id)
-        validators = chain_info.get("validators", [])
-        final_root = (chain_info.get("finalRoot") or "").lower().replace("0x", "")
-        if final_root and final_root != "0" * 64:
-            step3_match = (result_root == final_root)
+    onchain_case_id = case.get("onchain_case_id")
+    if onchain_case_id:
+        try:
+            gw = get_gateway()
+            try:
+                gw.poll_events()
+            except Exception:
+                pass
+            chain_info = gw.get_chain_status(case_id)
+            validators = chain_info.get("validators", [])
+            final_root = (chain_info.get("finalRoot") or "").lower().replace("0x", "")
+            if final_root and final_root != "0" * 64:
+                step3_match = (result_root == final_root)
 
-        # Step 4: PostureLedger check
-        if chain_info.get("state") == "Finalized" and len(scores_data) > 0:
-            step4_match = True
+            # Step 4: PostureLedger check
+            if chain_info.get("state") == "Finalized" and len(scores_data) > 0:
+                step4_match = True
 
-        # Step 5: ReportHash check
-        rep_file = case_dir / "report.json"
-        anchored_report = (chain_info.get("reportHash") or "").lower().replace("0x", "")
-        if rep_file.exists() and anchored_report and anchored_report != "0" * 64:
-            actual_rep_hash = hashlib.sha256(rep_file.read_bytes()).hexdigest().lower()
-            step5_match = (actual_rep_hash == anchored_report)
-    except Exception:
+            # Step 5: ReportHash check
+            rep_file = case_dir / "report.json"
+            anchored_report = (chain_info.get("reportHash") or "").lower().replace("0x", "")
+            if rep_file.exists() and anchored_report and anchored_report != "0" * 64:
+                actual_rep_hash = hashlib.sha256(rep_file.read_bytes()).hexdigest().lower()
+                step5_match = (actual_rep_hash == anchored_report)
+        except CaseNotFoundError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"On-chain case record not found for case {case_id}",
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            err_str = str(exc).lower()
+            if "connection" in err_str or "max retries" in err_str or "actively refused" in err_str or "failed to establish" in err_str:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Blockchain RPC endpoint is unavailable",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Blockchain service error: {exc}",
+            )
+    else:
+        # On-chain data is missing because the case has not been opened on-chain yet
         chain_info = {
-            "stateName": case.get("status", "uploaded"),
-            "finalRoot": result_root,
+            "caseId": case_id,
+            "status": case.get("status", "uploaded"),
+            "onchainCaseId": None,
+            "state": "None",
+            "stateName": "Not Opened",
+            "finalRoot": None,
             "reportHash": None,
-            "round": 1,
+            "round": 0,
             "k": 2,
             "n": 3,
+            "validators": [],
+            "transactions": txs,
         }
-        step3_match = step2_match
-        step4_match = (case.get("status") in ("Finalized", "finalized", "recorded", "report_anchored"))
 
     verifier_steps = [
         {
@@ -1095,25 +1124,25 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
             "step": 2,
             "name": "Off-Chain Leaves & Root Rebuild",
             "status": "PASS" if step2_match else "FAIL",
-            "details": f"Result Root matches rebuilt tree: {result_root[:16]}...",
+            "details": f"Result Root matches rebuilt tree: {result_root[:16]}..." if step2_match else "Tree rebuild mismatch",
         },
         {
             "step": 3,
             "name": "Result Root vs On-Chain finalRoot",
             "status": "PASS" if step3_match else ("PENDING" if not chain_info.get("finalRoot") else "FAIL"),
-            "details": f"Verified against CaseRegistry",
+            "details": "Verified against CaseRegistry" if step3_match else ("Case not yet finalized on-chain" if not chain_info.get("finalRoot") else "Final root mismatch"),
         },
         {
             "step": 4,
             "name": "PostureLedger Hash Chain Walk",
             "status": "PASS" if step4_match else "PENDING",
-            "details": f"Verified {len(scores_data)} host posture entries",
+            "details": f"Verified {len(scores_data)} host posture entries" if step4_match else "Posture not yet recorded on-chain",
         },
         {
             "step": 5,
             "name": "Report SHA-256 vs Anchored reportHash",
             "status": "PASS" if step5_match else "PENDING",
-            "details": f"Report hash anchored on CaseRegistry",
+            "details": "Report hash anchored on CaseRegistry" if step5_match else "Report not yet anchored on-chain",
         },
     ]
 
@@ -1152,30 +1181,16 @@ async def get_case_chain_state(
     if not case.get("onchain_case_id"):
         result_json = read_case_json(case_id, "result.json")
         result_root = result_json.get("resultRoot") if result_json else None
-        txs = get_chain_txs(case_id)
         return {
             "caseId": case_id,
             "status": case["status"],
+            "onchainCaseId": None,
+            "state": "None",
             "resultRoot": result_root,
             "transactions": txs,
         }
 
-    try:
-        gateway = get_gateway()
-        try:
-            gateway.poll_events()
-        except Exception:
-            pass
-        return gateway.get_chain_status(case_id)
-    except Exception:
-        result_json = read_case_json(case_id, "result.json")
-        result_root = result_json.get("resultRoot") if result_json else None
-        return {
-            "caseId": case_id,
-            "status": case["status"],
-            "resultRoot": result_root,
-            "transactions": txs,
-        }
+    return chain_info
 
 
 @app.post("/cases/{case_id}/chain/verify")
@@ -1438,7 +1453,7 @@ async def resolve_case_on_chain(
 async def get_case_report(
     case_id: str,
     format: str = Query("json", description="Report format: json or html (pdf returns 501)"),
-    actor: str = Depends(require_analyst),
+    actor: str = Depends(optional_analyst),
 ):
     """Generate or retrieve deterministic posture report (JSON or HTML)."""
     case = get_case(case_id)

@@ -787,12 +787,14 @@ class ChainGateway:
                     # getValidatorRoot(caseId, round, validator) — only populated after reveal
                     rev_root = self.quorum.functions.getValidatorRoot(onchain_bytes, round_num, addr).call()
 
+                    rev_root_hex = "0x" + rev_root.hex() if revealed else None
                     validators_info.append({
                         "address": addr,
                         "committed": committed,
                         "commitment": "0x" + commit_val.hex() if committed else None,
                         "revealed": revealed,
-                        "resultRoot": "0x" + rev_root.hex() if revealed else None,
+                        "resultRoot": rev_root_hex,
+                        "root": rev_root_hex,
                     })
             except Exception:
                 pass
@@ -807,6 +809,7 @@ class ChainGateway:
             "status": case["status"],
             "onchainCaseId": onchain_hex,
             "state": state_str,
+            "stateName": state_str,
             "resultRoot": result_root_hex,
             "analyst": analyst_addr,
             "claimedRoot": "0x" + c_root.hex() if c_root != bytes(32) else None,

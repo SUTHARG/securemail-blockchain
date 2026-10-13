@@ -76,7 +76,7 @@
     <table class="data-table">
       <tr>
         <th style="width: 160px;">On-Chain State</th>
-        <td><span class="badge badge-Info">{{ chain_state.stateName or 'Unknown' }}</span></td>
+        <td><span class="badge badge-info">{{ chain_state.stateName or chain_state.state or 'Not Opened' }}</span></td>
       </tr>
       <tr>
         <th>Finalized Root</th>
@@ -120,7 +120,7 @@
           </td>
           <td class="mono" style="font-size: 0.75rem;">
             {% if v.revealed %}
-              {{ v.root[:16] }}...
+              {{ (v.root or v.resultRoot or '')[:16] }}...
             {% else %}
               <span style="color: var(--text-muted);">&mdash;</span>
             {% endif %}

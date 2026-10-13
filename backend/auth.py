@@ -34,6 +34,11 @@ def require_analyst(api_key: str = Security(get_api_key)) -> str:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing API key",
         )
+    if not config.ANALYST_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ANALYST_API_KEY is not configured on the server",
+        )
     if api_key == config.ADMIN_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -51,9 +56,22 @@ def optional_analyst(
     request: Request,
     api_key: str = Security(get_api_key),
 ) -> str:
-    """Allow HTML requests to view dashboard without API key; enforce analyst key for API requests."""
+    """Allow browser requests to view dashboard without API key; enforce analyst key for API requests."""
     accept = request.headers.get("accept", "")
-    if "text/html" in accept:
+    sec_dest = request.headers.get("sec-fetch-dest", "")
+    sec_mode = request.headers.get("sec-fetch-mode", "")
+    sec_site = request.headers.get("sec-fetch-site", "")
+
+    # Browser navigation or same-origin browser session
+    is_browser = (
+        "text/html" in accept
+        or sec_dest == "document"
+        or sec_mode == "navigate"
+        or (sec_site == "same-origin" and not api_key)
+    )
+    if is_browser:
+        if api_key:
+            return require_analyst(api_key)
         return "browser_analyst"
     return require_analyst(api_key)
 
@@ -64,6 +82,11 @@ def require_admin(api_key: str = Security(get_api_key)) -> str:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing API key",
+        )
+    if not config.ADMIN_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ADMIN_API_KEY is not configured on the server",
         )
     if api_key == config.ANALYST_API_KEY:
         raise HTTPException(
