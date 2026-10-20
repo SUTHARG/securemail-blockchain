@@ -86,6 +86,9 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
 
     # 1. Handle Implicit TLS streams
     if ident.transport_hint == "implicitTls":
+        s_cont = getattr(stream, "contiguous", getattr(stream, "complete", True))
+        s_term = getattr(stream, "terminated", False)
+        s_comp = getattr(stream, "confirmed_complete", s_cont and s_term)
         rec = SessionRecord(
             sessionId=stream.index,
             clientEndpoint=stream.client,
@@ -93,7 +96,7 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
             protocol="smtp",
             protocolSource=ident.source,
             transportMode="implicitTls",
-            streamComplete=stream.complete,
+            streamComplete=s_cont,
             firstPacketTs=stream.firstTs,
             starttls=StarttlsInfo(offered=False, attempted=False, outcome="notOffered"),
             cleartextAuth=[],
@@ -101,6 +104,10 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
             certificates=[],
             clientTlsStartOffset=0,
             serverTlsStartOffset=0,
+            stream=stream,
+            streamContiguous=s_cont,
+            streamTerminated=s_term,
+            confirmedComplete=s_comp,
         )
         return rec
 
@@ -117,6 +124,9 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
     starttls_offered = False
     starttls_attempted = False
     starttls_outcome = "notOffered"
+    starttls_offered_frame: Optional[int] = None
+    starttls_attempted_frame: Optional[int] = None
+    starttls_outcome_frame: Optional[int] = None
     transport_mode = "plaintext"
     cleartext_auth: List[CleartextAuth] = []
     client_tls_start_offset: Optional[int] = None
@@ -173,32 +183,84 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
                 reply_idx += 1
             continue
 
-        # Check for Cleartext Authentication: AUTH PLAIN or AUTH LOGIN
+        # Check for Cleartext Authentication: AUTH PLAIN or AUTH LOGIN with payload
         if cmd_upper.startswith("AUTH PLAIN"):
-            packet_no = stream.frame_for_offset("client", client_offset)
-            cleartext_auth.append(CleartextAuth(mechanism="PLAIN", packetNumber=packet_no))
+            parts = cmd_upper.split(None, 2)
+            has_payload = False
+            if len(parts) > 2 and len(parts[2].strip()) > 0:
+                has_payload = True
+            else:
+                if reply_idx < len(server_replies):
+                    auth_reply = server_replies[reply_idx]
+                    reply_idx += 1
+                    if auth_reply[2] == 334:
+                        if next_client_offset < total_client_len:
+                            next_end = client_bytes.find(b"\n", next_client_offset)
+                            if next_end == -1:
+                                next_line = client_bytes[next_client_offset:].decode("latin-1", errors="replace").strip()
+                            else:
+                                next_line = client_bytes[next_client_offset:next_end].decode("latin-1", errors="replace").strip()
+                            if next_line and next_line != "*":
+                                has_payload = True
+            if has_payload:
+                packet_no = stream.frame_for_offset("client", client_offset)
+                cleartext_auth.append(CleartextAuth(mechanism="PLAIN", packetNumber=packet_no))
         elif cmd_upper.startswith("AUTH LOGIN"):
-            packet_no = stream.frame_for_offset("client", client_offset)
-            cleartext_auth.append(CleartextAuth(mechanism="LOGIN", packetNumber=packet_no))
+            parts = cmd_upper.split(None, 2)
+            has_payload = False
+            if len(parts) > 2 and len(parts[2].strip()) > 0:
+                has_payload = True
+            else:
+                if reply_idx < len(server_replies):
+                    auth_reply = server_replies[reply_idx]
+                    reply_idx += 1
+                    if auth_reply[2] == 334:
+                        if next_client_offset < total_client_len:
+                            next_end = client_bytes.find(b"\n", next_client_offset)
+                            if next_end == -1:
+                                next_line = client_bytes[next_client_offset:].decode("latin-1", errors="replace").strip()
+                            else:
+                                next_line = client_bytes[next_client_offset:next_end].decode("latin-1", errors="replace").strip()
+                            if next_line and next_line != "*":
+                                has_payload = True
+            if has_payload:
+                packet_no = stream.frame_for_offset("client", client_offset)
+                cleartext_auth.append(CleartextAuth(mechanism="LOGIN", packetNumber=packet_no))
 
         # Check for EHLO command to extract capability list
         if cmd_upper.startswith("EHLO ") or cmd_upper == "EHLO":
             if reply_idx < len(server_replies):
                 ehlo_reply = server_replies[reply_idx]
                 reply_idx += 1
+                try:
+                    ehlo_frame = stream.frame_for_offset("server", ehlo_reply[0])
+                except Exception:
+                    ehlo_frame = stream.firstFrame
                 for line in ehlo_reply[3]:
                     # Check if STARTTLS is in capability list
                     if re.search(r"\bSTARTTLS\b", line, re.IGNORECASE):
                         starttls_offered = True
+                        starttls_offered_frame = ehlo_frame
+                if not starttls_offered and starttls_offered_frame is None:
+                    starttls_offered_frame = ehlo_frame
 
         # Check for STARTTLS command
         elif cmd_upper == "STARTTLS" or cmd_upper.startswith("STARTTLS "):
             starttls_attempted = True
+            try:
+                starttls_attempted_frame = stream.frame_for_offset("client", client_offset)
+            except Exception:
+                starttls_attempted_frame = stream.firstFrame
             client_tls_start_offset = next_client_offset
 
             if reply_idx < len(server_replies):
                 stls_reply = server_replies[reply_idx]
                 reply_idx += 1
+                try:
+                    stls_frame = stream.frame_for_offset("server", stls_reply[0])
+                except Exception:
+                    stls_frame = stream.firstFrame
+                starttls_outcome_frame = stls_frame
                 reply_code = stls_reply[2]
                 if reply_code == 220:
                     starttls_outcome = "succeeded"
@@ -225,6 +287,12 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
 
         client_offset = next_client_offset
 
+    if not starttls_offered_frame and server_replies:
+        try:
+            starttls_offered_frame = stream.frame_for_offset("server", server_replies[0][0])
+        except Exception:
+            starttls_offered_frame = stream.firstFrame
+
     # If STARTTLS was never attempted, determine outcome from capability offer
     if not starttls_attempted:
         if starttls_offered:
@@ -238,6 +306,10 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
         outcome=starttls_outcome,
     )
 
+    s_cont = getattr(stream, "contiguous", getattr(stream, "complete", True))
+    s_term = getattr(stream, "terminated", False)
+    s_comp = getattr(stream, "confirmed_complete", s_cont and s_term)
+
     rec = SessionRecord(
         sessionId=stream.index,
         clientEndpoint=stream.client,
@@ -245,7 +317,7 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
         protocol="smtp",
         protocolSource=ident.source,
         transportMode=transport_mode,
-        streamComplete=stream.complete,
+        streamComplete=s_cont,
         firstPacketTs=stream.firstTs,
         starttls=starttls_info,
         cleartextAuth=cleartext_auth,
@@ -254,6 +326,12 @@ def track_smtp(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
         clientTlsStartOffset=client_tls_start_offset,
         serverTlsStartOffset=server_tls_start_offset,
         stream=stream,
+        starttls_offered_frame=starttls_offered_frame,
+        starttls_attempted_frame=starttls_attempted_frame,
+        starttls_outcome_frame=starttls_outcome_frame,
+        streamContiguous=s_cont,
+        streamTerminated=s_term,
+        confirmedComplete=s_comp,
     )
     return rec
 

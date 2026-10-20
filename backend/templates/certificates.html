@@ -9,7 +9,8 @@
 </div>
 
 {% if certificates %}
-<div class="card" style="padding: 0; overflow-x: auto;">
+<div class="card" style="padding: 0;">
+  <div class="table-responsive" style="margin-bottom: 0;">
   <table class="data-table">
     <thead>
       <tr>
@@ -53,6 +54,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% else %}
 <div class="card">

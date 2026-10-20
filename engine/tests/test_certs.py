@@ -273,3 +273,61 @@ def test_acceptance_s11():
     assert c.sha256 == truth_tls["certFingerprints"][0]
     assert "unknownIssuer" in c.verdicts
     assert "selfSigned" not in c.verdicts
+
+
+def test_certificate_timestamp_boundary_uses_certificate_packet_ts():
+    """
+    Issue 6: Certificate validity is judged against the timestamp of the packet
+    carrying the Certificate message, not the session's first packet.
+    """
+    from engine.smscope.certs import process_certs
+    from engine.smscope.models import SessionRecord, StarttlsInfo
+
+    expired_der = x509.load_pem_x509_certificate(
+        (CA_OUT_DIR / "expired.crt").read_bytes()
+    ).public_bytes(Encoding.DER)
+
+    cert_obj = x509.load_der_x509_certificate(expired_der)
+    not_after = int(cert_obj.not_valid_after_utc.timestamp())
+    not_before = int(cert_obj.not_valid_before_utc.timestamp())
+
+    # Case 1: First packet is BEFORE expiry (valid), but Certificate packet is AFTER expiry (expired)
+    sess_expired = SessionRecord(
+        sessionId=1,
+        clientEndpoint="10.0.0.1:1234",
+        serverEndpoint="10.0.0.2:25",
+        protocol="smtp",
+        protocolSource="port",
+        transportMode="starttls",
+        streamComplete=True,
+        firstPacketTs=not_after - 10,  # Would be valid if firstPacketTs was used
+        starttls=StarttlsInfo(offered=True, attempted=True, outcome="succeeded"),
+    )
+    sess_expired._raw_certificates = [expired_der]
+    sess_expired._certificate_ts_sec = not_after + 5  # Expired at certificate packet time
+    sess_expired._sni = None
+
+    process_certs([sess_expired], trust_store_path=CA_OUT_DIR / "client_trust.crt")
+    assert len(sess_expired.certificates) == 1
+    assert "expired" in sess_expired.certificates[0].verdicts
+
+    # Case 2: First packet is BEFORE notBefore (invalid), but Certificate packet is AFTER notBefore (valid)
+    sess_valid_after_start = SessionRecord(
+        sessionId=2,
+        clientEndpoint="10.0.0.1:1235",
+        serverEndpoint="10.0.0.2:25",
+        protocol="smtp",
+        protocolSource="port",
+        transportMode="starttls",
+        streamComplete=True,
+        firstPacketTs=not_before - 10,  # Would be invalid if firstPacketTs was used
+        starttls=StarttlsInfo(offered=True, attempted=True, outcome="succeeded"),
+    )
+    sess_valid_after_start._raw_certificates = [expired_der]
+    sess_valid_after_start._certificate_ts_sec = not_before + 10  # Valid at certificate packet time
+    sess_valid_after_start._sni = None
+
+    process_certs([sess_valid_after_start], trust_store_path=CA_OUT_DIR / "client_trust.crt")
+    assert len(sess_valid_after_start.certificates) == 1
+    assert "notYetValid" not in sess_valid_after_start.certificates[0].verdicts
+    assert "expired" not in sess_valid_after_start.certificates[0].verdicts

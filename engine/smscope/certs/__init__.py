@@ -22,10 +22,11 @@ def process_certs(
     for sess in sessions:
         raw_certs = getattr(sess, "_raw_certificates", None)
         sni = getattr(sess, "_sni", None)
+        cert_ts = getattr(sess, "_certificate_ts_sec", None) or sess.firstPacketTs
         if raw_certs:
             sess.certificates = analyze_certificate_chain(
                 raw_certs,
-                capture_ts_sec=sess.firstPacketTs,
+                capture_ts_sec=cert_ts,
                 sni=sni,
                 trust_store_path=trust_store_path,
             )

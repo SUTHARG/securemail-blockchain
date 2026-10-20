@@ -41,4 +41,8 @@ def process_tls(sessions: List[SessionRecord]) -> List[SessionRecord]:
                     sess.tls = negotiate_tls(hs)
                     sess._raw_certificates = hs.certificates
                     sess._sni = hs.sni
+                    sess._certificate_ts_sec = hs.certificate_ts_sec
+                    sess._certificate_frame = hs.certificate_frame
+                    sess._server_hello_frame = hs.server_hello_frame
+                    sess._server_key_exchange_frame = hs.server_key_exchange_frame
     return sessions

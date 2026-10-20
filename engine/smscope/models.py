@@ -158,13 +158,49 @@ class SessionRecord:
     clientTlsStartOffset: Optional[int] = None
     serverTlsStartOffset: Optional[int] = None
     stream: Optional[Any] = field(default=None, repr=False)
+    starttls_offered_frame: Optional[int] = None
+    starttls_attempted_frame: Optional[int] = None
+    starttls_outcome_frame: Optional[int] = None
+
+    streamContiguous: Optional[bool] = None
+    streamTerminated: Optional[bool] = None
+    confirmedComplete: Optional[bool] = None
+
+    def __post_init__(self):
+        """
+        Stream Completion Semantics:
+        - streamContiguous: True if every delivered byte follows TCP sequence space continuously without gaps or drops.
+        - streamTerminated: True if capture contains evidence that connection ended (FIN delivered in both directions or RST).
+        - confirmedComplete: True if stream is BOTH contiguous AND cleanly terminated teardown was observed.
+        - streamComplete: Backwards-compatible contiguity flag.
+        """
+        if self.streamContiguous is None:
+            if self.stream is not None:
+                self.streamContiguous = getattr(self.stream, "contiguous", getattr(self.stream, "complete", self.streamComplete))
+            else:
+                self.streamContiguous = self.streamComplete
+        if self.streamTerminated is None:
+            if self.stream is not None:
+                self.streamTerminated = getattr(self.stream, "terminated", False)
+            else:
+                self.streamTerminated = False
+        if self.confirmedComplete is None:
+            if self.stream is not None:
+                self.confirmedComplete = getattr(self.stream, "confirmed_complete", bool(self.streamContiguous and self.streamTerminated))
+            else:
+                self.confirmedComplete = bool(self.streamContiguous and self.streamTerminated)
 
     @property
     def tlsStartOffset(self) -> Optional[int]:
         return self.clientTlsStartOffset
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {
+    def to_dict(self, include_extended: bool = False) -> Dict[str, Any]:
+        """
+        Serializes SessionRecord.
+        When include_extended is True, also serializes streamContiguous, streamTerminated, and confirmedComplete.
+        Defaults to False to preserve baseline schema/test compatibility. Use to_extended_dict() for full telemetry.
+        """
+        d = {
             "sessionId": self.sessionId,
             "clientEndpoint": self.clientEndpoint,
             "serverEndpoint": self.serverEndpoint,
@@ -178,9 +214,23 @@ class SessionRecord:
             "tls": self.tls.to_dict() if self.tls is not None else None,
             "certificates": [c.to_dict() for c in self.certificates],
         }
+        if include_extended:
+            d["streamContiguous"] = bool(self.streamContiguous)
+            d["streamTerminated"] = bool(self.streamTerminated)
+            d["confirmedComplete"] = bool(self.confirmedComplete)
+        return d
+
+    def to_extended_dict(self) -> Dict[str, Any]:
+        """Serialize with explicit completion, contiguity, and termination flags."""
+        return self.to_dict(include_extended=True)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SessionRecord":
+        stream_comp = bool(data["streamComplete"])
+        stream_cont = bool(data.get("streamContiguous", stream_comp))
+        stream_term = bool(data.get("streamTerminated", False))
+        confirmed_comp = bool(data.get("confirmedComplete", stream_cont and stream_term))
+
         return cls(
             sessionId=int(data["sessionId"]),
             clientEndpoint=str(data["clientEndpoint"]),
@@ -188,12 +238,15 @@ class SessionRecord:
             protocol=str(data["protocol"]),
             protocolSource=str(data["protocolSource"]),
             transportMode=str(data["transportMode"]),
-            streamComplete=bool(data["streamComplete"]),
+            streamComplete=stream_comp,
             firstPacketTs=int(data["firstPacketTs"]),
             starttls=StarttlsInfo.from_dict(data["starttls"]),
             cleartextAuth=[CleartextAuth.from_dict(c) for c in data.get("cleartextAuth", [])],
             tls=TlsInfo.from_dict(data.get("tls")),
             certificates=[CertificateInfo.from_dict(c) for c in data.get("certificates", [])],
+            streamContiguous=stream_cont,
+            streamTerminated=stream_term,
+            confirmedComplete=confirmed_comp,
         )
 
 

@@ -51,6 +51,7 @@
     On-chain chronological verification ledger for this host. Proofs can be independently audited on-chain.
   </p>
   {% if posture_records %}
+  <div class="table-responsive">
   <table class="data-table">
     <thead>
       <tr>
@@ -71,6 +72,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border);">
     <span class="badge badge-pending">Local Evaluation</span>
@@ -85,6 +87,7 @@
     <h3>Cryptographic Findings ({{ findings|length }})</h3>
   </div>
   {% if findings %}
+  <div class="table-responsive">
   <table class="data-table">
     <thead>
       <tr>
@@ -118,6 +121,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   <p style="color: var(--text-muted);">No cryptographic vulnerabilities or posture violations detected on this endpoint.</p>
   {% endif %}
@@ -129,6 +133,7 @@
     <h3>Observed Mail Sessions ({{ sessions|length }})</h3>
   </div>
   {% if sessions %}
+  <div class="table-responsive">
   <table class="data-table">
     <thead>
       <tr>
@@ -173,6 +178,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   <p style="color: var(--text-muted);">No sessions recorded for this host.</p>
   {% endif %}
@@ -185,6 +191,7 @@
     Certificates presented by {{ host.serverEndpoint }} during TLS handshakes.
   </p>
   {% if certificates %}
+  <div class="table-responsive">
   <table class="data-table">
     <thead>
       <tr>
@@ -217,6 +224,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
     <span class="badge badge-pending">Not Observable</span>

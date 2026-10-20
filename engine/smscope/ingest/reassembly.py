@@ -38,29 +38,50 @@ class DirectionReassembler:
         self.delivered_bytes: bytearray = bytearray()
         self.offsets: List[Tuple[int, int, int, int]] = []  # (start, end, frame, ts_sec)
         self.buffered_segments: List[BufferedSegment] = []
+        self.dropped_segments: int = 0
+        self.dropped_bytes: int = 0
+        self.fin_seen: bool = False
+        self.fin_seq: Optional[int] = None
+        self.rst_seen: bool = False
 
     def feed(self, packet: RawPacket) -> None:
         """Processes an incoming TCP packet."""
         is_syn = bool(packet.flags & 0x02)
+        is_fin = bool(packet.flags & 0x01)
+        is_rst = bool(packet.flags & 0x04)
+
+        if is_rst:
+            self.rst_seen = True
+
         if is_syn:
-            self.isn = (packet.seq + 1) & 0xFFFFFFFF
-            self.next_seq = self.isn
+            if self.isn is None:
+                self.isn = (packet.seq + 1) & 0xFFFFFFFF
+                self.next_seq = self.isn
+            elif len(self.delivered_bytes) == 0 and len(self.buffered_segments) == 0:
+                self.isn = (packet.seq + 1) & 0xFFFFFFFF
+                self.next_seq = self.isn
 
         payload = packet.payload
+        p_seq = packet.seq
+        p_len = len(payload)
+
+        if is_fin:
+            self.fin_seen = True
+            self.fin_seq = (p_seq + p_len) & 0xFFFFFFFF
+
         if not payload:
             return
 
         if self.next_seq is None:
-            self.isn = packet.seq
-            self.next_seq = packet.seq
+            self.isn = p_seq
+            self.next_seq = p_seq
 
-        p_seq = packet.seq
         diff = seq_diff(p_seq, self.next_seq)
 
         if diff <= 0:
             # Starts at or before next_seq
             past = -diff
-            if past >= len(payload):
+            if past >= p_len:
                 # Exact retransmission or already seen data: drop
                 return
             new_data = payload[past:]
@@ -76,6 +97,9 @@ class DirectionReassembler:
             # Future segment (out-of-order gap)
             if len(self.buffered_segments) < self.buffer_cap:
                 self._add_to_buffer(p_seq, payload, packet.frame_number, packet.ts_sec)
+            else:
+                self.dropped_segments += 1
+                self.dropped_bytes += p_len
 
     def _add_to_buffer(self, seq: int, data: bytes, frame: int, ts: int) -> None:
         """Adds segment to out-of-order buffer preserving first-seen bytes on overlaps."""
@@ -145,14 +169,55 @@ class DirectionReassembler:
                 # Still a gap
                 break
 
+    def is_contiguous(self) -> bool:
+        """Returns True if no observed reassembly gaps, undelivered segments, or dropped bytes exist."""
+        if len(self.buffered_segments) > 0 or self.dropped_segments > 0 or self.dropped_bytes > 0:
+            return False
+        if self.fin_seen and self.fin_seq is not None and self.next_seq is not None:
+            if seq_diff(self.next_seq, self.fin_seq) < 0:
+                return False
+        return True
+
+    def is_terminated(self) -> bool:
+        """Returns True if capture contains evidence that the stream ended (FIN delivered or RST seen)."""
+        if self.rst_seen:
+            return True
+        if self.fin_seen and self.fin_seq is not None and self.next_seq is not None:
+            return seq_diff(self.next_seq, self.fin_seq) >= 0
+        return False
+
     def is_complete(self) -> bool:
-        """Returns True if no undelivered out-of-order segments remain (no gaps)."""
-        return len(self.buffered_segments) == 0
+        """Compatibility wrapper: returns True if no observed reassembly gaps or drops."""
+        return self.is_contiguous()
+
+    def is_confirmed_complete(self) -> bool:
+        """Returns True only if both contiguous (no gaps/drops) and terminated (FIN/RST observed)."""
+        return self.is_contiguous() and self.is_terminated()
 
 
 @dataclass
 class Stream:
-    """Reassembled TCP stream."""
+    """Reassembled TCP stream.
+
+    Attributes:
+        index: Sequential stream identifier.
+        client: Client endpoint "IP:port".
+        server: Server endpoint "IP:port".
+        firstFrame: First observed frame number in stream.
+        firstTs: Timestamp of first packet in stream (seconds).
+        complete: Backwards-compatible indicator of payload reassembly contiguity
+            (no missing sequence gaps or dropped out-of-order packets). For confirmed
+            stream completion including termination teardown, use `confirmed_complete`.
+        clientInferred: True if client/server direction was inferred from initial packet
+            rather than observed SYN handshake.
+        clientBytes: Contiguous reassembled client payload.
+        serverBytes: Contiguous reassembled server payload.
+        contiguous: True if no reassembly gaps or dropped packets were observed.
+        terminated: True if capture contains evidence of connection termination (FIN or RST).
+        confirmed_complete: True if stream is both contiguous and cleanly terminated.
+        clientOffsets: Mapping of byte ranges to source frames and timestamps.
+        serverOffsets: Mapping of byte ranges to source frames and timestamps.
+    """
     index: int
     client: str
     server: str
@@ -162,6 +227,9 @@ class Stream:
     clientInferred: bool
     clientBytes: bytes
     serverBytes: bytes
+    contiguous: bool = True
+    terminated: bool = False
+    confirmed_complete: bool = False
     clientOffsets: List[Tuple[int, int, int, int]] = field(default_factory=list)
     serverOffsets: List[Tuple[int, int, int, int]] = field(default_factory=list)
 
@@ -235,25 +303,62 @@ class FlowTracker:
         self.ep2 = ep2
         self.syn_client: Optional[str] = None
         self.syn_server: Optional[str] = None
+        self.initial_syn_seq: Optional[int] = None
         self.dir_ep1_to_ep2 = DirectionReassembler(buffer_cap=buffer_cap)
         self.dir_ep2_to_ep1 = DirectionReassembler(buffer_cap=buffer_cap)
+        self.packets_seen: int = 0
+        self.is_closed: bool = False
+
+    def is_new_connection(self, packet: RawPacket) -> bool:
+        """Determines if packet belongs to a new TCP connection on the same 5-tuple."""
+        is_syn = bool(packet.flags & 0x02)
+        is_ack = bool(packet.flags & 0x10)
+        src_ep = format_endpoint(packet.src_ip, packet.src_port)
+
+        # A new TCP connection on an existing tuple begins with a pure SYN
+        if is_syn and not is_ack:
+            if self.syn_client is None:
+                # Mid-capture connection that already saw packets
+                if self.packets_seen > 0:
+                    return True
+                return False
+            # Retransmitted SYN: same client endpoint and same sequence number
+            if src_ep == self.syn_client and packet.seq == self.initial_syn_seq:
+                return False
+            return True
+
+        # If previous connection was terminated (RST or FIN) and a SYN arrives
+        if self.is_closed and is_syn:
+            return True
+
+        return False
 
     def process_packet(self, packet: RawPacket) -> None:
+        self.packets_seen += 1
         src_ep = format_endpoint(packet.src_ip, packet.src_port)
         dst_ep = format_endpoint(packet.dst_ip, packet.dst_port)
 
         is_syn = bool(packet.flags & 0x02)
         is_ack = bool(packet.flags & 0x10)
+        is_rst = bool(packet.flags & 0x04)
 
         # First SYN without ACK identifies client
         if is_syn and not is_ack and self.syn_client is None:
             self.syn_client = src_ep
             self.syn_server = dst_ep
+            self.initial_syn_seq = packet.seq
 
         if src_ep == self.ep1:
             self.dir_ep1_to_ep2.feed(packet)
         else:
             self.dir_ep2_to_ep1.feed(packet)
+
+        # Update connection closure state
+        if is_rst or self.dir_ep1_to_ep2.rst_seen or self.dir_ep2_to_ep1.rst_seen:
+            self.is_closed = True
+        elif self.dir_ep1_to_ep2.fin_seen and self.dir_ep2_to_ep1.fin_seen:
+            if self.dir_ep1_to_ep2.is_complete() and self.dir_ep2_to_ep1.is_complete():
+                self.is_closed = True
 
     def to_stream(self) -> Stream:
         if self.syn_client is not None:
@@ -270,13 +375,19 @@ class FlowTracker:
             server_bytes = bytes(self.dir_ep2_to_ep1.delivered_bytes)
             client_offsets = self.dir_ep1_to_ep2.offsets
             server_offsets = self.dir_ep2_to_ep1.offsets
-            complete = self.dir_ep1_to_ep2.is_complete() and self.dir_ep2_to_ep1.is_complete()
+            c_dir = self.dir_ep1_to_ep2
+            s_dir = self.dir_ep2_to_ep1
         else:
             client_bytes = bytes(self.dir_ep2_to_ep1.delivered_bytes)
             server_bytes = bytes(self.dir_ep1_to_ep2.delivered_bytes)
             client_offsets = self.dir_ep2_to_ep1.offsets
             server_offsets = self.dir_ep1_to_ep2.offsets
-            complete = self.dir_ep2_to_ep1.is_complete() and self.dir_ep1_to_ep2.is_complete()
+            c_dir = self.dir_ep2_to_ep1
+            s_dir = self.dir_ep1_to_ep2
+
+        contiguous = c_dir.is_contiguous() and s_dir.is_contiguous()
+        terminated = c_dir.rst_seen or s_dir.rst_seen or (c_dir.is_terminated() and s_dir.is_terminated())
+        confirmed_complete = contiguous and terminated
 
         return Stream(
             index=self.index,
@@ -284,10 +395,13 @@ class FlowTracker:
             server=server,
             firstFrame=self.first_frame,
             firstTs=self.first_ts,
-            complete=complete,
+            complete=contiguous,
             clientInferred=client_inferred,
             clientBytes=client_bytes,
             serverBytes=server_bytes,
+            contiguous=contiguous,
+            terminated=terminated,
+            confirmed_complete=confirmed_complete,
             clientOffsets=client_offsets,
             serverOffsets=server_offsets,
         )
@@ -298,7 +412,9 @@ def reassemble_packets(
     buffer_cap: int = 1000,
 ) -> List[Stream]:
     """Reassembles a stream of RawPackets into complete TCP streams."""
-    flows: Dict[Tuple[str, str, str], FlowTracker] = {}
+    active_flows: Dict[Tuple[str, str, str], FlowTracker] = {}
+    completed_streams: List[Stream] = []
+    stream_counter = 0
 
     for pkt in packets:
         ep_src = format_endpoint(pkt.src_ip, pkt.src_port)
@@ -306,20 +422,32 @@ def reassemble_packets(
         ep_pair = tuple(sorted([ep_src, ep_dst]))
         flow_key = (ep_pair[0], ep_pair[1], "tcp")
 
-        if flow_key not in flows:
+        if flow_key in active_flows:
+            tracker = active_flows[flow_key]
+            if tracker.is_new_connection(pkt):
+                completed_streams.append(tracker.to_stream())
+                del active_flows[flow_key]
+
+        if flow_key not in active_flows:
             from engine.smscope.limits import check_stream_count
-            check_stream_count(len(flows) + 1)
-            flows[flow_key] = FlowTracker(
-                index=len(flows),
+            check_stream_count(stream_counter + 1)
+            tracker = FlowTracker(
+                index=stream_counter,
                 packet=pkt,
                 ep1=ep_pair[0],
                 ep2=ep_pair[1],
                 buffer_cap=buffer_cap,
             )
+            stream_counter += 1
+            active_flows[flow_key] = tracker
 
-        flows[flow_key].process_packet(pkt)
+        active_flows[flow_key].process_packet(pkt)
 
-    return [tracker.to_stream() for tracker in flows.values()]
+    for tracker in active_flows.values():
+        completed_streams.append(tracker.to_stream())
+
+    completed_streams.sort(key=lambda s: s.index)
+    return completed_streams
 
 
 def reassemble_pcap(

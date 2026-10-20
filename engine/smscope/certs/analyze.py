@@ -1,4 +1,11 @@
-"""X.509 certificate chain parsing, validation, and forensic analysis."""
+"""X.509 certificate chain parsing, forensic analysis, and targeted chain validation.
+
+Note: Implements signature chain verification, CA BasicConstraints and KeyUsage,
+applicable Intermediate CA NameConstraints, leaf ExtendedKeyUsage (TLS serverAuth),
+temporal validity vs capture timestamp, key strength evaluation, and trust store anchoring.
+Complete RFC 5280 path validation features such as online/offline CRL/OCSP revocation checking,
+policy mapping, and inhibit-any-policy are not evaluated.
+"""
 import ipaddress
 from pathlib import Path
 from typing import Any, List, Optional, Set, Tuple, Union
@@ -108,16 +115,21 @@ def check_sni_match(san_dns: List[str], san_ips: List[str], sni: str) -> bool:
 
 
 def verify_signature(cert: x509.Certificate, issuer_pubkey: Any) -> bool:
-    """Verifies that cert's signature was signed by issuer_pubkey."""
+    """Verifies that cert's signature was signed by issuer_pubkey using actual signature parameters."""
     try:
         if isinstance(issuer_pubkey, rsa.RSAPublicKey):
-            pad = padding.PKCS1v15()
             sig_oid_name = cert.signature_algorithm_oid._name.lower()
-            if "pss" in sig_oid_name and cert.signature_hash_algorithm is not None:
+            pad = None
+            if hasattr(cert, "signature_algorithm_parameters") and cert.signature_algorithm_parameters is not None:
+                pad = cert.signature_algorithm_parameters
+            elif "pss" in sig_oid_name and cert.signature_hash_algorithm is not None:
                 pad = padding.PSS(
                     mgf=padding.MGF1(cert.signature_hash_algorithm),
-                    salt_length=padding.PSS.MAX_LENGTH,
+                    salt_length=padding.PSS.AUTO,
                 )
+            else:
+                pad = padding.PKCS1v15()
+
             issuer_pubkey.verify(
                 cert.signature,
                 cert.tbs_certificate_bytes,
@@ -147,6 +159,120 @@ def verify_signature(cert: x509.Certificate, issuer_pubkey: Any) -> bool:
     except Exception:
         return False
     return False
+
+
+def check_name_constraints(ca_cert: x509.Certificate, leaf_dns: List[str], leaf_ips: List[str]) -> bool:
+    """Enforces NameConstraints extension from CA cert against leaf SANs per RFC 5280."""
+    try:
+        nc_ext = ca_cert.extensions.get_extension_for_oid(x509.ExtensionOID.NAME_CONSTRAINTS)
+        nc = nc_ext.value
+    except x509.ExtensionNotFound:
+        return True
+
+    # 1. Permitted Subtrees: every leaf name must match at least one permitted subtree
+    if nc.permitted_subtrees:
+        permitted_dns = [st.value for st in nc.permitted_subtrees if isinstance(st, x509.DNSName)]
+        permitted_ips = [st.value for st in nc.permitted_subtrees if isinstance(st, x509.IPAddress)]
+
+        if permitted_dns:
+            for d in leaf_dns:
+                d_clean = d.lower()
+                if d_clean.startswith("*."):
+                    d_clean = d_clean[2:]
+                match = False
+                for p in permitted_dns:
+                    p_clean = p.lower()
+                    if p_clean.startswith("."):
+                        p_clean = p_clean[1:]
+                    if d_clean == p_clean or d_clean.endswith("." + p_clean):
+                        match = True
+                        break
+                if not match:
+                    return False
+
+        if permitted_ips:
+            for ip_str in leaf_ips:
+                try:
+                    ip_obj = ipaddress.ip_address(ip_str)
+                    match = False
+                    for p_net in permitted_ips:
+                        if isinstance(p_net, (ipaddress.IPv4Network, ipaddress.IPv6Network)):
+                            if ip_obj in p_net:
+                                match = True
+                                break
+                        elif isinstance(p_net, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+                            if ip_obj == p_net:
+                                match = True
+                                break
+                    if not match:
+                        return False
+                except ValueError:
+                    return False
+
+    # 2. Excluded Subtrees: no leaf name may match any excluded subtree
+    if nc.excluded_subtrees:
+        excluded_dns = [st.value for st in nc.excluded_subtrees if isinstance(st, x509.DNSName)]
+        excluded_ips = [st.value for st in nc.excluded_subtrees if isinstance(st, x509.IPAddress)]
+
+        for d in leaf_dns:
+            d_clean = d.lower()
+            if d_clean.startswith("*."):
+                d_clean = d_clean[2:]
+            for ex in excluded_dns:
+                ex_clean = ex.lower()
+                if ex_clean.startswith("."):
+                    ex_clean = ex_clean[1:]
+                if d_clean == ex_clean or d_clean.endswith("." + ex_clean):
+                    return False
+
+        for ip_str in leaf_ips:
+            try:
+                ip_obj = ipaddress.ip_address(ip_str)
+                for ex_net in excluded_ips:
+                    if isinstance(ex_net, (ipaddress.IPv4Network, ipaddress.IPv6Network)):
+                        if ip_obj in ex_net:
+                            return False
+                    elif isinstance(ex_net, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+                        if ip_obj == ex_net:
+                            return False
+            except ValueError:
+                pass
+
+    return True
+
+
+def check_ca_extensions(ca_cert: x509.Certificate, path_depth: int) -> bool:
+    """Validate BasicConstraints and KeyUsage for a CA certificate."""
+    try:
+        bc_ext = ca_cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)
+        bc = bc_ext.value
+        if not bc.ca:
+            return False
+        if bc.path_length is not None and path_depth > bc.path_length:
+            return False
+    except x509.ExtensionNotFound:
+        return False
+
+    try:
+        ku_ext = ca_cert.extensions.get_extension_for_oid(x509.ExtensionOID.KEY_USAGE)
+        ku = ku_ext.value
+        if not ku.key_cert_sign:
+            return False
+    except x509.ExtensionNotFound:
+        # RFC 5280: If KeyUsage extension is omitted, all usages are permitted
+        pass
+
+    return True
+
+
+def is_cert_valid_at_ts(cert: x509.Certificate, capture_ts_sec: int) -> bool:
+    """Check if certificate is temporally valid at capture timestamp."""
+    try:
+        nb = int(cert.not_valid_before_utc.timestamp())
+        na = int(cert.not_valid_after_utc.timestamp())
+        return nb <= capture_ts_sec <= na
+    except Exception:
+        return False
 
 
 def is_self_signed(cert: x509.Certificate) -> bool:
@@ -272,49 +398,85 @@ def analyze_certificate_chain(
                 if not check_sni_match(san_dns, san_ips, sni):
                     verdicts.append("hostnameMismatch")
 
-            # 5. Chain verification and trust store anchoring
+            # 4.5 EKU validation for TLS server use (evaluated on leaf certificate only)
+            if is_leaf:
+                try:
+                    eku_ext = cert.extensions.get_extension_for_oid(x509.ExtensionOID.EXTENDED_KEY_USAGE)
+                    server_auth_oids = {
+                        x509.ExtendedKeyUsageOID.SERVER_AUTH,
+                        x509.ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE,
+                    }
+                    if not any(oid in server_auth_oids for oid in eku_ext.value):
+                        verdicts.append("invalidEKU")
+                except x509.ExtensionNotFound:
+                    # RFC 5280: If EKU extension is omitted, usage is not restricted
+                    pass
+
+            # 5. Targeted chain verification and trust store anchoring
             self_signed = is_self_signed(cert)
             if self_signed:
                 verdicts.append("selfSigned")
                 if sha256 in trusted_fingerprints:
-                    if "expired" not in verdicts and "notYetValid" not in verdicts:
+                    if (
+                        "expired" not in verdicts
+                        and "notYetValid" not in verdicts
+                        and "invalidEKU" not in verdicts
+                    ):
                         verdicts.append("valid")
                 else:
                     verdicts.append("unknownIssuer")
             else:
-                # Build chain to trusted root
+                # Walk chain to trusted root, tracking CA certs for NameConstraints
                 current = cert
                 anchored = False
                 visited: Set[bytes] = {current.signature}
+                ca_depth = 0
+                ca_path: List[x509.Certificate] = []
 
                 while True:
                     # Check if current cert is issued by a trusted root
                     issuer_root = None
                     for root in trusted_roots:
                         if root.subject == current.issuer and verify_signature(current, root.public_key()):
-                            issuer_root = root
-                            break
+                            if check_ca_extensions(root, ca_depth):
+                                issuer_root = root
+                                break
 
                     if issuer_root is not None:
+                        ca_path.append(issuer_root)
                         anchored = True
                         break
 
                     # Otherwise check if issuer is in presented certificates
                     next_cert = None
                     for cand in parsed_certs:
-                        if cand.subject == current.issuer and is_ca_cert(cand):
+                        if cand.subject == current.issuer and check_ca_extensions(cand, ca_depth) and is_cert_valid_at_ts(cand, capture_ts_sec):
                             if verify_signature(current, cand.public_key()):
                                 next_cert = cand
                                 break
 
                     if next_cert is not None and next_cert.signature not in visited:
                         visited.add(next_cert.signature)
+                        ca_path.append(next_cert)
                         current = next_cert
+                        ca_depth += 1
                     else:
                         break
 
+                # Enforce NameConstraints from intermediate CAs against leaf certificate
+                if is_leaf:
+                    for ca in ca_path:
+                        if not check_name_constraints(ca, san_dns, san_ips):
+                            verdicts.append("nameConstraintsViolation")
+                            break
+
                 if anchored:
-                    if "expired" not in verdicts and "notYetValid" not in verdicts:
+                    if (
+                        "expired" not in verdicts
+                        and "notYetValid" not in verdicts
+                        and "invalidEKU" not in verdicts
+                        and "nameConstraintsViolation" not in verdicts
+                    ):
                         verdicts.append("valid")
                 else:
                     verdicts.append("unknownIssuer")

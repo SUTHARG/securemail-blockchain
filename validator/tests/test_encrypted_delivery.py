@@ -29,10 +29,14 @@ import backend.config as config
 from backend.database import get_validator_key, init_db, register_validator_key
 from backend.storage import get_case_dir
 from validator.crypto import (
+    StorageDecryptionError,
+    StorageEncryptionError,
+    StorageKeyError,
     decrypt_at_rest,
     decrypt_validator_bundle,
     encrypt_at_rest,
     encrypt_validator_bundle,
+    get_storage_at_rest_key,
 )
 from validator.keygen import (
     generate_validator_keypair,
@@ -74,12 +78,106 @@ def test_storage_at_rest_plaintext_fallback():
 
 
 def test_storage_at_rest_tamper_fails():
-    """Verifies that tampering with at-rest ciphertext raises an authentication error."""
+    """Verifies that tampering with at-rest ciphertext raises an authentication error and fails closed."""
     encrypted = bytearray(encrypt_at_rest(SAMPLE_PCAP))
     # Flip one byte in the ciphertext payload
     encrypted[-1] ^= 0x01
-    with pytest.raises(InvalidTag):
+    with pytest.raises((StorageDecryptionError, InvalidTag)):
         decrypt_at_rest(bytes(encrypted))
+
+
+def test_storage_key_validation(monkeypatch):
+    """Verifies that missing, malformed, or wrong-sized storage keys are rejected."""
+    # 1. Missing key
+    monkeypatch.delenv("CASE_STORAGE_KEY_HEX", raising=False)
+    with pytest.raises(StorageKeyError, match="required"):
+        get_storage_at_rest_key()
+
+    # 2. Empty key
+    monkeypatch.setenv("CASE_STORAGE_KEY_HEX", "   ")
+    with pytest.raises(StorageKeyError, match="required"):
+        get_storage_at_rest_key()
+
+    # 3. Malformed hex
+    monkeypatch.setenv("CASE_STORAGE_KEY_HEX", "zz" * 32)
+    with pytest.raises(StorageKeyError, match="malformed hex"):
+        get_storage_at_rest_key()
+
+    # 4. Wrong size (16 bytes = 32 hex chars)
+    monkeypatch.setenv("CASE_STORAGE_KEY_HEX", "01" * 16)
+    with pytest.raises(StorageKeyError, match="64 hex characters"):
+        get_storage_at_rest_key()
+
+    # 5. Wrong size (33 bytes = 66 hex chars)
+    monkeypatch.setenv("CASE_STORAGE_KEY_HEX", "01" * 33)
+    with pytest.raises(StorageKeyError, match="64 hex characters"):
+        get_storage_at_rest_key()
+
+
+def test_decryption_wrong_key_fails():
+    """Verifies that decrypting with the wrong key raises an error and never returns raw bytes."""
+    key1 = b"\x11" * 32
+    key2 = b"\x22" * 32
+    encrypted = encrypt_at_rest(SAMPLE_PCAP, key=key1)
+
+    with pytest.raises(StorageDecryptionError):
+        decrypt_at_rest(encrypted, key=key2)
+
+
+def test_decryption_corrupted_payload_fails():
+    """Verifies that corrupted or truncated SMSE payload raises StorageDecryptionError."""
+    # Truncated SMSE header
+    with pytest.raises(StorageDecryptionError):
+        decrypt_at_rest(b"SMSEshort")
+
+
+def test_legacy_plaintext_requires_pcap_magic():
+    """Verifies that non-SMSE data is only accepted if it has a valid PCAP magic."""
+    valid_pcap = SAMPLE_PCAP + b"extra"
+    assert decrypt_at_rest(valid_pcap) == valid_pcap
+
+    invalid_data = b"NOT_A_PCAP_FILE_AND_NOT_ENCRYPTED"
+    with pytest.raises(StorageDecryptionError):
+        decrypt_at_rest(invalid_data)
+
+
+def test_upload_encryption_failure_cleanup(tmp_path, monkeypatch):
+    """Verifies that upload aborts and cleans up partial files if encryption fails."""
+    init_db()
+    monkeypatch.setattr(config, "CASES_DIR", tmp_path / "cases")
+    client = TestClient(app)
+    headers = {"X-API-Key": config.ANALYST_API_KEY}
+
+    # Patch encrypt_at_rest to fail
+    def mock_encrypt_fail(data, key=None):
+        raise StorageEncryptionError("Simulated encryption failure")
+
+    monkeypatch.setattr("validator.crypto.encrypt_at_rest", mock_encrypt_fail)
+
+    res = client.post(
+        "/cases",
+        files={"file": ("test.pcap", io.BytesIO(SAMPLE_PCAP), "application/vnd.tcpdump.pcap")},
+        headers=headers,
+    )
+    assert res.status_code == 500
+    assert "encryption failed" in res.text
+
+    # Verify no partial directory or file remains
+    case_dirs = list((tmp_path / "cases").iterdir())
+    assert len(case_dirs) == 0
+
+
+def test_dev_keys_rejected_in_production(monkeypatch):
+    """Verifies that default development keys fail startup when APP_ENV=production."""
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.delenv("ALLOW_DEV_KEYS", raising=False)
+    monkeypatch.setattr(config, "APP_ENV", "production")
+    monkeypatch.setattr(config, "ALLOW_DEV_KEYS", False)
+    monkeypatch.setattr(config, "ANALYST_KEY", config.HARDHAT_DEV_KEY)
+
+    with pytest.raises(RuntimeError, match="must not use Hardhat development keys"):
+        config.validate_environment()
+
 
 
 # ---------------------------------------------------------------------------

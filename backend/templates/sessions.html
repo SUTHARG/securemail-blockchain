@@ -39,7 +39,8 @@
 </div>
 
 <!-- Sessions Table -->
-<div class="card" style="padding: 0; overflow-x: auto;">
+<div class="card" style="padding: 0;">
+  <div class="table-responsive" style="margin-bottom: 0;">
   <table class="data-table" id="sessions_table">
     <thead>
       <tr>
@@ -64,10 +65,16 @@
         </td>
         <td>
           <span class="badge badge-Info">{{ s.protocol }}</span>
-          {% if not s.streamComplete %}
-          <div style="font-size: 0.75rem; color: var(--critical); margin-top: 0.2rem;">
-            Not evaluable (Incomplete / truncated TCP stream)
-          </div>
+          {% if s.confirmedComplete %}
+            <span class="badge badge-Low" style="margin-left: 0.25rem;">Complete</span>
+          {% elif not s.streamContiguous or not s.streamComplete %}
+            <div style="font-size: 0.75rem; color: var(--critical); margin-top: 0.2rem;">
+              Not evaluable (Sequence gaps / dropped packets)
+            </div>
+          {% elif not s.streamTerminated %}
+            <div style="font-size: 0.75rem; color: var(--warning); margin-top: 0.2rem;">
+              Partial capture (Contiguous payload, no FIN/RST observed)
+            </div>
           {% endif %}
         </td>
         <td style="font-size: 0.85rem;">{{ s.transportMode }}</td>
@@ -145,5 +152,6 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% endblock %}

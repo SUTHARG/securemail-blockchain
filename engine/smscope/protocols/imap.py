@@ -86,6 +86,9 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
 
     # 1. Handle Implicit TLS (e.g. port 993 or direct TLS handshake)
     if ident.transport_hint == "implicitTls" or client_bytes.startswith(b"\x16\x03"):
+        s_cont = getattr(stream, "contiguous", getattr(stream, "complete", True))
+        s_term = getattr(stream, "terminated", False)
+        s_comp = getattr(stream, "confirmed_complete", s_cont and s_term)
         return SessionRecord(
             sessionId=stream.index,
             clientEndpoint=stream.client,
@@ -93,7 +96,7 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
             protocol="imap",
             protocolSource=ident.source,
             transportMode="implicitTls",
-            streamComplete=stream.complete,
+            streamComplete=s_cont,
             firstPacketTs=stream.firstTs,
             starttls=StarttlsInfo(offered=False, attempted=False, outcome="notOffered"),
             cleartextAuth=[],
@@ -102,9 +105,16 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
             clientTlsStartOffset=0,
             serverTlsStartOffset=0,
             stream=stream,
+            streamContiguous=s_cont,
+            streamTerminated=s_term,
+            confirmedComplete=s_comp,
         )
 
     # 2. Parse Server Greeting & Capability responses
+    starttls_offered_frame: Optional[int] = None
+    starttls_attempted_frame: Optional[int] = None
+    starttls_outcome_frame: Optional[int] = None
+
     server_lines = _parse_server_lines(server_bytes)
     for start_off, end_off, line in server_lines:
         # Check greeting: * OK ...
@@ -112,12 +122,17 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
             st, ld, ap = _extract_capabilities(line)
             if st:
                 starttls_offered = True
+                starttls_offered_frame = _get_frame(stream, "server", start_off)
 
         # Check untagged capability line: * CAPABILITY ...
         if line.startswith("* CAPABILITY"):
             st, ld, ap = _extract_capabilities(line)
             if st:
                 starttls_offered = True
+                starttls_offered_frame = _get_frame(stream, "server", start_off)
+
+    if not starttls_offered_frame and server_lines:
+        starttls_offered_frame = _get_frame(stream, "server", server_lines[0][0])
 
     # 3. Parse Client Commands
     client_offset = 0
@@ -157,17 +172,53 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
 
         # Check for Cleartext Authentication in plaintext portion
         if cmd_verb == "LOGIN":
-            packet_no = _get_frame(stream, "client", client_offset)
-            cleartext_auth.append(CleartextAuth(mechanism="LOGIN", packetNumber=packet_no))
-        elif cmd_verb == "AUTHENTICATE":
-            auth_mech = parts[2].split()[0].upper() if len(parts) > 2 else ""
-            if auth_mech == "PLAIN":
+            login_args = parts[2].split() if len(parts) > 2 else []
+            has_payload = (len(login_args) >= 2 and len(login_args[0].strip()) > 0 and len(login_args[1].strip()) > 0)
+            if not has_payload and literal_bytes_to_skip > 0 and len(login_args) >= 1:
+                has_payload = True
+            if has_payload:
                 packet_no = _get_frame(stream, "client", client_offset)
-                cleartext_auth.append(CleartextAuth(mechanism="PLAIN", packetNumber=packet_no))
+                cleartext_auth.append(CleartextAuth(mechanism="LOGIN", packetNumber=packet_no))
+        elif cmd_verb == "AUTHENTICATE":
+            auth_parts = parts[2].split() if len(parts) > 2 else []
+            auth_mech = auth_parts[0].upper() if auth_parts else ""
+            if auth_mech == "PLAIN":
+                has_payload = False
+                if len(auth_parts) > 1 and len(auth_parts[1].strip()) > 0:
+                    has_payload = True
+                else:
+                    cmd_frame = _get_frame(stream, "client", client_offset)
+                    # Correlate challenge with active command: must start with '+' and occur after command
+                    has_challenge = False
+                    for s_start, s_end, s_line in server_lines:
+                        s_frame = _get_frame(stream, "server", s_start)
+                        if s_frame >= cmd_frame:
+                            s_clean = s_line.strip()
+                            if s_clean.startswith("+ ") or s_clean == "+":
+                                has_challenge = True
+                                break
+                            if s_line.startswith(tag + " "):
+                                # Tagged completion response arrived without challenge
+                                break
+                    if has_challenge and next_client_offset < total_client_len:
+                        next_end = client_bytes.find(b"\n", next_client_offset)
+                        if next_end == -1:
+                            next_line = client_bytes[next_client_offset:].decode("latin-1", errors="replace").strip()
+                            resp_next_offset = total_client_len
+                        else:
+                            next_line = client_bytes[next_client_offset:next_end].decode("latin-1", errors="replace").strip()
+                            resp_next_offset = next_end + 1
+                        if next_line and next_line != "*":
+                            has_payload = True
+                        next_client_offset = resp_next_offset
+                if has_payload:
+                    packet_no = _get_frame(stream, "client", client_offset)
+                    cleartext_auth.append(CleartextAuth(mechanism="PLAIN", packetNumber=packet_no))
 
         # Check for STARTTLS command
         elif cmd_verb == "STARTTLS":
             starttls_attempted = True
+            starttls_attempted_frame = _get_frame(stream, "client", client_offset)
             client_tls_start_offset = next_client_offset
 
             # Search server lines for matching tag response: <tag> OK / NO / BAD
@@ -177,6 +228,7 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
                 if len(s_parts) >= 2 and s_parts[0] == tag:
                     status = s_parts[1].upper()
                     found_reply = True
+                    starttls_outcome_frame = _get_frame(stream, "server", s_start)
                     if status == "OK":
                         starttls_outcome = "succeeded"
                         transport_mode = "starttls"
@@ -218,6 +270,10 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
         outcome=starttls_outcome,
     )
 
+    s_cont = getattr(stream, "contiguous", getattr(stream, "complete", True))
+    s_term = getattr(stream, "terminated", False)
+    s_comp = getattr(stream, "confirmed_complete", s_cont and s_term)
+
     return SessionRecord(
         sessionId=stream.index,
         clientEndpoint=stream.client,
@@ -225,7 +281,7 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
         protocol="imap",
         protocolSource=ident.source,
         transportMode=transport_mode,
-        streamComplete=stream.complete,
+        streamComplete=s_cont,
         firstPacketTs=stream.firstTs,
         starttls=starttls_info,
         cleartextAuth=cleartext_auth,
@@ -234,4 +290,10 @@ def track_imap(stream: Stream, ident: Optional[ProtocolIdentification] = None) -
         clientTlsStartOffset=client_tls_start_offset,
         serverTlsStartOffset=server_tls_start_offset,
         stream=stream,
+        starttls_offered_frame=starttls_offered_frame,
+        starttls_attempted_frame=starttls_attempted_frame,
+        starttls_outcome_frame=starttls_outcome_frame,
+        streamContiguous=s_cont,
+        streamTerminated=s_term,
+        confirmedComplete=s_comp,
     )

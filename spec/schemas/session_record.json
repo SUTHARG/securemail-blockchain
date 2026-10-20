@@ -42,6 +42,15 @@
     "streamComplete": {
       "type": "boolean"
     },
+    "streamContiguous": {
+      "type": "boolean"
+    },
+    "streamTerminated": {
+      "type": "boolean"
+    },
+    "confirmedComplete": {
+      "type": "boolean"
+    },
     "firstPacketTs": {
       "type": "integer",
       "minimum": 0

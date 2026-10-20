@@ -671,3 +671,126 @@ class TestDeterminism:
 
         assert dict1 == dict2
         assert dict1 == dict3
+
+
+# ---------------------------------------------------------------------------
+# Evidence Frame Tracking Tests (Issue 7)
+# ---------------------------------------------------------------------------
+
+
+class TestEvidenceFrameTracking:
+    """Verify that finding evidence points to actual PCAP frames, not hard-coded frame 1."""
+
+    def test_starttls_evidence_frames(self):
+        # R02: Plaintext without STARTTLS offer
+        s_r02 = make_synthetic_session(
+            session_id=1,
+            server_endpoint="10.0.0.1:25",
+            transport_mode="plaintext",
+            starttls_offered=False,
+        )
+        s_r02.starttls_offered_frame = 14
+        f_r02 = evaluate_rules([s_r02])
+        assert len(f_r02) == 1
+        assert f_r02[0].evidence[0].packetNumber == 14
+
+        # R03: STARTTLS offered but ignored
+        s_r03 = make_synthetic_session(
+            session_id=2,
+            server_endpoint="10.0.0.1:25",
+            transport_mode="plaintext",
+            starttls_offered=True,
+            starttls_attempted=False,
+            starttls_outcome="ignored",
+        )
+        s_r03.starttls_offered_frame = 22
+        f_r03 = evaluate_rules([s_r03])
+        assert len(f_r03) == 1
+        assert f_r03[0].evidence[0].packetNumber == 22
+
+        # R04: STARTTLS refused
+        s_r04 = make_synthetic_session(
+            session_id=3,
+            server_endpoint="10.0.0.1:25",
+            transport_mode="plaintext",
+            starttls_offered=True,
+            starttls_attempted=True,
+            starttls_outcome="refused",
+        )
+        s_r04.starttls_attempted_frame = 31
+        s_r04.starttls_outcome_frame = 35
+        f_r04 = evaluate_rules([s_r04])
+        assert len(f_r04) == 1
+        assert f_r04[0].evidence[0].packetNumber == 35
+
+    def test_tls_negotiation_evidence_frames(self):
+        # R06 (TLS 1.0) and R09 (Non-forward-secret) use ServerHello frame
+        s_tls = make_synthetic_session(
+            session_id=4,
+            server_endpoint="10.0.0.2:25",
+            transport_mode="starttls",
+            tls_info=TlsInfo(
+                certObservable=True,
+                version="TLS 1.0",
+                forwardSecrecy=False,
+                kxType="RSA",
+                cipherSuiteName="TLS_RSA_WITH_AES_128_CBC_SHA",
+                cipherSuiteCode=47,
+            ),
+        )
+        s_tls._server_hello_frame = 42
+        findings = evaluate_rules([s_tls])
+        r06 = next(f for f in findings if f.ruleId == "R06")
+        r09 = next(f for f in findings if f.ruleId == "R09")
+        assert r06.evidence[0].packetNumber == 42
+        assert r09.evidence[0].packetNumber == 42
+
+        # R10 uses ServerKeyExchange frame
+        s_dhe = make_synthetic_session(
+            session_id=5,
+            server_endpoint="10.0.0.3:25",
+            transport_mode="starttls",
+            tls_info=TlsInfo(
+                certObservable=True,
+                version="TLS 1.2",
+                forwardSecrecy=True,
+                kxType="DHE",
+                kxGroupOrDhBits=1024,
+            ),
+        )
+        s_dhe._server_hello_frame = 50
+        s_dhe._server_key_exchange_frame = 55
+        f_dhe = evaluate_rules([s_dhe])
+        r10 = next(f for f in f_dhe if f.ruleId == "R10")
+        assert r10.evidence[0].packetNumber == 55
+
+    def test_certificate_evidence_frames(self):
+        # R11, R12, R16 use Certificate message frame
+        cert = CertificateInfo(
+            sha256="abc1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd",
+            subject="CN=mail.example.com",
+            issuer="CN=mail.example.com",
+            notBefore=1600000000,
+            notAfter=1650000000,
+            keyAlgorithm="RSA",
+            keySize=1024,
+            signatureAlgorithm="sha256WithRSAEncryption",
+            san=[],
+            isCa=False,
+            verdicts=["expired", "weakKey", "selfSigned"],
+        )
+        s_cert = make_synthetic_session(
+            session_id=6,
+            server_endpoint="10.0.0.4:25",
+            transport_mode="starttls",
+            first_packet_ts=1700000000,
+            certificates=[cert],
+        )
+        s_cert._certificate_frame = 68
+        findings = evaluate_rules([s_cert])
+        r11 = next(f for f in findings if f.ruleId == "R11")
+        r12 = next(f for f in findings if f.ruleId == "R12")
+        r16 = next(f for f in findings if f.ruleId == "R16")
+        assert r11.evidence[0].packetNumber == 68
+        assert r12.evidence[0].packetNumber == 68
+        assert r16.evidence[0].packetNumber == 68

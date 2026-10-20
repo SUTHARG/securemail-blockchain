@@ -299,3 +299,136 @@ def test_hypothesis_shuffle_duplicate_split(payload, cuts, order, duplicate_chan
     assert len(reassembler.offsets) > 0
     total_mapped = sum(end - start for start, end, _, _ in reassembler.offsets)
     assert total_mapped == len(payload)
+
+
+# ==============================================================================
+# Port Reuse, SYN Retransmission, Mid-Capture & Incomplete Stream Tests
+# ==============================================================================
+
+def test_port_reuse_creates_separate_streams():
+    """Two separate connections reusing the exact same 5-tuple must produce distinct streams."""
+    c_ip, s_ip = "192.168.1.50", "192.168.1.10"
+    c_port, s_port = 54321, 25
+
+    pkts = [
+        # Connection 1: 3-way handshake + data + FIN/ACK
+        RawPacket(1, 1000, 0, c_ip, s_ip, c_port, s_port, 100, 0, 0x02, b""),          # SYN
+        RawPacket(2, 1001, 0, s_ip, c_ip, s_port, c_port, 500, 101, 0x12, b""),        # SYN-ACK
+        RawPacket(3, 1002, 0, c_ip, s_ip, c_port, s_port, 101, 501, 0x10, b""),        # ACK
+        RawPacket(4, 1003, 0, c_ip, s_ip, c_port, s_port, 101, 501, 0x18, b"HELO c1\r\n"), # Data
+        RawPacket(5, 1004, 0, s_ip, c_ip, s_port, c_port, 501, 110, 0x18, b"250 ok\r\n"),  # Data
+        RawPacket(6, 1005, 0, c_ip, s_ip, c_port, s_port, 110, 509, 0x11, b""),        # FIN-ACK
+        RawPacket(7, 1006, 0, s_ip, c_ip, s_port, c_port, 509, 111, 0x11, b""),        # FIN-ACK
+        RawPacket(8, 1007, 0, c_ip, s_ip, c_port, s_port, 111, 510, 0x10, b""),        # ACK
+
+        # Connection 2: New connection on the same 5-tuple (new SYN with seq=2000)
+        RawPacket(9, 2000, 0, c_ip, s_ip, c_port, s_port, 2000, 0, 0x02, b""),         # SYN
+        RawPacket(10, 2001, 0, s_ip, c_ip, s_port, c_port, 9000, 2001, 0x12, b""),     # SYN-ACK
+        RawPacket(11, 2002, 0, c_ip, s_ip, c_port, s_port, 2001, 9001, 0x10, b""),     # ACK
+        RawPacket(12, 2003, 0, c_ip, s_ip, c_port, s_port, 2001, 9001, 0x18, b"HELO c2\r\n"), # Data
+        RawPacket(13, 2004, 0, s_ip, c_ip, s_port, c_port, 9001, 2010, 0x18, b"250 ok\r\n"),  # Data
+        RawPacket(14, 2005, 0, c_ip, s_ip, c_port, s_port, 2010, 9009, 0x14, b""),     # RST
+    ]
+
+    streams = reassemble_packets(pkts)
+    assert len(streams) == 2, f"Expected 2 distinct streams for port reuse, got {len(streams)}"
+
+    # Stream 0
+    assert streams[0].index == 0
+    assert streams[0].firstFrame == 1
+    assert streams[0].clientBytes == b"HELO c1\r\n"
+    assert streams[0].serverBytes == b"250 ok\r\n"
+    assert streams[0].complete is True
+
+    # Stream 1
+    assert streams[1].index == 1
+    assert streams[1].firstFrame == 9
+    assert streams[1].clientBytes == b"HELO c2\r\n"
+    assert streams[1].serverBytes == b"250 ok\r\n"
+    assert streams[1].complete is True
+
+
+def test_retransmitted_syn_does_not_create_duplicate_stream():
+    """SYN retransmissions must not create duplicate streams."""
+    c_ip, s_ip = "192.168.1.50", "192.168.1.10"
+    c_port, s_port = 54322, 25
+
+    pkts = [
+        # Client sends SYN, retransmits it 3 times before server replies
+        RawPacket(1, 1000, 0, c_ip, s_ip, c_port, s_port, 500, 0, 0x02, b""),
+        RawPacket(2, 1001, 0, c_ip, s_ip, c_port, s_port, 500, 0, 0x02, b""),
+        RawPacket(3, 1002, 0, c_ip, s_ip, c_port, s_port, 500, 0, 0x02, b""),
+        # Server replies SYN-ACK
+        RawPacket(4, 1003, 0, s_ip, c_ip, s_port, c_port, 800, 501, 0x12, b""),
+        RawPacket(5, 1004, 0, c_ip, s_ip, c_port, s_port, 501, 801, 0x10, b""),
+        RawPacket(6, 1005, 0, c_ip, s_ip, c_port, s_port, 501, 801, 0x18, b"HELO single\r\n"),
+    ]
+
+    streams = reassemble_packets(pkts)
+    assert len(streams) == 1
+    assert streams[0].clientBytes == b"HELO single\r\n"
+    assert streams[0].complete is True
+
+
+def test_buffer_cap_overflow_marks_stream_incomplete():
+    """When out-of-order buffer cap is reached, dropped packets must cause complete=False."""
+    reassembler = DirectionReassembler(buffer_cap=2)
+    isn = 1000
+    reassembler.isn = isn
+    reassembler.next_seq = isn
+
+    # Expected next_seq is 1000.
+    # Feed 3 out-of-order future packets with gaps.
+    p1 = RawPacket(1, 100, 0, "1.1.1.1", "2.2.2.2", 1000, 25, 2000, 0, 0x10, b"GAP1")
+    p2 = RawPacket(2, 100, 0, "1.1.1.1", "2.2.2.2", 1000, 25, 3000, 0, 0x10, b"GAP2")
+    p3 = RawPacket(3, 100, 0, "1.1.1.1", "2.2.2.2", 1000, 25, 4000, 0, 0x10, b"GAP3")
+
+    reassembler.feed(p1)  # Buffer has 1 item
+    reassembler.feed(p2)  # Buffer has 2 items (cap reached)
+    reassembler.feed(p3)  # Over cap! Must be dropped, not added
+
+    assert reassembler.dropped_segments == 1
+    assert reassembler.dropped_bytes == len(b"GAP3")
+    assert reassembler.is_complete() is False
+
+    # Now deliver the missing prefix (seq=1000..3000) so p1 and p2 can drain
+    prefix = RawPacket(4, 100, 0, "1.1.1.1", "2.2.2.2", 1000, 25, 1000, 0, 0x10, b"A" * 1000)
+    reassembler.feed(prefix)
+
+    # Even if buffered_segments drained, dropped_segments remains > 0 -> must still be False!
+    assert reassembler.is_complete() is False
+
+
+def test_unresolved_gap_at_end_of_capture():
+    """If segments remain in buffer at end of capture, stream is incomplete."""
+    reassembler = DirectionReassembler(buffer_cap=10)
+    isn = 1000
+    reassembler.isn = isn
+    reassembler.next_seq = isn
+
+    # Missing seq 1000..1500, we only receive seq 1500..1510
+    future = RawPacket(1, 100, 0, "1.1.1.1", "2.2.2.2", 1000, 25, 1500, 0, 0x10, b"FUTURE_DATA")
+    reassembler.feed(future)
+
+    assert len(reassembler.buffered_segments) == 1
+    assert reassembler.is_complete() is False
+
+
+def test_mid_capture_start_then_syn():
+    """A flow that starts mid-capture without SYN, then receives a SYN, separates cleanly."""
+    c_ip, s_ip = "10.0.0.1", "10.0.0.2"
+    c_port, s_port = 40000, 25
+
+    pkts = [
+        # Mid-capture connection 1: starts directly with ACK and data (no SYN)
+        RawPacket(1, 100, 0, c_ip, s_ip, c_port, s_port, 1000, 500, 0x18, b"MID_CAPTURE_1\r\n"),
+        # New connection with SYN
+        RawPacket(2, 200, 0, c_ip, s_ip, c_port, s_port, 50000, 0, 0x02, b""),
+        RawPacket(3, 201, 0, s_ip, c_ip, s_port, c_port, 80000, 50001, 0x12, b""),
+        RawPacket(4, 202, 0, c_ip, s_ip, c_port, s_port, 50001, 80001, 0x18, b"SECOND_CONN\r\n"),
+    ]
+
+    streams = reassemble_packets(pkts)
+    assert len(streams) == 2
+    assert streams[0].clientBytes == b"MID_CAPTURE_1\r\n"
+    assert streams[1].clientBytes == b"SECOND_CONN\r\n"

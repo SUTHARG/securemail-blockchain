@@ -69,6 +69,7 @@ def test_golden_byte_for_byte(scenario: str, tmp_path: Path):
         cmd.extend(["--trust-store", str(TRUST_STORE_PATH)])
 
     env = os.environ.copy()
+    env["SMSCOPE_LEGACY_SESSIONS"] = "1"
     pythonpath = str(REPO_ROOT / "engine")
     if "PYTHONPATH" in env:
         env["PYTHONPATH"] = f"{pythonpath}{os.pathsep}{env['PYTHONPATH']}"

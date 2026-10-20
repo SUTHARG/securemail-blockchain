@@ -102,13 +102,25 @@ async def stream_and_validate_pcap(
             detail="Uploaded file is empty",
         )
 
-    # Encrypt pcap.bin at rest per Prompt T3.1
+    # Encrypt pcap.bin at rest per Prompt T3.1 (fails closed)
     try:
         from validator.crypto import encrypt_at_rest
         plaintext_data = pcap_path.read_bytes()
-        pcap_path.write_bytes(encrypt_at_rest(plaintext_data))
-    except Exception:
-        pass
+        encrypted_bytes = encrypt_at_rest(plaintext_data)
+        pcap_path.write_bytes(encrypted_bytes)
+    except Exception as exc:
+        if pcap_path.exists():
+            pcap_path.unlink(missing_ok=True)
+        try:
+            for child in case_dir.iterdir():
+                child.unlink(missing_ok=True)
+            case_dir.rmdir()
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PCAP-at-rest encryption failed: {exc}",
+        ) from exc
 
     try:
         os.chmod(pcap_path, 0o600)
@@ -119,17 +131,14 @@ async def stream_and_validate_pcap(
 
 
 def read_case_pcap(case_id: str) -> bytes:
-    """Read case pcap, decrypting transparently if encrypted at rest (Prompt T3.1)."""
+    """Read case pcap, decrypting transparently if encrypted at rest (Prompt T3.1). Fails closed on error."""
     case_dir = get_case_dir(case_id)
     pcap_path = case_dir / "pcap.bin"
     if not pcap_path.exists():
         raise FileNotFoundError(f"pcap.bin not found for case {case_id}")
     raw_data = pcap_path.read_bytes()
-    try:
-        from validator.crypto import decrypt_at_rest
-        return decrypt_at_rest(raw_data)
-    except Exception:
-        return raw_data
+    from validator.crypto import decrypt_at_rest
+    return decrypt_at_rest(raw_data)
 
 
 def read_case_json(case_id: str, filename: str) -> Optional[Any]:
@@ -140,3 +149,12 @@ def read_case_json(case_id: str, filename: str) -> Optional[Any]:
         return None
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def write_case_json(case_id: str, filename: str, data: Any) -> Path:
+    """Write JSON data to case directory on disk."""
+    case_dir = get_case_dir(case_id)
+    file_path = case_dir / filename
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    return file_path

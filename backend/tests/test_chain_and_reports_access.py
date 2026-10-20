@@ -31,12 +31,22 @@ TEST_ADMIN_KEY = "test-admin-secret-key-67890"
 
 analyst_headers = {"X-API-Key": TEST_ANALYST_KEY}
 admin_headers = {"X-API-Key": TEST_ADMIN_KEY}
-browser_headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}
+browser_headers = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Cookie": f"api_key={TEST_ANALYST_KEY}",
+}
 
 
 @pytest.fixture
-def client():
-    """Create test client with isolated database."""
+def client(tmp_path, monkeypatch):
+    """Create test client with isolated database and storage."""
+    test_db = tmp_path / "test_chain_reports.db"
+    test_cases_dir = tmp_path / "cases"
+    test_cases_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(config, "DB_PATH", test_db)
+    monkeypatch.setattr(config, "CASES_DIR", test_cases_dir)
+    monkeypatch.setattr(config, "ANALYST_API_KEY", TEST_ANALYST_KEY)
+    monkeypatch.setattr(config, "ADMIN_API_KEY", TEST_ADMIN_KEY)
     init_db()
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
@@ -347,3 +357,28 @@ def test_report_content_and_determinism_preserved(client, seeded_case):
     sha1 = hashlib.sha256(bytes1).hexdigest()
     sha2 = hashlib.sha256(bytes2).hexdigest()
     assert sha1 == sha2
+
+
+def test_data_directory_isolation(client, seeded_case):
+    """
+    10. Regression test proving that running the test suite does not write
+    cases or files into the application's normal data directory.
+    """
+    case_id = seeded_case
+    default_data_dir = REPO_ROOT / "data"
+    default_cases_dir = default_data_dir / "cases"
+    default_db = default_data_dir / "smscope.db"
+
+    # The seeded case must exist in the isolated test environment
+    assert (config.CASES_DIR / case_id).exists()
+    assert config.DB_PATH != default_db
+    assert config.CASES_DIR != default_cases_dir
+
+    # The seeded case must NEVER be written to the default application directory
+    assert not (default_cases_dir / case_id).exists()
+    if default_db.exists():
+        import sqlite3
+        conn = sqlite3.connect(default_db)
+        row = conn.execute("SELECT id FROM cases WHERE id = ?", (case_id,)).fetchone()
+        conn.close()
+        assert row is None, f"Seeded test case {case_id} was leaked into default application database!"

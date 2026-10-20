@@ -24,6 +24,490 @@ Evaluation of system-wide data protection and forensic privacy guarantees. Scans
 | Engine Outputs & Reports | `data/cases/a9f69efc1c50491f8f9b947030d64f2b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs & Reports | `data/cases/b9f6e2767e2e404ba7925eed951e3a5b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs & Reports | `data/cases/b9f6e2767e2e404ba7925eed951e3a5b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_regression_case_001/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_regression_case_001/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_regression_case_001/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_regression_case_001/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_038f25678a40/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_038f25678a40/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_038f25678a40/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_038f25678a40/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_05f460a74b3d/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_05f460a74b3d/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_05f460a74b3d/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_05f460a74b3d/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06c27330f301/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06c27330f301/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06c27330f301/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06c27330f301/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06e731288c2a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06e731288c2a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06e731288c2a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_06e731288c2a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_07382030e577/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_07382030e577/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_07382030e577/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_07382030e577/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0948dfc9b13e/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0948dfc9b13e/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0948dfc9b13e/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0948dfc9b13e/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_096de8601bb1/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_096de8601bb1/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_096de8601bb1/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_096de8601bb1/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0afd9ced51de/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0afd9ced51de/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0afd9ced51de/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0afd9ced51de/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d3aafb447d8/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d3aafb447d8/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d3aafb447d8/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d3aafb447d8/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d8c10f9018b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d8c10f9018b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d8c10f9018b/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0d8c10f9018b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0f8dc8f7fc24/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0f8dc8f7fc24/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0f8dc8f7fc24/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_0f8dc8f7fc24/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_11c0d36a2bea/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_11c0d36a2bea/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_11c0d36a2bea/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_11c0d36a2bea/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_13d6042b348a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_13d6042b348a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_13d6042b348a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_13d6042b348a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_173a37c780a8/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_173a37c780a8/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_173a37c780a8/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_173a37c780a8/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c0995daf3ae/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c0995daf3ae/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c0995daf3ae/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c0995daf3ae/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c427f9cec77/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c427f9cec77/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c427f9cec77/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1c427f9cec77/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1cf69e14d731/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1cf69e14d731/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1cf69e14d731/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1cf69e14d731/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1d173cef4b56/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1d173cef4b56/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1d173cef4b56/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_1d173cef4b56/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_24c3e1043335/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_24c3e1043335/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_24c3e1043335/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_24c3e1043335/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_25cc0aacdcb0/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_25cc0aacdcb0/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_25cc0aacdcb0/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_25cc0aacdcb0/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2774ee39452e/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2774ee39452e/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2774ee39452e/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2774ee39452e/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2874f0312b05/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2874f0312b05/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2874f0312b05/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2874f0312b05/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2b44555aa40d/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2b44555aa40d/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2b44555aa40d/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_2b44555aa40d/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_30a272174d87/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_30a272174d87/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_30a272174d87/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_30a272174d87/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3466dd769558/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3466dd769558/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3466dd769558/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3466dd769558/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_37039b01b229/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_37039b01b229/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_37039b01b229/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_37039b01b229/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3789b20ebfbc/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3789b20ebfbc/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3789b20ebfbc/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3789b20ebfbc/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_38fa080ced66/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_38fa080ced66/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_38fa080ced66/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_38fa080ced66/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3e6de6d3041a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3e6de6d3041a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3e6de6d3041a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_3e6de6d3041a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_405afa61482e/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_405afa61482e/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_405afa61482e/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_405afa61482e/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49a3b18d1a67/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49a3b18d1a67/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49a3b18d1a67/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49a3b18d1a67/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49e0980ee1d8/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49e0980ee1d8/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49e0980ee1d8/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_49e0980ee1d8/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4ded6415c77a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4ded6415c77a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4ded6415c77a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4ded6415c77a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4f1c1e79e9cf/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4f1c1e79e9cf/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4f1c1e79e9cf/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4f1c1e79e9cf/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4fb4e71d7e4e/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4fb4e71d7e4e/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4fb4e71d7e4e/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_4fb4e71d7e4e/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_513ad137cc91/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_513ad137cc91/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_513ad137cc91/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_513ad137cc91/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_52fcf46b7441/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_52fcf46b7441/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_52fcf46b7441/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_52fcf46b7441/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_566c38e8b57a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_566c38e8b57a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_566c38e8b57a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_566c38e8b57a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59198937a89a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59198937a89a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59198937a89a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59198937a89a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59298aa1bae5/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59298aa1bae5/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59298aa1bae5/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59298aa1bae5/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_593ada9396bd/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_593ada9396bd/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_593ada9396bd/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_593ada9396bd/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59ab1e31f164/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59ab1e31f164/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59ab1e31f164/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_59ab1e31f164/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_5a0672e825be/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_5a0672e825be/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_5a0672e825be/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_5a0672e825be/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_60f31985574d/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_60f31985574d/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_60f31985574d/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_60f31985574d/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_649d891812a8/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_649d891812a8/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_649d891812a8/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_649d891812a8/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_68ec2372b126/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_68ec2372b126/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_68ec2372b126/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_68ec2372b126/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6959c94db2da/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6959c94db2da/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6959c94db2da/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6959c94db2da/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6bf8c9c70f47/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6bf8c9c70f47/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6bf8c9c70f47/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6bf8c9c70f47/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6c6c016de01b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6c6c016de01b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6c6c016de01b/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_6c6c016de01b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_708a82fec71c/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_708a82fec71c/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_708a82fec71c/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_708a82fec71c/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_74e420d40e81/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_74e420d40e81/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_74e420d40e81/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_74e420d40e81/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_765a04479388/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_765a04479388/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_765a04479388/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_765a04479388/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_76fab90e41e7/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_76fab90e41e7/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_76fab90e41e7/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_76fab90e41e7/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_778011cf7539/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_778011cf7539/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_778011cf7539/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_778011cf7539/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7864bfdd66a3/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7864bfdd66a3/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7864bfdd66a3/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7864bfdd66a3/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7875a6fdb0e3/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7875a6fdb0e3/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7875a6fdb0e3/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7875a6fdb0e3/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_794885f8a7a2/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_794885f8a7a2/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_794885f8a7a2/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_794885f8a7a2/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7c35499b8caa/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7c35499b8caa/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7c35499b8caa/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7c35499b8caa/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7d8fda6c9e76/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7d8fda6c9e76/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7d8fda6c9e76/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_7d8fda6c9e76/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_81c25b3b3ff4/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_81c25b3b3ff4/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_81c25b3b3ff4/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_81c25b3b3ff4/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8a6a9c5b2dc5/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8a6a9c5b2dc5/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8a6a9c5b2dc5/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8a6a9c5b2dc5/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8f486ef96177/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8f486ef96177/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8f486ef96177/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_8f486ef96177/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9127b116933b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9127b116933b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9127b116933b/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9127b116933b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9461a1dbe37a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9461a1dbe37a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9461a1dbe37a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9461a1dbe37a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9614b02ff7fc/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9614b02ff7fc/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9614b02ff7fc/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9614b02ff7fc/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_96d550057c5c/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_96d550057c5c/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_96d550057c5c/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_96d550057c5c/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991946c38175/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991946c38175/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991946c38175/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991946c38175/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991ad0292945/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991ad0292945/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991ad0292945/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_991ad0292945/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e239fa4997a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e239fa4997a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e239fa4997a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e239fa4997a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e7639e44e4b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e7639e44e4b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e7639e44e4b/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_9e7639e44e4b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a17ba33edf36/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a17ba33edf36/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a17ba33edf36/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a17ba33edf36/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a1c48911f3fa/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a1c48911f3fa/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a1c48911f3fa/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a1c48911f3fa/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a4df3f3516b7/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a4df3f3516b7/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a4df3f3516b7/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a4df3f3516b7/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a5f5077d533b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a5f5077d533b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a5f5077d533b/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a5f5077d533b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a65f272df5b2/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a65f272df5b2/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a65f272df5b2/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a65f272df5b2/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a7832125eebf/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a7832125eebf/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a7832125eebf/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a7832125eebf/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a8e303cf64b4/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a8e303cf64b4/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a8e303cf64b4/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_a8e303cf64b4/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa009eaba7c5/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa009eaba7c5/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa009eaba7c5/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa009eaba7c5/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa85848f4888/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa85848f4888/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa85848f4888/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_aa85848f4888/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ac46e8be6081/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ac46e8be6081/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ac46e8be6081/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ac46e8be6081/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ade05522d9d1/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ade05522d9d1/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ade05522d9d1/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ade05522d9d1/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b0e439f09848/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b0e439f09848/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b0e439f09848/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b0e439f09848/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b146996a2adb/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b146996a2adb/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b146996a2adb/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b146996a2adb/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b7414a05f2b0/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b7414a05f2b0/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b7414a05f2b0/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b7414a05f2b0/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b8e6eb0ada3a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b8e6eb0ada3a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b8e6eb0ada3a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_b8e6eb0ada3a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bb52dd44f32c/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bb52dd44f32c/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bb52dd44f32c/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bb52dd44f32c/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bc8cdf7e152d/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bc8cdf7e152d/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bc8cdf7e152d/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_bc8cdf7e152d/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_be6a59ba9c1a/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_be6a59ba9c1a/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_be6a59ba9c1a/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_be6a59ba9c1a/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c01023d30068/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c01023d30068/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c01023d30068/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c01023d30068/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c7bbff8d61f2/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c7bbff8d61f2/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c7bbff8d61f2/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_c7bbff8d61f2/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cbaeacdb4d57/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cbaeacdb4d57/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cbaeacdb4d57/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cbaeacdb4d57/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cd54653df493/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cd54653df493/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cd54653df493/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cd54653df493/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cf5a0352ff94/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cf5a0352ff94/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cf5a0352ff94/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cf5a0352ff94/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cfb49d7ccbb7/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cfb49d7ccbb7/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cfb49d7ccbb7/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_cfb49d7ccbb7/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d179d1e6b974/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d179d1e6b974/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d179d1e6b974/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d179d1e6b974/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d1cce6963cef/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d1cce6963cef/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d1cce6963cef/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d1cce6963cef/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d2445cf100f6/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d2445cf100f6/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d2445cf100f6/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d2445cf100f6/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d247da2d0b92/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d247da2d0b92/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d247da2d0b92/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d247da2d0b92/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d603a45f7725/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d603a45f7725/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d603a45f7725/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d603a45f7725/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d8708c7ce453/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d8708c7ce453/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d8708c7ce453/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_d8708c7ce453/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_da0b6b7ac906/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_da0b6b7ac906/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_da0b6b7ac906/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_da0b6b7ac906/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db283345d216/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db283345d216/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db283345d216/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db283345d216/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db76087ad987/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db76087ad987/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db76087ad987/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_db76087ad987/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_dbda09c66d29/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_dbda09c66d29/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_dbda09c66d29/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_dbda09c66d29/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e00c809d6970/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e00c809d6970/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e00c809d6970/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e00c809d6970/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e3d597396567/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e3d597396567/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e3d597396567/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e3d597396567/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e688dd2d0a0e/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e688dd2d0a0e/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e688dd2d0a0e/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e688dd2d0a0e/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e7bac719a726/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e7bac719a726/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e7bac719a726/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e7bac719a726/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e80a0bab91b1/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e80a0bab91b1/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e80a0bab91b1/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_e80a0bab91b1/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_eaa4e5e2d5cb/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_eaa4e5e2d5cb/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_eaa4e5e2d5cb/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_eaa4e5e2d5cb/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ed10989e670c/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ed10989e670c/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ed10989e670c/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ed10989e670c/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee35e7c4ade7/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee35e7c4ade7/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee35e7c4ade7/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee35e7c4ade7/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee78697a8af1/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee78697a8af1/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee78697a8af1/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ee78697a8af1/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ef970329f8e9/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ef970329f8e9/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ef970329f8e9/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_ef970329f8e9/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f21df366ad9e/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f21df366ad9e/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f21df366ad9e/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f21df366ad9e/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2698ad918cd/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2698ad918cd/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2698ad918cd/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2698ad918cd/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2e1741a562b/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2e1741a562b/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2e1741a562b/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f2e1741a562b/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f7a167be6fd2/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f7a167be6fd2/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f7a167be6fd2/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f7a167be6fd2/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f80126cf3469/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f80126cf3469/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f80126cf3469/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_f80126cf3469/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_fb9dca086d38/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_fb9dca086d38/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_fb9dca086d38/report.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs & Reports | `data/cases/test_reg_fb9dca086d38/report.html` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs | `data/cases/a9f69efc1c50491f8f9b947030d64f2b/host_proofs.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs | `data/cases/a9f69efc1c50491f8f9b947030d64f2b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs | `data/cases/a9f69efc1c50491f8f9b947030d64f2b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
@@ -32,6 +516,449 @@ Evaluation of system-wide data protection and forensic privacy guarantees. Scans
 | Engine Outputs | `data/cases/b9f6e2767e2e404ba7925eed951e3a5b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs | `data/cases/b9f6e2767e2e404ba7925eed951e3a5b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Engine Outputs | `data/cases/b9f6e2767e2e404ba7925eed951e3a5b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_regression_case_001/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_regression_case_001/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_regression_case_001/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_038f25678a40/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_038f25678a40/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_038f25678a40/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_038f25678a40/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_05f460a74b3d/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_05f460a74b3d/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_05f460a74b3d/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_05f460a74b3d/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_06c27330f301/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_06c27330f301/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_06c27330f301/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_06e731288c2a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_06e731288c2a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_06e731288c2a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_07382030e577/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_07382030e577/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_07382030e577/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_07382030e577/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0948dfc9b13e/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0948dfc9b13e/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0948dfc9b13e/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0948dfc9b13e/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_096de8601bb1/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_096de8601bb1/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_096de8601bb1/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_096de8601bb1/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0afd9ced51de/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0afd9ced51de/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0afd9ced51de/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0afd9ced51de/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d3aafb447d8/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d3aafb447d8/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d3aafb447d8/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d3aafb447d8/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d8c10f9018b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d8c10f9018b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d8c10f9018b/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0d8c10f9018b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0f8dc8f7fc24/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0f8dc8f7fc24/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0f8dc8f7fc24/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_0f8dc8f7fc24/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_11c0d36a2bea/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_11c0d36a2bea/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_11c0d36a2bea/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_11c0d36a2bea/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_13d6042b348a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_13d6042b348a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_13d6042b348a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_173a37c780a8/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_173a37c780a8/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_173a37c780a8/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_173a37c780a8/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c0995daf3ae/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c0995daf3ae/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c0995daf3ae/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c0995daf3ae/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c427f9cec77/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c427f9cec77/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1c427f9cec77/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1cf69e14d731/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1cf69e14d731/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1cf69e14d731/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1cf69e14d731/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1d173cef4b56/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1d173cef4b56/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1d173cef4b56/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_1d173cef4b56/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_24c3e1043335/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_24c3e1043335/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_24c3e1043335/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_25cc0aacdcb0/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_25cc0aacdcb0/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_25cc0aacdcb0/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_25cc0aacdcb0/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2774ee39452e/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2774ee39452e/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2774ee39452e/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2774ee39452e/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2874f0312b05/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2874f0312b05/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2874f0312b05/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2874f0312b05/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2b44555aa40d/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2b44555aa40d/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2b44555aa40d/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_2b44555aa40d/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_30a272174d87/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_30a272174d87/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_30a272174d87/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3466dd769558/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3466dd769558/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3466dd769558/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_37039b01b229/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_37039b01b229/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_37039b01b229/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_37039b01b229/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3789b20ebfbc/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3789b20ebfbc/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3789b20ebfbc/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_38fa080ced66/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_38fa080ced66/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_38fa080ced66/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3e6de6d3041a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3e6de6d3041a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3e6de6d3041a/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_3e6de6d3041a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_405afa61482e/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_405afa61482e/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_405afa61482e/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_405afa61482e/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_49a3b18d1a67/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_49a3b18d1a67/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_49a3b18d1a67/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_49e0980ee1d8/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_49e0980ee1d8/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_49e0980ee1d8/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4ded6415c77a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4ded6415c77a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4ded6415c77a/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4ded6415c77a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4f1c1e79e9cf/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4f1c1e79e9cf/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4f1c1e79e9cf/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4fb4e71d7e4e/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4fb4e71d7e4e/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4fb4e71d7e4e/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_4fb4e71d7e4e/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_513ad137cc91/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_513ad137cc91/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_513ad137cc91/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_513ad137cc91/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_52fcf46b7441/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_52fcf46b7441/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_52fcf46b7441/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_566c38e8b57a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_566c38e8b57a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_566c38e8b57a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59198937a89a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59198937a89a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59198937a89a/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59198937a89a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59298aa1bae5/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59298aa1bae5/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59298aa1bae5/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59298aa1bae5/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_593ada9396bd/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_593ada9396bd/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_593ada9396bd/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_593ada9396bd/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59ab1e31f164/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59ab1e31f164/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_59ab1e31f164/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_5a0672e825be/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_5a0672e825be/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_5a0672e825be/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_5a0672e825be/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_60f31985574d/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_60f31985574d/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_60f31985574d/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_60f31985574d/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_649d891812a8/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_649d891812a8/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_649d891812a8/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_649d891812a8/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_68ec2372b126/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_68ec2372b126/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_68ec2372b126/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_68ec2372b126/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6959c94db2da/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6959c94db2da/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6959c94db2da/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6959c94db2da/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6bf8c9c70f47/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6bf8c9c70f47/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6bf8c9c70f47/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6bf8c9c70f47/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6c6c016de01b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6c6c016de01b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6c6c016de01b/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_6c6c016de01b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_708a82fec71c/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_708a82fec71c/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_708a82fec71c/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_708a82fec71c/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_74e420d40e81/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_74e420d40e81/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_74e420d40e81/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_765a04479388/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_765a04479388/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_765a04479388/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_765a04479388/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_76fab90e41e7/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_76fab90e41e7/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_76fab90e41e7/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_76fab90e41e7/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_778011cf7539/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_778011cf7539/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_778011cf7539/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_778011cf7539/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7864bfdd66a3/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7864bfdd66a3/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7864bfdd66a3/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7864bfdd66a3/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7875a6fdb0e3/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7875a6fdb0e3/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7875a6fdb0e3/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_794885f8a7a2/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_794885f8a7a2/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_794885f8a7a2/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_794885f8a7a2/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7c35499b8caa/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7c35499b8caa/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7c35499b8caa/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7c35499b8caa/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7d8fda6c9e76/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7d8fda6c9e76/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_7d8fda6c9e76/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_81c25b3b3ff4/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_81c25b3b3ff4/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_81c25b3b3ff4/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_81c25b3b3ff4/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8a6a9c5b2dc5/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8a6a9c5b2dc5/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8a6a9c5b2dc5/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8a6a9c5b2dc5/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8f486ef96177/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8f486ef96177/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8f486ef96177/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_8f486ef96177/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9127b116933b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9127b116933b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9127b116933b/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9127b116933b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9461a1dbe37a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9461a1dbe37a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9461a1dbe37a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9614b02ff7fc/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9614b02ff7fc/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9614b02ff7fc/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9614b02ff7fc/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_96d550057c5c/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_96d550057c5c/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_96d550057c5c/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_96d550057c5c/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991946c38175/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991946c38175/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991946c38175/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991ad0292945/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991ad0292945/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991ad0292945/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_991ad0292945/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e239fa4997a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e239fa4997a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e239fa4997a/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e239fa4997a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e7639e44e4b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e7639e44e4b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e7639e44e4b/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_9e7639e44e4b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a17ba33edf36/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a17ba33edf36/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a17ba33edf36/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a17ba33edf36/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a1c48911f3fa/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a1c48911f3fa/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a1c48911f3fa/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a1c48911f3fa/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a4df3f3516b7/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a4df3f3516b7/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a4df3f3516b7/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a4df3f3516b7/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a5f5077d533b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a5f5077d533b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a5f5077d533b/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a5f5077d533b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a65f272df5b2/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a65f272df5b2/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a65f272df5b2/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a65f272df5b2/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a7832125eebf/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a7832125eebf/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a7832125eebf/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a7832125eebf/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a8e303cf64b4/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a8e303cf64b4/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a8e303cf64b4/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_a8e303cf64b4/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa009eaba7c5/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa009eaba7c5/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa009eaba7c5/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa009eaba7c5/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa85848f4888/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa85848f4888/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa85848f4888/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_aa85848f4888/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ac46e8be6081/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ac46e8be6081/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ac46e8be6081/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ade05522d9d1/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ade05522d9d1/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ade05522d9d1/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b0e439f09848/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b0e439f09848/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b0e439f09848/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b146996a2adb/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b146996a2adb/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b146996a2adb/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b146996a2adb/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b7414a05f2b0/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b7414a05f2b0/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b7414a05f2b0/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b7414a05f2b0/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b8e6eb0ada3a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b8e6eb0ada3a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b8e6eb0ada3a/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_b8e6eb0ada3a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bb52dd44f32c/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bb52dd44f32c/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bb52dd44f32c/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bb52dd44f32c/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bc8cdf7e152d/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bc8cdf7e152d/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_bc8cdf7e152d/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_be6a59ba9c1a/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_be6a59ba9c1a/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_be6a59ba9c1a/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c01023d30068/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c01023d30068/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c01023d30068/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c7bbff8d61f2/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c7bbff8d61f2/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c7bbff8d61f2/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_c7bbff8d61f2/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cbaeacdb4d57/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cbaeacdb4d57/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cbaeacdb4d57/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cd54653df493/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cd54653df493/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cd54653df493/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cf5a0352ff94/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cf5a0352ff94/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cf5a0352ff94/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cfb49d7ccbb7/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cfb49d7ccbb7/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cfb49d7ccbb7/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_cfb49d7ccbb7/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d179d1e6b974/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d179d1e6b974/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d179d1e6b974/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d179d1e6b974/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d1cce6963cef/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d1cce6963cef/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d1cce6963cef/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d1cce6963cef/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d2445cf100f6/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d2445cf100f6/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d2445cf100f6/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d2445cf100f6/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d247da2d0b92/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d247da2d0b92/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d247da2d0b92/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d603a45f7725/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d603a45f7725/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d603a45f7725/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d8708c7ce453/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d8708c7ce453/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_d8708c7ce453/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_da0b6b7ac906/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_da0b6b7ac906/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_da0b6b7ac906/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db283345d216/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db283345d216/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db283345d216/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db283345d216/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db76087ad987/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db76087ad987/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_db76087ad987/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_dbda09c66d29/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_dbda09c66d29/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_dbda09c66d29/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_dbda09c66d29/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e00c809d6970/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e00c809d6970/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e00c809d6970/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e00c809d6970/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e3d597396567/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e3d597396567/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e3d597396567/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e3d597396567/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e688dd2d0a0e/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e688dd2d0a0e/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e688dd2d0a0e/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e7bac719a726/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e7bac719a726/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e7bac719a726/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e80a0bab91b1/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e80a0bab91b1/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_e80a0bab91b1/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_eaa4e5e2d5cb/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_eaa4e5e2d5cb/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_eaa4e5e2d5cb/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_eaa4e5e2d5cb/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ed10989e670c/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ed10989e670c/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ed10989e670c/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ed10989e670c/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ee35e7c4ade7/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ee35e7c4ade7/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ee35e7c4ade7/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ee78697a8af1/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ee78697a8af1/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ee78697a8af1/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ef970329f8e9/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ef970329f8e9/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ef970329f8e9/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_ef970329f8e9/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f21df366ad9e/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f21df366ad9e/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f21df366ad9e/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f21df366ad9e/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2698ad918cd/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2698ad918cd/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2698ad918cd/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2e1741a562b/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2e1741a562b/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2e1741a562b/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f2e1741a562b/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f7a167be6fd2/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f7a167be6fd2/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f7a167be6fd2/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f7a167be6fd2/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f80126cf3469/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f80126cf3469/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f80126cf3469/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_f80126cf3469/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_fb9dca086d38/host_scores.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_fb9dca086d38/manifest.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_fb9dca086d38/report_status.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
+| Engine Outputs | `data/cases/test_reg_fb9dca086d38/result.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Validator State | `validator_state/0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Validator State | `validator_state/0x70997970c51812dc3a010c7d01b50e0d17dc79c8.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
 | Validator State | `validator_state/0x90f79bf6eb2c4f870365e785982e1f101e93b906.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean |
@@ -65,7 +992,7 @@ Evaluation of system-wide data protection and forensic privacy guarantees. Scans
 | Active Engine S05 Outputs (Cleartext Session) | `temp/findings.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean: streams & packet numbers only |
 | Active Engine S05 Outputs (Cleartext Session) | `temp/sessions.json` | 7 | **0** | `PASS (ZERO LEAK)` | Clean: streams & packet numbers only |
 
-**Total Targets Inspected:** 46  
+**Total Targets Inspected:** 973
 **Total Sensitive Leaks Detected:** **0** (Zero tolerance confirmed)
 
 ## Architectural Privacy Verification

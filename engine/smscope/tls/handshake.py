@@ -81,6 +81,10 @@ class TlsHandshake:
     fatal_alert: Optional[TlsAlert] = None
     parse_errors: List[TlsParseError] = field(default_factory=list)
     encrypted_record_count: int = 0
+    server_hello_frame: Optional[int] = None
+    certificate_frame: Optional[int] = None
+    certificate_ts_sec: Optional[int] = None
+    server_key_exchange_frame: Optional[int] = None
 
     @property
     def selected_cipher(self) -> Optional[int]:
@@ -107,130 +111,165 @@ class TlsHandshake:
         return None
 
 
-def _parse_client_hello_extensions(ext_data: bytes) -> Tuple[Dict[str, Any], List[int]]:
-    """Parses ClientHello extension blocks."""
+def _parse_client_hello_extensions(ext_data: bytes) -> Tuple[Dict[str, Any], List[int], Optional[str]]:
+    """Parses ClientHello extension blocks with strict length checks."""
     extensions: Dict[str, Any] = {}
     extension_types: List[int] = []
     idx = 0
     total_len = len(ext_data)
 
-    while idx + 4 <= total_len:
+    while idx < total_len:
+        if idx + 4 > total_len:
+            return extensions, extension_types, "truncated"
         ext_type, ext_len = struct.unpack("!HH", ext_data[idx:idx + 4])
         idx += 4
         if idx + ext_len > total_len:
-            break
+            return extensions, extension_types, "truncated"
         val = ext_data[idx:idx + ext_len]
         idx += ext_len
         extension_types.append(ext_type)
 
         if ext_type == 0:  # server_name (SNI)
-            if len(val) >= 5:
-                name_list_len = struct.unpack("!H", val[:2])[0]
-                name_type = val[2]
-                if name_type == 0 and len(val) >= 5:
-                    name_len = struct.unpack("!H", val[3:5])[0]
-                    if len(val) >= 5 + name_len:
-                        extensions["server_name"] = val[5:5 + name_len].decode("ascii", errors="replace")
+            if len(val) < 5:
+                return extensions, extension_types, "truncated"
+            name_list_len = struct.unpack("!H", val[:2])[0]
+            if 2 + name_list_len > len(val):
+                return extensions, extension_types, "truncated"
+            name_type = val[2]
+            if name_type == 0:
+                name_len = struct.unpack("!H", val[3:5])[0]
+                if 5 + name_len > len(val):
+                    return extensions, extension_types, "truncated"
+                extensions["server_name"] = val[5:5 + name_len].decode("ascii", errors="replace")
 
         elif ext_type == 10:  # supported_groups
-            if len(val) >= 2:
-                groups_len = struct.unpack("!H", val[:2])[0]
-                groups = []
-                for i in range(2, min(len(val), 2 + groups_len), 2):
-                    if i + 2 <= len(val):
-                        groups.append(struct.unpack("!H", val[i:i + 2])[0])
-                extensions["supported_groups"] = groups
+            if len(val) < 2:
+                return extensions, extension_types, "truncated"
+            groups_len = struct.unpack("!H", val[:2])[0]
+            if 2 + groups_len > len(val) or groups_len % 2 != 0:
+                return extensions, extension_types, "truncated" if 2 + groups_len > len(val) else "malformed"
+            groups = []
+            for i in range(2, 2 + groups_len, 2):
+                groups.append(struct.unpack("!H", val[i:i + 2])[0])
+            extensions["supported_groups"] = groups
 
         elif ext_type == 11:  # ec_point_formats
-            if len(val) >= 1:
-                formats_len = val[0]
-                extensions["ec_point_formats"] = list(val[1:1 + formats_len])
+            if len(val) < 1:
+                return extensions, extension_types, "truncated"
+            formats_len = val[0]
+            if 1 + formats_len > len(val):
+                return extensions, extension_types, "truncated"
+            extensions["ec_point_formats"] = list(val[1:1 + formats_len])
 
         elif ext_type == 13:  # signature_algorithms
-            if len(val) >= 2:
-                sig_len = struct.unpack("!H", val[:2])[0]
-                sigs = []
-                for i in range(2, min(len(val), 2 + sig_len), 2):
-                    if i + 2 <= len(val):
-                        sigs.append(struct.unpack("!H", val[i:i + 2])[0])
-                extensions["signature_algorithms"] = sigs
+            if len(val) < 2:
+                return extensions, extension_types, "truncated"
+            sig_len = struct.unpack("!H", val[:2])[0]
+            if 2 + sig_len > len(val) or sig_len % 2 != 0:
+                return extensions, extension_types, "truncated" if 2 + sig_len > len(val) else "malformed"
+            sigs = []
+            for i in range(2, 2 + sig_len, 2):
+                sigs.append(struct.unpack("!H", val[i:i + 2])[0])
+            extensions["signature_algorithms"] = sigs
 
         elif ext_type == 16:  # alpn
-            if len(val) >= 2:
-                alpn_len = struct.unpack("!H", val[:2])[0]
-                protocols = []
-                p_idx = 2
-                while p_idx < 2 + alpn_len and p_idx < len(val):
-                    p_len = val[p_idx]
-                    p_idx += 1
-                    if p_idx + p_len <= len(val):
-                        protocols.append(val[p_idx:p_idx + p_len].decode("ascii", errors="replace"))
-                    p_idx += p_len
-                extensions["alpn"] = protocols
+            if len(val) < 2:
+                return extensions, extension_types, "truncated"
+            alpn_len = struct.unpack("!H", val[:2])[0]
+            if 2 + alpn_len > len(val):
+                return extensions, extension_types, "truncated"
+            protocols = []
+            p_idx = 2
+            while p_idx < 2 + alpn_len:
+                p_len = val[p_idx]
+                p_idx += 1
+                if p_idx + p_len > 2 + alpn_len:
+                    return extensions, extension_types, "truncated"
+                protocols.append(val[p_idx:p_idx + p_len].decode("ascii", errors="replace"))
+                p_idx += p_len
+            extensions["alpn"] = protocols
 
         elif ext_type == 43:  # supported_versions
-            if len(val) >= 1:
-                vers_len = val[0]
-                versions = []
-                for i in range(1, min(len(val), 1 + vers_len), 2):
-                    if i + 2 <= len(val):
-                        versions.append(struct.unpack("!H", val[i:i + 2])[0])
-                extensions["supported_versions"] = versions
+            if len(val) < 1:
+                return extensions, extension_types, "truncated"
+            vers_len = val[0]
+            if 1 + vers_len > len(val) or vers_len % 2 != 0:
+                return extensions, extension_types, "truncated" if 1 + vers_len > len(val) else "malformed"
+            versions = []
+            for i in range(1, 1 + vers_len, 2):
+                versions.append(struct.unpack("!H", val[i:i + 2])[0])
+            extensions["supported_versions"] = versions
 
         elif ext_type == 45:  # psk_key_exchange_modes
-            if len(val) >= 1:
-                modes_len = val[0]
-                extensions["psk_key_exchange_modes"] = list(val[1:1 + modes_len])
+            if len(val) < 1:
+                return extensions, extension_types, "truncated"
+            modes_len = val[0]
+            if 1 + modes_len > len(val):
+                return extensions, extension_types, "truncated"
+            extensions["psk_key_exchange_modes"] = list(val[1:1 + modes_len])
 
         elif ext_type == 51:  # key_share
-            if len(val) >= 2:
-                client_shares_len = struct.unpack("!H", val[:2])[0]
-                shares = []
-                s_idx = 2
-                while s_idx + 4 <= min(len(val), 2 + client_shares_len):
-                    group, k_len = struct.unpack("!HH", val[s_idx:s_idx + 4])
-                    s_idx += 4
-                    if s_idx + k_len <= len(val):
-                        shares.append({"group": group, "key_exchange": val[s_idx:s_idx + k_len]})
-                    s_idx += k_len
-                extensions["key_share"] = shares
+            if len(val) < 2:
+                return extensions, extension_types, "truncated"
+            client_shares_len = struct.unpack("!H", val[:2])[0]
+            if 2 + client_shares_len > len(val):
+                return extensions, extension_types, "truncated"
+            shares = []
+            s_idx = 2
+            while s_idx < 2 + client_shares_len:
+                if s_idx + 4 > 2 + client_shares_len:
+                    return extensions, extension_types, "truncated"
+                group, k_len = struct.unpack("!HH", val[s_idx:s_idx + 4])
+                s_idx += 4
+                if s_idx + k_len > 2 + client_shares_len:
+                    return extensions, extension_types, "truncated"
+                shares.append({"group": group, "key_exchange": val[s_idx:s_idx + k_len]})
+                s_idx += k_len
+            extensions["key_share"] = shares
 
-    return extensions, extension_types
+    return extensions, extension_types, None
 
 
-def _parse_server_hello_extensions(ext_data: bytes) -> Tuple[Dict[str, Any], List[int]]:
-    """Parses ServerHello extension blocks."""
+def _parse_server_hello_extensions(ext_data: bytes) -> Tuple[Dict[str, Any], List[int], Optional[str]]:
+    """Parses ServerHello extension blocks with strict length checks."""
     extensions: Dict[str, Any] = {}
     extension_types: List[int] = []
     idx = 0
     total_len = len(ext_data)
 
-    while idx + 4 <= total_len:
+    while idx < total_len:
+        if idx + 4 > total_len:
+            return extensions, extension_types, "truncated"
         ext_type, ext_len = struct.unpack("!HH", ext_data[idx:idx + 4])
         idx += 4
         if idx + ext_len > total_len:
-            break
+            return extensions, extension_types, "truncated"
         val = ext_data[idx:idx + ext_len]
         idx += ext_len
         extension_types.append(ext_type)
 
         if ext_type == 43:  # supported_versions (RFC 8446)
-            if len(val) >= 2:
-                extensions["supported_versions"] = struct.unpack("!H", val[:2])[0]
+            if len(val) < 2:
+                return extensions, extension_types, "truncated"
+            extensions["supported_versions"] = struct.unpack("!H", val[:2])[0]
 
         elif ext_type == 51:  # key_share
-            if len(val) >= 4:
-                group, k_len = struct.unpack("!HH", val[:4])
-                extensions["key_share"] = {
-                    "group": group,
-                    "key_exchange": val[4:4 + k_len] if len(val) >= 4 + k_len else b"",
-                }
+            if len(val) < 4:
+                return extensions, extension_types, "truncated"
+            group, k_len = struct.unpack("!HH", val[:4])
+            if 4 + k_len > len(val):
+                return extensions, extension_types, "truncated"
+            extensions["key_share"] = {
+                "group": group,
+                "key_exchange": val[4:4 + k_len],
+            }
 
         elif ext_type == 41:  # pre_shared_key
-            if len(val) >= 2:
-                extensions["pre_shared_key"] = struct.unpack("!H", val[:2])[0]
+            if len(val) < 2:
+                return extensions, extension_types, "truncated"
+            extensions["pre_shared_key"] = struct.unpack("!H", val[:2])[0]
 
-    return extensions, extension_types
+    return extensions, extension_types, None
 
 
 def _reassemble_handshake_payload(records: List[TlsRecord]) -> bytes:
@@ -255,6 +294,12 @@ def parse_tls_handshake(
             return stream.frame_for_offset(direction, off)
         except Exception:
             return stream.firstFrame
+
+    def safe_ts_lookup(direction: str, off: int) -> int:
+        try:
+            return stream.ts_for_offset(direction, off)
+        except Exception:
+            return stream.firstTs
 
     # 1. Parse Record Layer for Client and Server
     c_records, c_errors, c_alerts, c_enc_count = parse_tls_records(
@@ -300,43 +345,73 @@ def parse_tls_handshake(
         body = client_payload[body_start:body_end]
 
         if msg_type == HANDSHAKE_TYPE_CLIENT_HELLO:
-            if len(body) >= 34:
+            frame = safe_frame_lookup("client", client_tls_offset + c_idx)
+            if len(body) < 35:
+                handshake.parse_errors.append(TlsParseError(kind="malformed", offset=client_tls_offset + c_idx, frame=frame))
+            else:
                 legacy_ver = struct.unpack("!H", body[:2])[0]
                 rnd = body[2:34]
                 sess_id_len = body[34]
-                sess_id = body[35:35 + sess_id_len]
-                b_off = 35 + sess_id_len
+                if 35 + sess_id_len > len(body):
+                    handshake.parse_errors.append(TlsParseError(kind="truncated", offset=client_tls_offset + c_idx, frame=frame))
+                else:
+                    sess_id = body[35:35 + sess_id_len]
+                    b_off = 35 + sess_id_len
 
-                if b_off + 2 <= len(body):
-                    cs_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
-                    b_off += 2
-                    ciphers = []
-                    for i in range(b_off, min(len(body), b_off + cs_len), 2):
-                        if i + 2 <= len(body):
-                            ciphers.append(struct.unpack("!H", body[i:i + 2])[0])
-                    b_off += cs_len
+                    if b_off + 2 > len(body):
+                        handshake.parse_errors.append(TlsParseError(kind="truncated", offset=client_tls_offset + c_idx, frame=frame))
+                    else:
+                        cs_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
+                        b_off += 2
+                        if b_off + cs_len > len(body) or cs_len % 2 != 0 or cs_len == 0:
+                            kind = "truncated" if b_off + cs_len > len(body) else "malformed"
+                            handshake.parse_errors.append(TlsParseError(kind=kind, offset=client_tls_offset + c_idx, frame=frame))
+                        else:
+                            ciphers = []
+                            for i in range(b_off, b_off + cs_len, 2):
+                                ciphers.append(struct.unpack("!H", body[i:i + 2])[0])
+                            b_off += cs_len
 
-                    if b_off < len(body):
-                        comp_len = body[b_off]
-                        comp_methods = body[b_off + 1:b_off + 1 + comp_len]
-                        b_off += 1 + comp_len
+                            if b_off >= len(body):
+                                handshake.parse_errors.append(TlsParseError(kind="truncated", offset=client_tls_offset + c_idx, frame=frame))
+                            else:
+                                comp_len = body[b_off]
+                                b_off += 1
+                                if b_off + comp_len > len(body) or comp_len == 0:
+                                    kind = "truncated" if b_off + comp_len > len(body) else "malformed"
+                                    handshake.parse_errors.append(TlsParseError(kind=kind, offset=client_tls_offset + c_idx, frame=frame))
+                                else:
+                                    comp_methods = body[b_off:b_off + comp_len]
+                                    b_off += comp_len
 
-                        extensions: Dict[str, Any] = {}
-                        ext_types: List[int] = []
-                        if b_off + 2 <= len(body):
-                            ext_total_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
-                            b_off += 2
-                            extensions, ext_types = _parse_client_hello_extensions(body[b_off:b_off + ext_total_len])
+                                    ext_err = None
+                                    extensions = {}
+                                    ext_types = []
+                                    if b_off < len(body):
+                                        if b_off + 2 > len(body):
+                                            ext_err = "truncated"
+                                        else:
+                                            ext_total_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
+                                            b_off += 2
+                                            if b_off + ext_total_len != len(body):
+                                                ext_err = "truncated" if b_off + ext_total_len > len(body) else "malformed"
+                                            else:
+                                                extensions, ext_types, err = _parse_client_hello_extensions(body[b_off:b_off + ext_total_len])
+                                                if err:
+                                                    ext_err = err
 
-                        handshake.client_hello = ClientHello(
-                            legacy_version=legacy_ver,
-                            random=rnd,
-                            session_id=sess_id,
-                            cipher_suites=ciphers,
-                            compression_methods=comp_methods,
-                            extensions=extensions,
-                            extension_types=ext_types,
-                        )
+                                    if ext_err:
+                                        handshake.parse_errors.append(TlsParseError(kind=ext_err, offset=client_tls_offset + c_idx, frame=frame))
+                                    else:
+                                        handshake.client_hello = ClientHello(
+                                            legacy_version=legacy_ver,
+                                            random=rnd,
+                                            session_id=sess_id,
+                                            cipher_suites=ciphers,
+                                            compression_methods=comp_methods,
+                                            extensions=extensions,
+                                            extension_types=ext_types,
+                                        )
 
         c_idx = body_end
 
@@ -363,83 +438,143 @@ def parse_tls_handshake(
         body = server_payload[body_start:body_end]
 
         if msg_type == HANDSHAKE_TYPE_SERVER_HELLO:
-            if len(body) >= 34:
+            frame = safe_frame_lookup("server", server_tls_offset + s_idx)
+            handshake.server_hello_frame = frame
+            if len(body) < 38:
+                handshake.parse_errors.append(TlsParseError(kind="malformed", offset=server_tls_offset + s_idx, frame=frame))
+            else:
                 ver = struct.unpack("!H", body[:2])[0]
                 rnd = body[2:34]
                 sess_id_len = body[34]
-                sess_id = body[35:35 + sess_id_len]
-                b_off = 35 + sess_id_len
-
-                if b_off + 2 <= len(body):
-                    cs = struct.unpack("!H", body[b_off:b_off + 2])[0]
-                    b_off += 2
-                    comp_method = body[b_off] if b_off < len(body) else 0
-                    b_off += 1
-
-                    extensions = {}
-                    ext_types = []
-                    if b_off + 2 <= len(body):
-                        ext_total_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
-                        b_off += 2
-                        extensions, ext_types = _parse_server_hello_extensions(body[b_off:b_off + ext_total_len])
-
-                    handshake.server_hello = ServerHello(
-                        version=ver,
-                        random=rnd,
-                        session_id=sess_id,
-                        cipher_suite=cs,
-                        compression_method=comp_method,
-                        extensions=extensions,
-                        extension_types=ext_types,
-                    )
-
-                    # Check HelloRetryRequest
-                    if rnd == HRR_RANDOM:
-                        handshake.is_hello_retry_request = True
-
-                    # Determine Negotiated Version
-                    if "supported_versions" in extensions:
-                        handshake.negotiated_version = extensions["supported_versions"]
+                if 35 + sess_id_len > len(body):
+                    handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
+                else:
+                    sess_id = body[35:35 + sess_id_len]
+                    b_off = 35 + sess_id_len
+                    if b_off + 3 > len(body):
+                        handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
                     else:
-                        handshake.negotiated_version = ver
+                        cs = struct.unpack("!H", body[b_off:b_off + 2])[0]
+                        b_off += 2
+                        comp_method = body[b_off]
+                        b_off += 1
 
-                    if handshake.negotiated_version == 0x0304:
-                        is_tls13 = True
+                        ext_err = None
+                        extensions = {}
+                        ext_types = []
+                        if b_off < len(body):
+                            if b_off + 2 > len(body):
+                                ext_err = "truncated"
+                            else:
+                                ext_total_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
+                                b_off += 2
+                                if b_off + ext_total_len != len(body):
+                                    ext_err = "truncated" if b_off + ext_total_len > len(body) else "malformed"
+                                else:
+                                    extensions, ext_types, err = _parse_server_hello_extensions(body[b_off:b_off + ext_total_len])
+                                    if err:
+                                        ext_err = err
+
+                        if ext_err:
+                            handshake.parse_errors.append(TlsParseError(kind=ext_err, offset=server_tls_offset + s_idx, frame=frame))
+                        else:
+                            handshake.server_hello = ServerHello(
+                                version=ver,
+                                random=rnd,
+                                session_id=sess_id,
+                                cipher_suite=cs,
+                                compression_method=comp_method,
+                                extensions=extensions,
+                                extension_types=ext_types,
+                            )
+                            if rnd == HRR_RANDOM:
+                                handshake.is_hello_retry_request = True
+                            if "supported_versions" in extensions:
+                                handshake.negotiated_version = extensions["supported_versions"]
+                            else:
+                                handshake.negotiated_version = ver
+                            if handshake.negotiated_version == 0x0304:
+                                is_tls13 = True
 
         elif msg_type == HANDSHAKE_TYPE_CERTIFICATE:
+            frame = safe_frame_lookup("server", server_tls_offset + s_idx)
+            handshake.certificate_frame = frame
+            handshake.certificate_ts_sec = safe_ts_lookup("server", server_tls_offset + s_idx)
             if is_tls13:
                 # TLS 1.3 Certificate (RFC 8446)
-                if len(body) >= 4:
+                if len(body) < 4:
+                    handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
+                else:
                     context_len = body[0]
                     b_off = 1 + context_len
-                    if b_off + 3 <= len(body):
+                    if b_off + 3 > len(body):
+                        handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
+                    else:
                         certs_total_len = (body[b_off] << 16) | (body[b_off + 1] << 8) | body[b_off + 2]
                         b_off += 3
-                        while b_off + 3 <= len(body) and b_off < len(body):
+                        if b_off + certs_total_len != len(body):
+                            kind = "truncated" if b_off + certs_total_len > len(body) else "malformed"
+                            handshake.parse_errors.append(TlsParseError(kind=kind, offset=server_tls_offset + s_idx, frame=frame))
+                        else:
+                            parsed_certs_list = []
+                            cert_err = None
+                            limit_off = b_off + certs_total_len
+                            while b_off < limit_off:
+                                if b_off + 3 > limit_off:
+                                    cert_err = "truncated"
+                                    break
+                                cert_len = (body[b_off] << 16) | (body[b_off + 1] << 8) | body[b_off + 2]
+                                check_certificate_length(cert_len)
+                                b_off += 3
+                                if b_off + cert_len > limit_off:
+                                    cert_err = "truncated"
+                                    break
+                                parsed_certs_list.append(body[b_off:b_off + cert_len])
+                                b_off += cert_len
+                                if b_off + 2 > limit_off:
+                                    cert_err = "truncated"
+                                    break
+                                ext_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
+                                b_off += 2 + ext_len
+                                if b_off > limit_off:
+                                    cert_err = "truncated"
+                                    break
+                            if cert_err:
+                                handshake.parse_errors.append(TlsParseError(kind=cert_err, offset=server_tls_offset + s_idx, frame=frame))
+                            else:
+                                handshake.certificates.extend(parsed_certs_list)
+            else:
+                # TLS 1.2 Certificate (RFC 5246)
+                if len(body) < 3:
+                    handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
+                else:
+                    certs_total_len = (body[0] << 16) | (body[1] << 8) | body[2]
+                    if 3 + certs_total_len != len(body):
+                        kind = "truncated" if 3 + certs_total_len > len(body) else "malformed"
+                        handshake.parse_errors.append(TlsParseError(kind=kind, offset=server_tls_offset + s_idx, frame=frame))
+                    else:
+                        b_off = 3
+                        parsed_certs_list = []
+                        cert_err = None
+                        while b_off < 3 + certs_total_len:
+                            if b_off + 3 > 3 + certs_total_len:
+                                cert_err = "truncated"
+                                break
                             cert_len = (body[b_off] << 16) | (body[b_off + 1] << 8) | body[b_off + 2]
                             check_certificate_length(cert_len)
                             b_off += 3
-                            if b_off + cert_len <= len(body):
-                                handshake.certificates.append(body[b_off:b_off + cert_len])
+                            if b_off + cert_len > 3 + certs_total_len:
+                                cert_err = "truncated"
+                                break
+                            parsed_certs_list.append(body[b_off:b_off + cert_len])
                             b_off += cert_len
-                            # Skip extensions
-                            if b_off + 2 <= len(body):
-                                ext_len = struct.unpack("!H", body[b_off:b_off + 2])[0]
-                                b_off += 2 + ext_len
-            else:
-                # TLS 1.2 Certificate (RFC 5246)
-                if len(body) >= 3:
-                    certs_total_len = (body[0] << 16) | (body[1] << 8) | body[2]
-                    b_off = 3
-                    while b_off + 3 <= len(body) and b_off < 3 + certs_total_len:
-                        cert_len = (body[b_off] << 16) | (body[b_off + 1] << 8) | body[b_off + 2]
-                        check_certificate_length(cert_len)
-                        b_off += 3
-                        if b_off + cert_len <= len(body):
-                            handshake.certificates.append(body[b_off:b_off + cert_len])
-                        b_off += cert_len
+                        if cert_err:
+                            handshake.parse_errors.append(TlsParseError(kind=cert_err, offset=server_tls_offset + s_idx, frame=frame))
+                        else:
+                            handshake.certificates.extend(parsed_certs_list)
 
         elif msg_type == HANDSHAKE_TYPE_SERVER_KEY_EXCHANGE:
+            handshake.server_key_exchange_frame = safe_frame_lookup("server", server_tls_offset + s_idx)
             param_type = "unknown"
             named_curve = None
             dh_bits = None
@@ -461,14 +596,20 @@ def parse_tls_handshake(
             )
 
         elif msg_type == HANDSHAKE_TYPE_CERTIFICATE_STATUS:
-            if len(body) >= 4:
+            frame = safe_frame_lookup("server", server_tls_offset + s_idx)
+            if len(body) < 4:
+                handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
+            else:
                 status_type = body[0]
                 resp_len = (body[1] << 16) | (body[2] << 8) | body[3]
-                resp = body[4:4 + resp_len] if len(body) >= 4 + resp_len else b""
-                handshake.certificate_status = CertificateStatus(
-                    status_type=status_type,
-                    ocsp_response=resp,
-                )
+                if 4 + resp_len > len(body):
+                    handshake.parse_errors.append(TlsParseError(kind="truncated", offset=server_tls_offset + s_idx, frame=frame))
+                else:
+                    resp = body[4:4 + resp_len]
+                    handshake.certificate_status = CertificateStatus(
+                        status_type=status_type,
+                        ocsp_response=resp,
+                    )
 
         s_idx = body_end
 

@@ -90,6 +90,12 @@ def extract_session_features(
             if baseline_fp is not None and leaf_fp != baseline_fp:
                 cert_differs = 1
 
+        client_tls_offset = session.get("clientTlsStartOffset")
+        server_tls_offset = session.get("serverTlsStartOffset")
+        if client_tls_offset is not None:
+            client_b = max(0, client_b - int(client_tls_offset))
+        if server_tls_offset is not None:
+            server_b = max(0, server_b - int(server_tls_offset))
         handshake_size_bucket = (client_b + server_b) // 256
         resumed_flag = 1 if (tls and isinstance(tls, dict) and tls.get("resumed")) else 0
         starttls_offered = 1 if starttls_offered_val else 0
@@ -136,6 +142,10 @@ def extract_session_features(
         # 5. Handshake Byte Size Bucket (bucket size = 256)
         client_b = len(session.stream.clientBytes) if session.stream else 0
         server_b = len(session.stream.serverBytes) if session.stream else 0
+        if session.clientTlsStartOffset is not None:
+            client_b = max(0, client_b - session.clientTlsStartOffset)
+        if session.serverTlsStartOffset is not None:
+            server_b = max(0, server_b - session.serverTlsStartOffset)
         handshake_size_bucket = (client_b + server_b) // 256
 
         # 6. Resumed Flag

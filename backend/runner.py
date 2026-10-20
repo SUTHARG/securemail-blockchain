@@ -78,6 +78,14 @@ def execute_analysis(case_id: str, use_docker: Optional[bool] = None) -> bool:
             run_pcap_path = pcap_path
 
         if docker_mode:
+            try:
+                insp = subprocess.run(["docker", "image", "inspect", config.ENGINE_DOCKER_IMAGE], capture_output=True, timeout=2)
+                if insp.returncode != 0:
+                    docker_mode = False
+            except Exception:
+                docker_mode = False
+
+        if docker_mode:
             # Containerized execution per Prompt 6.1
             cmd = [
                 "docker",
@@ -103,8 +111,10 @@ def execute_analysis(case_id: str, use_docker: Optional[bool] = None) -> bool:
             if res.returncode == 0:
                 success = True
             else:
-                err_message = f"Container analysis failed with code {res.returncode}: {res.stderr[:200]}"
-        else:
+                logger.warning("Container analysis failed with code %s: %s; falling back to direct CLI", res.returncode, res.stderr[:200])
+                docker_mode = False
+
+        if not docker_mode:
             # Direct engine CLI invocation
             cmd = [
                 sys.executable,

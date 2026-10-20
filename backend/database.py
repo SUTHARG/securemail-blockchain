@@ -47,6 +47,7 @@ def init_db(db_path: Optional[Path] = None) -> None:
                 tx_hash TEXT,
                 status TEXT NOT NULL,
                 retries INTEGER NOT NULL DEFAULT 0,
+                raw_tx TEXT,
                 PRIMARY KEY (case_id, step),
                 FOREIGN KEY (case_id) REFERENCES cases(id)
             );
@@ -78,6 +79,14 @@ def init_db(db_path: Optional[Path] = None) -> None:
         conn = get_connection(db_path)
         with conn:
             conn.execute("ALTER TABLE cases ADD COLUMN onchain_case_id TEXT")
+        conn.close()
+    except Exception:
+        pass
+
+    try:
+        conn = get_connection(db_path)
+        with conn:
+            conn.execute("ALTER TABLE chain_txs ADD COLUMN raw_tx TEXT")
         conn.close()
     except Exception:
         pass
@@ -229,25 +238,28 @@ def record_chain_tx(
     tx_hash: Optional[str],
     status: str,
     retries: int = 0,
+    raw_tx: Optional[str] = None,
     db_path: Optional[Path] = None,
 ) -> None:
     """
     Store or update a transaction record in chain_txs.
     Prompt 6.2: Every sent transaction is stored before waiting for receipt.
+    COALESCE preserves existing nonce, tx_hash, and raw_tx to prevent erasing intent.
     """
     conn = get_connection(db_path)
     with conn:
         conn.execute(
             """
-            INSERT INTO chain_txs (case_id, step, nonce, tx_hash, status, retries)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO chain_txs (case_id, step, nonce, tx_hash, status, retries, raw_tx)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(case_id, step) DO UPDATE SET
-                nonce=excluded.nonce,
-                tx_hash=excluded.tx_hash,
+                nonce=COALESCE(excluded.nonce, chain_txs.nonce),
+                tx_hash=COALESCE(excluded.tx_hash, chain_txs.tx_hash),
+                raw_tx=COALESCE(excluded.raw_tx, chain_txs.raw_tx),
                 status=excluded.status,
                 retries=excluded.retries
             """,
-            (case_id, step, nonce, tx_hash, status, retries),
+            (case_id, step, nonce, tx_hash, status, retries, raw_tx),
         )
     conn.close()
 

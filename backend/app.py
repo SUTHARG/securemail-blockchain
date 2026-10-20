@@ -1,17 +1,23 @@
 """FastAPI backend application for SecureMailScope (Prompt 6.1)."""
 from contextlib import asynccontextmanager
 import hashlib
+import hmac
 import json
+import logging
 from pathlib import Path
 import shutil
 import time
 from typing import Any, Dict, List, Optional, Tuple
+import urllib.parse
 import uuid
+
+logger = logging.getLogger("securemailscope.backend.app")
 
 from fastapi import (
     BackgroundTasks,
     Depends,
     FastAPI,
+    Form,
     HTTPException,
     Body,
     Query,
@@ -24,7 +30,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from backend.auth import optional_analyst, require_admin, require_analyst
+from backend.auth import (
+    BrowserAuthRedirect,
+    generate_csrf_token,
+    require_admin,
+    require_analyst,
+    require_analyst_html,
+    verify_csrf,
+)
 from backend.chain.gateway import (
     ChainGateway,
     CaseNotFoundError,
@@ -51,6 +64,7 @@ from backend.runner import execute_analysis
 from backend.storage import (
     get_case_dir,
     read_case_json,
+    read_case_pcap,
     stream_and_validate_pcap,
 )
 
@@ -68,7 +82,8 @@ def get_gateway() -> ChainGateway:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize database and storage on startup."""
+    """Initialize database, storage, and validate configuration on startup."""
+    config.validate_environment()
     config.CASES_DIR.mkdir(parents=True, exist_ok=True)
     init_db()
     yield
@@ -100,9 +115,151 @@ STATUS_STAGE_MAP = {
 }
 
 
+@app.exception_handler(BrowserAuthRedirect)
+async def browser_auth_redirect_handler(request: Request, exc: BrowserAuthRedirect):
+    return RedirectResponse(
+        url=f"/login?next={exc.next_url}",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+def is_safe_relative_url(url: Optional[str]) -> bool:
+    """Ensure redirect URL is a safe, same-origin relative path."""
+    if not url:
+        return False
+    # Reject scheme-relative URLs like "//example.com" or backslash bypasses like "/\evil.com"
+    if url.startswith("//") or url.startswith("/\\") or url.startswith("\\"):
+        return False
+    if not url.startswith("/"):
+        return False
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme or parsed.netloc:
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _get_csrf_token(request: Request) -> str:
+    return request.cookies.get("csrf_token") or generate_csrf_token()
+
+
+def _is_secure_request(request: Request) -> bool:
+    """Return True if connection is HTTPS or environment is production."""
+    return (
+        request.url.scheme == "https"
+        or getattr(config, "APP_ENV", "").lower() == "production"
+        or request.headers.get("x-forwarded-proto") == "https"
+    )
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request, next: Optional[str] = "/"):
+    api_key = request.cookies.get("api_key") or ""
+    safe_next = next if is_safe_relative_url(next) else "/"
+    if api_key == config.ANALYST_API_KEY and config.ANALYST_API_KEY:
+        return RedirectResponse(url=safe_next, status_code=status.HTTP_303_SEE_OTHER)
+    csrf_token = _get_csrf_token(request)
+    response = templates.TemplateResponse(
+        "login.html",
+        {"request": request, "error": None, "next_url": safe_next, "csrf_token": csrf_token},
+    )
+    if "csrf_token" not in request.cookies:
+        response.set_cookie(
+            key="csrf_token",
+            value=csrf_token,
+            httponly=False,
+            secure=_is_secure_request(request),
+            samesite="lax",
+            path="/",
+        )
+    return response
+
+
+@app.post("/login")
+async def login_submit(
+    request: Request,
+    api_key: str = Form(...),
+    next: Optional[str] = Form("/"),
+    csrf_token: Optional[str] = Form(None),
+):
+    target = next if is_safe_relative_url(next) else "/"
+    cookie_csrf = request.cookies.get("csrf_token")
+    if not cookie_csrf or not csrf_token or not hmac.compare_digest(str(csrf_token), str(cookie_csrf)):
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+                "error": "Invalid or missing CSRF token",
+                "next_url": target,
+                "csrf_token": cookie_csrf or generate_csrf_token(),
+            },
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    if not config.ANALYST_API_KEY:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "ANALYST_API_KEY is not configured on the server", "next_url": target, "csrf_token": cookie_csrf or generate_csrf_token()},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    if api_key == config.ADMIN_API_KEY:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Admin key cannot access analyst dashboard", "next_url": target, "csrf_token": cookie_csrf or generate_csrf_token()},
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    if api_key != config.ANALYST_API_KEY:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Invalid analyst API key", "next_url": target, "csrf_token": cookie_csrf or generate_csrf_token()},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    new_csrf_token = generate_csrf_token()
+    is_secure = _is_secure_request(request)
+    response = RedirectResponse(url=target, status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(
+        key="api_key",
+        value=api_key,
+        httponly=True,
+        secure=is_secure,
+        samesite="lax",
+        path="/",
+    )
+    response.set_cookie(
+        key="csrf_token",
+        value=new_csrf_token,
+        httponly=False,
+        secure=is_secure,
+        samesite="lax",
+        path="/",
+    )
+    return response
+
+
+@app.post("/logout")
+async def logout(
+    request: Request,
+    _csrf: None = Depends(verify_csrf),
+):
+    is_secure = _is_secure_request(request)
+    response = RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    response.delete_cookie(key="api_key", path="/", secure=is_secure)
+    response.delete_cookie(key="csrf_token", path="/", secure=is_secure)
+    return response
+
+
 @app.get("/", response_class=HTMLResponse)
-async def dashboard_index(request: Request):
+async def dashboard_index(
+    request: Request,
+    actor: str = Depends(require_analyst_html),
+):
     """Case list and PCAP upload form."""
+    csrf_token = _get_csrf_token(request)
     raw_cases = list_all_cases()
     formatted_cases = []
     for c in raw_cases:
@@ -117,23 +274,33 @@ async def dashboard_index(request: Request):
             "status": c["status"],
             "created_at": created_str,
         })
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "index.html",
-        {"request": request, "cases": formatted_cases},
+        {
+            "request": request,
+            "cases": formatted_cases,
+            "csrf_token": csrf_token,
+            "is_authenticated": True,
+        },
     )
+    if "csrf_token" not in request.cookies:
+        response.set_cookie(key="csrf_token", value=csrf_token, httponly=False, samesite="lax", path="/")
+    return response
 
 
 @app.post("/cases/upload-form")
 async def upload_case_form(
     request: Request,
     file: UploadFile = File(...),
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ):
     """Browser upload form handler redirecting to case overview."""
     case_id = uuid.uuid4().hex
     pcap_sha256, pcap_path, total_size = await stream_and_validate_pcap(file, case_id)
     create_case(case_id=case_id, pcap_sha256=pcap_sha256, status="uploaded")
     add_audit_entry(
-        actor="browser_analyst",
+        actor="analyst",
         action="case_uploaded",
         case_id=case_id,
         detail=f"bytes={total_size}",
@@ -151,6 +318,7 @@ async def upload_case_form(
 async def upload_case(
     file: UploadFile = File(...),
     actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ) -> Dict[str, Any]:
     """Upload PCAP capture and register a new case."""
     case_id = uuid.uuid4().hex
@@ -180,6 +348,7 @@ async def analyze_case(
     background_tasks: BackgroundTasks,
     sync: bool = Query(True, description="Run synchronously if True, or as background task if False"),
     actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ) -> Dict[str, Any]:
     """Execute offline analysis on case PCAP."""
     case = get_case(case_id)
@@ -206,6 +375,7 @@ async def analyze_case(
 async def distribute_case(
     case_id: str,
     actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ) -> Dict[str, Any]:
     """Distribute case PCAP and organization secret to validator inboxes (Tier 1: file copy)."""
     case = get_case(case_id)
@@ -222,12 +392,8 @@ async def distribute_case(
             detail="Case PCAP (pcap.bin) not found",
         )
 
-    # Read plaintext pcap bytes (transparently decrypting from storage at rest if encrypted)
-    try:
-        from validator.crypto import decrypt_at_rest
-        raw_pcap_bytes = decrypt_at_rest(pcap_path.read_bytes())
-    except Exception:
-        raw_pcap_bytes = pcap_path.read_bytes()
+    # Read plaintext pcap bytes (transparently decrypting from storage at rest, fails closed)
+    raw_pcap_bytes = read_case_pcap(case["id"])
 
     # Determine organization secret
     secret_hex = config.ORG_SECRET_HEX.strip()
@@ -328,6 +494,7 @@ async def register_validator_public_key(
     validator_id: str,
     payload: Dict[str, Any] = Body(...),
     actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ) -> Dict[str, Any]:
     """Register validator Curve25519 public key with the backend."""
     pub_hex = payload.get("publicKeyHex") or payload.get("publicKey") or payload.get("key")
@@ -387,7 +554,7 @@ async def get_validator_public_key_route(
 async def get_case_details(
     case_id: str,
     request: Request,
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ) -> Any:
     """Get case status and metadata (JSON or HTML overview)."""
     case = get_case(case_id)
@@ -425,6 +592,17 @@ async def get_case_details(
 
         host_scores = read_case_json(case_id, "host_scores.json") or []
 
+        onchain_id = case.get("onchain_case_id") or ""
+        onchain_status = "Not Opened"
+        chain_info = {}
+        if onchain_id:
+            try:
+                gateway = get_gateway()
+                chain_info = gateway.get_chain_status(case_id)
+                onchain_status = chain_info.get("stateName") or chain_info.get("state") or "Opened"
+            except Exception:
+                onchain_status = "Unavailable"
+
         return templates.TemplateResponse(
             "overview.html",
             {
@@ -432,13 +610,23 @@ async def get_case_details(
                 "case_id": case["id"],
                 "active_tab": "overview",
                 "current_status": cur_status,
+                "onchain_status": onchain_status,
+                "chain_info": chain_info,
+                "can_finalize": chain_info.get("canFinalize", False),
+                "quorum_reached": chain_info.get("quorumReached", False),
+                "matching_reveals": chain_info.get("matchingReveals", 0),
+                "quorum_k": chain_info.get("k", 2),
+                "validators": chain_info.get("validators", []),
                 "stage_index": stage_idx,
                 "pcap_sha256": case["pcap_sha256"],
                 "result_root": result.get("resultRoot") or manifest.get("resultRoot") or "",
                 "ruleset_hash": manifest.get("rulesetHash") or "",
-                "onchain_id": case.get("onchain_case_id") or "",
+                "onchain_id": onchain_id,
                 "top_findings": top_findings,
                 "top_hosts": host_scores[:5],
+                "csrf_token": _get_csrf_token(request),
+                "error": request.query_params.get("error"),
+                "success": request.query_params.get("success"),
             },
         )
     return case
@@ -455,15 +643,15 @@ async def get_case_sessions(
     sort_order: Optional[str] = Query("asc"),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ) -> Any:
     """Get paginated session records from disk (JSON or HTML)."""
     case = get_case(case_id)
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
 
-    sessions = read_case_json(case_id, "sessions.json")
-    if sessions is None:
+    raw_sessions = read_case_json(case_id, "sessions.json")
+    if raw_sessions is None:
         if "text/html" in request.headers.get("accept", ""):
             return templates.TemplateResponse(
                 "sessions.html",
@@ -482,6 +670,12 @@ async def get_case_sessions(
                 },
             )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sessions not found (analysis pending)")
+
+    from engine.smscope.models import SessionRecord
+    sessions = [
+        SessionRecord.from_dict(s).to_dict(include_extended=True) if isinstance(s, dict) else s
+        for s in raw_sessions
+    ]
 
     if "text/html" in request.headers.get("accept", ""):
         all_hosts = sorted(list({s.get("serverEndpoint") for s in sessions if s.get("serverEndpoint")}))
@@ -543,7 +737,7 @@ async def get_case_findings(
     sort_order: Optional[str] = Query("desc"),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ) -> Any:
     """Get paginated cryptographic findings from disk (JSON or HTML)."""
     case = get_case(case_id)
@@ -640,7 +834,7 @@ async def get_case_hosts(
     sort_order: Optional[str] = Query("desc"),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ) -> Any:
     """Get paginated host scores and posture summaries (JSON or HTML)."""
     case = get_case(case_id)
@@ -720,7 +914,7 @@ async def get_case_host_detail(
     case_id: str,
     host_id_or_ep: str,
     request: Request,
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ):
     """Render drill-down page for a specific host (findings, sessions, certs, FS share, posture chain)."""
     case = get_case(case_id)
@@ -850,7 +1044,7 @@ async def get_case_host_detail(
 async def get_case_anomalies_page(
     case_id: str,
     request: Request,
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ):
     """Render advisory anomaly flags page from offline unsupervised model."""
     case = get_case(case_id)
@@ -898,7 +1092,7 @@ async def get_case_anomalies_page(
 async def get_case_tls_page(
     case_id: str,
     request: Request,
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ):
     """Render TLS protocol version and cipher suite distribution metrics page."""
     case = get_case(case_id)
@@ -968,7 +1162,7 @@ async def get_case_tls_page(
 async def get_case_certificates_page(
     case_id: str,
     request: Request,
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ):
     """Render observed X.509 certificates table."""
     case = get_case(case_id)
@@ -1017,42 +1211,84 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
     findings_data = read_case_json(case_id, "findings.json") or []
     scores_data = read_case_json(case_id, "host_scores.json") or []
 
-    # Step 1: PCAP SHA-256 match
-    pcap_match = False
-    pcap_sha = case.get("pcap_sha256") or manifest.get("pcapSha256") or ""
-    if pcap_path.exists():
+    # Step 1: Recompute PCAP SHA-256
+    actual_pcap_sha = ""
+    pcap_read_error = ""
+    if not pcap_path.exists():
+        pcap_read_error = "Stored PCAP file missing on disk"
+    else:
         from validator.crypto import decrypt_at_rest
-        actual_sha = hashlib.sha256(decrypt_at_rest(pcap_path.read_bytes())).hexdigest()
-        pcap_match = (actual_sha == pcap_sha)
+        try:
+            actual_pcap_sha = hashlib.sha256(decrypt_at_rest(pcap_path.read_bytes())).hexdigest().lower()
+        except Exception as exc:
+            actual_pcap_sha = ""
+            pcap_read_error = f"PCAP decryption failed: {exc}"
 
     # Step 2: Leaves & Root Rebuild
     step2_match = False
-    result_root = (result.get("resultRoot") or "").lower().replace("0x", "")
-    if result and findings_data is not None and scores_data is not None:
-        try:
-            from engine.smscope.results.canonical import canonical_json
-            from engine.smscope.results.hashing import finding_leaf, host_score_leaf
-            from engine.smscope.results.merkle import MerkleTree
+    step2_status = "PENDING"
+    step2_details = "Local analysis pending: result.json not yet generated"
+    result_root = (result.get("resultRoot") or "").lower().replace("0x", "") if result else ""
 
-            leaves = []
-            for f in findings_data:
-                leaves.append(finding_leaf(canonical_json(f)))
-            for s in scores_data:
-                leaves.append(host_score_leaf(s["hostId"], s["findingsDigest"], int(s["score"])))
-            if leaves:
-                computed_tree = MerkleTree(leaves)
-                step2_match = (computed_tree.root.hex().lower() == result_root)
-        except Exception:
-            step2_match = False
+    if result is not None:
+        if not result_root:
+            step2_status = "FAIL"
+            step2_details = "result.json missing resultRoot"
+        elif findings_data is None or scores_data is None:
+            step2_status = "FAIL"
+            step2_details = "findings.json or host_scores.json missing for result validation"
+        else:
+            try:
+                from engine.smscope.results.canonical import canonical_json
+                from engine.smscope.results.hashing import finding_leaf, host_score_leaf
+                from engine.smscope.results.merkle import MerkleTree
 
-    # On-Chain State from Gateway or database
+                leaves = []
+                for f in findings_data:
+                    leaves.append(finding_leaf(canonical_json(f)))
+                for s in scores_data:
+                    leaves.append(host_score_leaf(s["hostId"], s["findingsDigest"], int(s["score"])))
+                if leaves:
+                    computed_tree = MerkleTree(leaves)
+                    step2_match = (computed_tree.root.hex().lower() == result_root)
+                    if step2_match:
+                        step2_status = "PASS"
+                        step2_details = f"Result Root matches rebuilt tree: {result_root[:16]}..."
+                    else:
+                        step2_status = "FAIL"
+                        step2_details = "Result tree mismatch: computed root does not match stored resultRoot"
+                else:
+                    step2_status = "FAIL"
+                    step2_details = "No leaves found to rebuild Merkle tree"
+            except Exception as exc:
+                step2_match = False
+                step2_status = "FAIL"
+                step2_details = f"Tree rebuild error: {exc}"
+
+    # On-Chain State from Gateway
     chain_info: Dict[str, Any] = {}
     validators: List[Dict[str, Any]] = []
     txs = get_chain_txs(case_id)
 
+    step1_match = False
+    if pcap_read_error:
+        step1_status = "FAIL"
+        step1_details = pcap_read_error
+    else:
+        step1_status = "PENDING"
+        step1_details = "Case not yet opened on-chain"
+
     step3_match = False
+    step3_status = "PENDING"
+    step3_details = "Case not yet finalized on-chain"
+
     step4_match = False
+    step4_status = "PENDING"
+    step4_details = "Posture not yet recorded on-chain"
+
     step5_match = False
+    step5_status = "PENDING"
+    step5_details = "Report not yet anchored on-chain"
 
     onchain_case_id = case.get("onchain_case_id")
     if onchain_case_id:
@@ -1064,20 +1300,76 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
                 pass
             chain_info = gw.get_chain_status(case_id)
             validators = chain_info.get("validators", [])
+
+            # Step 1 check vs on-chain pcapHash
+            db_pcap_hash = (case.get("pcap_sha256") or manifest.get("pcapSha256") or "").lower()
+            onchain_pcap = (chain_info.get("pcapHash") or "").lower().replace("0x", "")
+            if pcap_read_error:
+                step1_match = False
+                step1_status = "FAIL"
+                step1_details = pcap_read_error
+            elif not onchain_pcap or onchain_pcap == "0" * 64:
+                step1_match = False
+                step1_status = "FAIL"
+                step1_details = "On-chain pcapHash is missing or zero for opened case"
+            elif db_pcap_hash and actual_pcap_sha != db_pcap_hash:
+                step1_match = False
+                step1_status = "FAIL"
+                step1_details = "Decrypted PCAP hash does not match stored case record and does not match on-chain pcapHash"
+            elif actual_pcap_sha and actual_pcap_sha == onchain_pcap:
+                step1_match = True
+                step1_status = "PASS"
+                step1_details = f"Stored PCAP matches on-chain pcapHash: {actual_pcap_sha[:16]}..."
+            else:
+                step1_match = False
+                step1_status = "FAIL"
+                step1_details = "Stored PCAP SHA-256 does not match on-chain pcapHash"
+
+            # Step 3 check vs on-chain finalRoot
             final_root = (chain_info.get("finalRoot") or "").lower().replace("0x", "")
             if final_root and final_root != "0" * 64:
-                step3_match = (result_root == final_root)
+                step3_match = (result_root == final_root and bool(result_root))
+                step3_status = "PASS" if step3_match else "FAIL"
+                step3_details = "Result root matches on-chain finalRoot" if step3_match else "Result root mismatch with on-chain finalRoot"
+            else:
+                step3_status = "PENDING"
+                step3_details = "Case not yet finalized on-chain"
 
-            # Step 4: PostureLedger check
-            if chain_info.get("state") == "Finalized" and len(scores_data) > 0:
-                step4_match = True
+            # Step 4: Walk and verify PostureLedger records
+            if chain_info.get("state") == "Finalized" and len(scores_data) > 0 and gw.posture_ledger:
+                try:
+                    from backend.chain.verifier import verify_posture_ledger_hash_chain
+                    case_bytes = bytes.fromhex(onchain_case_id.replace("0x", ""))
+                    result_root_bytes = bytes.fromhex(result_root) if result_root else bytes(32)
+                    step4_match, step4_details = verify_posture_ledger_hash_chain(
+                        posture_ledger_contract=gw.posture_ledger,
+                        onchain_case_bytes=case_bytes,
+                        result_root_bytes=result_root_bytes,
+                        expected_host_scores=scores_data,
+                        w3_instance=getattr(gw, "w3", None),
+                    )
+                    step4_status = "PASS" if step4_match else "FAIL"
+                except Exception as exc:
+                    step4_match = False
+                    step4_status = "FAIL"
+                    step4_details = f"PostureLedger verification error: {exc}"
+            else:
+                step4_match = False
+                step4_status = "PENDING"
+                step4_details = "Posture not yet recorded on-chain"
 
             # Step 5: ReportHash check
             rep_file = case_dir / "report.json"
             anchored_report = (chain_info.get("reportHash") or "").lower().replace("0x", "")
-            if rep_file.exists() and anchored_report and anchored_report != "0" * 64:
-                actual_rep_hash = hashlib.sha256(rep_file.read_bytes()).hexdigest().lower()
-                step5_match = (actual_rep_hash == anchored_report)
+            if anchored_report and anchored_report != "0" * 64:
+                if rep_file.exists():
+                    actual_rep_hash = hashlib.sha256(rep_file.read_bytes()).hexdigest().lower()
+                    step5_match = (actual_rep_hash == anchored_report)
+                    step5_status = "PASS" if step5_match else "FAIL"
+                    step5_details = "Report hash matches on-chain anchored reportHash" if step5_match else "Report hash mismatch with on-chain reportHash"
+                else:
+                    step5_status = "FAIL"
+                    step5_details = "report.json missing locally"
         except CaseNotFoundError:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -1097,7 +1389,7 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
                 detail=f"Blockchain service error: {exc}",
             )
     else:
-        # On-chain data is missing because the case has not been opened on-chain yet
+        # Case has not been opened on-chain yet
         chain_info = {
             "caseId": case_id,
             "status": case.get("status", "uploaded"),
@@ -1117,36 +1409,57 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
         {
             "step": 1,
             "name": "PCAP SHA-256 vs On-Chain pcapHash",
-            "status": "PASS" if pcap_match else "FAIL",
-            "details": f"Local SHA-256 matches: {pcap_sha[:16]}..." if pcap_match else "PCAP hash mismatch",
+            "status": step1_status,
+            "details": step1_details,
         },
         {
             "step": 2,
             "name": "Off-Chain Leaves & Root Rebuild",
-            "status": "PASS" if step2_match else "FAIL",
-            "details": f"Result Root matches rebuilt tree: {result_root[:16]}..." if step2_match else "Tree rebuild mismatch",
+            "status": step2_status,
+            "details": step2_details,
         },
         {
             "step": 3,
             "name": "Result Root vs On-Chain finalRoot",
-            "status": "PASS" if step3_match else ("PENDING" if not chain_info.get("finalRoot") else "FAIL"),
-            "details": "Verified against CaseRegistry" if step3_match else ("Case not yet finalized on-chain" if not chain_info.get("finalRoot") else "Final root mismatch"),
+            "status": step3_status,
+            "details": step3_details,
         },
         {
             "step": 4,
             "name": "PostureLedger Hash Chain Walk",
-            "status": "PASS" if step4_match else "PENDING",
-            "details": f"Verified {len(scores_data)} host posture entries" if step4_match else "Posture not yet recorded on-chain",
+            "status": step4_status,
+            "details": step4_details,
         },
         {
             "step": 5,
             "name": "Report SHA-256 vs Anchored reportHash",
-            "status": "PASS" if step5_match else "PENDING",
-            "details": "Report hash anchored on CaseRegistry" if step5_match else "Report not yet anchored on-chain",
+            "status": step5_status,
+            "details": step5_details,
         },
     ]
 
-    all_passed = pcap_match and step2_match and (step3_match or chain_info.get("state") != "Finalized")
+    has_fail = any(s["status"] == "FAIL" for s in verifier_steps)
+    has_pending = any(s["status"] == "PENDING" for s in verifier_steps)
+    if has_fail:
+        overall_status = "FAIL"
+    elif has_pending:
+        overall_status = "PENDING"
+    else:
+        overall_status = "PASS"
+    chain_info["overall_status"] = overall_status
+
+    all_passed = bool(
+        step1_match
+        and step1_status == "PASS"
+        and step2_match
+        and step2_status == "PASS"
+        and step3_match
+        and step3_status == "PASS"
+        and step4_match
+        and step4_status == "PASS"
+        and step5_match
+        and step5_status == "PASS"
+    )
     return verifier_steps, chain_info, validators, txs, all_passed
 
 
@@ -1154,7 +1467,7 @@ def _compute_verifier_steps_and_state(case_id: str) -> Tuple[List[Dict[str, Any]
 async def get_case_chain_state(
     case_id: str,
     request: Request,
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ) -> Any:
     """Get on-chain custody and transaction state (JSON or HTML)."""
     case = get_case(case_id)
@@ -1175,6 +1488,7 @@ async def get_case_chain_state(
                 "verification_result": None,
                 "validator_submissions": validators,
                 "transactions": txs,
+                "csrf_token": _get_csrf_token(request),
             },
         )
 
@@ -1197,6 +1511,8 @@ async def get_case_chain_state(
 async def verify_case_browser(
     case_id: str,
     request: Request,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ):
     """Run Section 8 independent verification suite and render HTML results."""
     case = get_case(case_id)
@@ -1212,9 +1528,15 @@ async def verify_case_browser(
             "active_tab": "chain",
             "chain_state": chain_info,
             "verifier_steps": verifier_steps,
-            "verification_result": {"verified": all_passed},
+            "verification_result": {
+                "verified": all_passed,
+                "overall_status": chain_info.get("overall_status", "PASS" if all_passed else "FAIL"),
+                "has_pending": any(s["status"] == "PENDING" for s in verifier_steps),
+                "has_fail": any(s["status"] == "FAIL" for s in verifier_steps),
+            },
             "validator_submissions": validators,
             "transactions": txs,
+            "csrf_token": _get_csrf_token(request),
         },
     )
 
@@ -1224,34 +1546,83 @@ async def execute_case_browser_action(
     case_id: str,
     action: str,
     request: Request,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ):
-    """Execute lifecycle action from browser overview and redirect to case."""
+    """Execute lifecycle action from browser overview and redirect to case with clear error messages."""
+    import urllib.parse
     case = get_case(case_id)
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
 
     act = action.lower()
+    error_msg = None
+    def _get_active_gateway():
+        try:
+            return get_gateway()
+        except Exception as exc:
+            raise GatewayError(f"Blockchain gateway is unavailable: {exc}")
+
     try:
-        gateway = get_gateway()
-    except Exception:
-        gateway = None
+        if act == "analyze":
+            execute_analysis(case_id)
+        elif act == "open":
+            gateway = _get_active_gateway()
+            gateway.open_case(case_id)
+        elif act == "claim":
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Claim action requires an on-chain case.")
+            gateway = _get_active_gateway()
+            gateway.submit_claim(case_id)
+        elif act == "distribute":
+            await distribute_case(case_id, actor="browser_analyst")
+            encoded_msg = urllib.parse.quote(
+                "Action 'distribute' completed: Bundles placed in validator inboxes. Next: Run Validator Consensus."
+            )
+            return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
+        elif act in ("validate", "validators", "consensus"):
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Validator consensus requires an on-chain case.")
+            gateway = _get_active_gateway()
+            val_res = gateway.run_validator_round(case_id)
+            encoded_msg = urllib.parse.quote(
+                f"Validator consensus completed: {val_res.get('reveals', 0)}/{val_res.get('quorum', 2)} matching reveals on-chain (Quorum: {'Reached' if val_res.get('quorumReached') else 'In Progress'})"
+            )
+            return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
+        elif act == "advance":
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Advance action requires an on-chain case.")
+            gateway = _get_active_gateway()
+            gateway.advance(case_id)
+        elif act == "finalize":
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Finalize action requires an on-chain case.")
+            gateway = _get_active_gateway()
+            gateway.finalize(case_id)
+        elif act == "record":
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Record action requires an on-chain case.")
+            gateway = _get_active_gateway()
+            gateway.record_posture(case_id)
+        elif act == "anchor":
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Anchor action requires an on-chain case.")
+            gateway = _get_active_gateway()
+            gateway.anchor_report(case_id)
+        else:
+            raise InvalidStateError(f"Unknown browser action: {action}")
+    except (CaseNotFoundError, InvalidStateError, GatewayError, TransactionRevertedError) as exc:
+        error_msg = str(exc)
+    except Exception as exc:
+        logger.exception("Unexpected error executing browser action '%s' for case %s", act, case_id)
+        error_msg = f"An unexpected error occurred while executing {act}. Please check server logs."
 
-    if act == "analyze":
-        execute_analysis(case_id)
-    elif act == "open" and gateway:
-        gateway.open_case(case_id)
-    elif act == "claim" and gateway:
-        gateway.submit_claim(case_id)
-    elif act == "distribute":
-        await distribute_case(case_id, actor="browser_analyst")
-    elif act == "finalize" and gateway:
-        gateway.finalize(case_id)
-    elif act == "record" and gateway:
-        gateway.record_posture(case_id)
-    elif act == "anchor" and gateway:
-        gateway.anchor_report(case_id)
+    if error_msg:
+        encoded_err = urllib.parse.quote(error_msg)
+        return RedirectResponse(url=f"/cases/{case_id}?error={encoded_err}", status_code=status.HTTP_303_SEE_OTHER)
 
-    return RedirectResponse(url=f"/cases/{case_id}", status_code=status.HTTP_303_SEE_OTHER)
+    encoded_msg = urllib.parse.quote(f"Action '{act}' completed successfully")
+    return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 
@@ -1259,6 +1630,7 @@ async def execute_case_browser_action(
 async def verify_case_endpoint(
     case_id: str,
     actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
 ) -> Dict[str, Any]:
     """Run verification checks on case outputs."""
     case = get_case(case_id)
@@ -1349,7 +1721,11 @@ async def get_host_posture_chain(
 
 
 @app.post("/cases/{case_id}/open")
-async def open_case_on_chain(case_id: str, actor: str = Depends(require_analyst)) -> Dict[str, Any]:
+async def open_case_on_chain(
+    case_id: str,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
+) -> Dict[str, Any]:
     """Open forensic case in CaseRegistry."""
     try:
         gateway = get_gateway()
@@ -1363,7 +1739,11 @@ async def open_case_on_chain(case_id: str, actor: str = Depends(require_analyst)
 
 
 @app.post("/cases/{case_id}/claim")
-async def claim_case_on_chain(case_id: str, actor: str = Depends(require_analyst)) -> Dict[str, Any]:
+async def claim_case_on_chain(
+    case_id: str,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
+) -> Dict[str, Any]:
     """Submit claimed forensic result root to ValidationQuorum."""
     try:
         gateway = get_gateway()
@@ -1379,7 +1759,11 @@ async def claim_case_on_chain(case_id: str, actor: str = Depends(require_analyst
 
 
 @app.post("/cases/{case_id}/finalize")
-async def finalize_case_on_chain(case_id: str, actor: str = Depends(require_analyst)) -> Dict[str, Any]:
+async def finalize_case_on_chain(
+    case_id: str,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
+) -> Dict[str, Any]:
     """Trigger quorum finalization."""
     try:
         gateway = get_gateway()
@@ -1393,23 +1777,57 @@ async def finalize_case_on_chain(case_id: str, actor: str = Depends(require_anal
 
 
 @app.post("/cases/{case_id}/record")
-async def record_case_on_chain(case_id: str, actor: str = Depends(require_analyst)) -> Dict[str, Any]:
+async def record_case_on_chain(
+    case_id: str,
+    request: Request,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
+) -> Any:
     """Record verified host posture scores on PostureLedger."""
+    is_html = "text/html" in request.headers.get("accept", "")
     try:
-        gateway = get_gateway()
-        return gateway.record_posture(case_id)
+        case = get_case(case_id)
+        if not case:
+            raise CaseNotFoundError(f"Case {case_id} not found")
+        if not case.get("onchain_case_id"):
+            raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Record action requires an on-chain case.")
+
+        try:
+            gateway = get_gateway()
+        except Exception as exc:
+            raise GatewayError(f"Blockchain gateway is unavailable: {exc}")
+        result = gateway.record_posture(case_id)
+        if is_html:
+            encoded_msg = urllib.parse.quote("Posture successfully recorded on PostureLedger")
+            return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
+        return result
     except CaseNotFoundError as exc:
+        if is_html:
+            encoded_err = urllib.parse.quote(str(exc))
+            return RedirectResponse(url=f"/cases/{case_id}?error={encoded_err}", status_code=status.HTTP_303_SEE_OTHER)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-    except (InvalidStateError, GatewayError) as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
-    except TransactionRevertedError as exc:
+    except (InvalidStateError, GatewayError, TransactionRevertedError) as exc:
+        if is_html:
+            encoded_err = urllib.parse.quote(str(exc))
+            return RedirectResponse(url=f"/cases/{case_id}?error={encoded_err}", status_code=status.HTTP_303_SEE_OTHER)
+        err_msg = str(exc).lower()
+        if "connection" in err_msg or "refused" in err_msg or "deployment file" in err_msg or "unavailable" in err_msg:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Blockchain service unavailable: {exc}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        logger.exception("Unexpected error in record_case_on_chain for case %s", case_id)
+        if is_html:
+            encoded_err = urllib.parse.quote("An unexpected error occurred while recording posture.")
+            return RedirectResponse(url=f"/cases/{case_id}?error={encoded_err}", status_code=status.HTTP_303_SEE_OTHER)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
 
 @app.post("/cases/{case_id}/anchor")
-async def anchor_case_on_chain(case_id: str, actor: str = Depends(require_analyst)) -> Dict[str, Any]:
+async def anchor_case_on_chain(
+    case_id: str,
+    actor: str = Depends(require_analyst),
+    _csrf: None = Depends(verify_csrf),
+) -> Dict[str, Any]:
     """Anchor custody report hash in CaseRegistry."""
     try:
         gateway = get_gateway()
@@ -1421,7 +1839,10 @@ async def anchor_case_on_chain(case_id: str, actor: str = Depends(require_analys
     except TransactionRevertedError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        err_msg = str(exc).lower()
+        if "connection" in err_msg or "refused" in err_msg or "deployment file" in err_msg or "unavailable" in err_msg:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Blockchain service unavailable: {exc}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 class ResolveRequest(BaseModel):
@@ -1434,6 +1855,7 @@ async def resolve_case_on_chain(
     case_id: str,
     payload: ResolveRequest = Body(default_factory=ResolveRequest),
     actor: str = Depends(require_admin),
+    _csrf: None = Depends(verify_csrf),
 ) -> Dict[str, Any]:
     """Administrator resolution for Disputed or Expired cases."""
     try:
@@ -1452,8 +1874,9 @@ async def resolve_case_on_chain(
 @app.get("/cases/{case_id}/report")
 async def get_case_report(
     case_id: str,
+    request: Request,
     format: str = Query("json", description="Report format: json or html (pdf returns 501)"),
-    actor: str = Depends(optional_analyst),
+    actor: str = Depends(require_analyst_html),
 ):
     """Generate or retrieve deterministic posture report (JSON or HTML)."""
     case = get_case(case_id)
@@ -1471,7 +1894,8 @@ async def get_case_report(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to build report: {exc}")
 
     if fmt == "json":
-        return Response(content=canonical_bytes, media_type="application/json")
+        from engine.smscope.results.canonical import canonical_json
+        return Response(content=canonical_json(report_dict), media_type="application/json")
     elif fmt == "html":
         return HTMLResponse(content=html_content)
     elif fmt == "pdf":

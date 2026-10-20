@@ -173,6 +173,12 @@ def read_pcap_packets(
                     stats["malformed_packets"] += 1
                     continue
 
+                total_len = struct.unpack("!H", packet_data[offset + 2: offset + 4])[0]
+                if total_len < ihl:
+                    stats["malformed_packets"] += 1
+                    continue
+                ip_end = min(len(packet_data), offset + total_len)
+
                 flags_frag = struct.unpack("!H", packet_data[offset + 6: offset + 8])[0]
                 frag_offset = flags_frag & 0x1FFF
                 more_frags = bool(flags_frag & 0x2000)
@@ -198,6 +204,9 @@ def read_pcap_packets(
                 if ver != 6:
                     stats["malformed_packets"] += 1
                     continue
+
+                v6_payload_len = struct.unpack("!H", packet_data[offset + 4: offset + 6])[0]
+                ip_end = min(len(packet_data), offset + 40 + v6_payload_len)
 
                 next_header = packet_data[offset + 6]
                 src_ip = ipaddress.IPv6Address(packet_data[offset + 8: offset + 24]).compressed.lower()
@@ -261,7 +270,12 @@ def read_pcap_packets(
                 stats["malformed_packets"] += 1
                 continue
 
-            payload = packet_data[tcp_offset + data_offset:]
+            payload_start = tcp_offset + data_offset
+            if payload_start > ip_end:
+                stats["malformed_packets"] += 1
+                continue
+
+            payload = packet_data[payload_start:ip_end]
             stats["tcp_packets"] += 1
 
             yield RawPacket(

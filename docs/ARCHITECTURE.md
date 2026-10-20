@@ -191,8 +191,8 @@ Integers replace the logarithmic exposure factor suggested earlier, because floa
 
 ### 4.8 Advisory layers (T6, T7)
 
-- **Anomaly detection (T6):** Isolation Forest over per-session features: TLS version, cipher suite, JA3 rarity relative to a baseline, certificate change for the same server, handshake size, resumption flag, STARTTLS offered and used. Baseline comes from clean lab traffic. Output is flagged sessions with the top deviating features. Excluded from the result root.
-- **Recommendations (T7):** an LLM receives the findings JSON only. A validator rejects any recommendation that cites a finding ID that does not exist and falls back to static templates. Excluded from the result root.
+- **Anomaly detection (T6):** Isolation Forest over per-session features: TLS version, cipher suite, JA3 rarity relative to a baseline, certificate change for the same server, handshake size (measured from TLS start offset when available, bucketed by 256 bytes), resumption flag, STARTTLS offered and used. Baseline comes from clean lab traffic. Output is flagged sessions with the top deviating features. Excluded from the result root.
+- **Recommendations (T7):** an LLM receives the findings JSON only. When an external LLM is offline or unconfigured, an offline provider generates deterministic template-based remediation guidance. A validator rejects any recommendation that cites a finding ID that does not exist and falls back to static templates. Excluded from the result root.
 - **Open:** the problem statement asks for AI-based risk scoring. The score in 4.7 is rule-based. Options are to keep it rule-based, or to add an ML-derived ranking next to it and compare the two. Not yet decided.
 
 ## 5. Data model
@@ -332,6 +332,8 @@ CaseOpened, ClaimSubmitted, CommitSubmitted, RevealSubmitted, CaseFinalized, Cas
 - A colluding majority of validators can finalize a false result. The claim is that trust moves from one operator to a quorum, not that the system is trustless.
 - Commit-reveal prevents copying but cannot prove a validator ran the engine.
 - Incomplete captures (dropped packets) limit what can be assessed. Gaps are flagged.
+- IP fragmentation: IP fragments (packets with IPv4 MF flag set or non-zero fragment offset, or IPv6 fragment extension headers) are not reassembled; fragmented packets beyond initial TCP headers cannot be tracked and are logged as incomplete capture gaps.
+- Trust store path validation: Certificate chain trust store validation evaluates against system or custom-configured CA bundle paths. Missing, invalid, or unreadable trust store files fail closed. Revocation checks (OCSP/CRL) are not evaluated in passive capture analysis.
 
 ## 10. Requirement traceability
 

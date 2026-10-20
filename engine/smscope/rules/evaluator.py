@@ -133,6 +133,12 @@ class RuleEvaluator:
                 detections[key]["severity"] = severity
 
         for session in sessions:
+            stream_first_frame = session.stream.firstFrame if getattr(session, "stream", None) else 1
+            sh_frame = getattr(session, "_server_hello_frame", None) or stream_first_frame
+            cert_frame = getattr(session, "_certificate_frame", None) or sh_frame
+            ske_frame = getattr(session, "_server_key_exchange_frame", None) or sh_frame
+            cert_ts = getattr(session, "_certificate_ts_sec", None) or session.firstPacketTs
+
             # R01 Critical: the session has any cleartextAuth entry
             if len(session.cleartextAuth) > 0:
                 evs = [
@@ -147,11 +153,14 @@ class RuleEvaluator:
                 record("R01", session, evs, {"mechanisms": mechs})
 
             # R02 High: transportMode is plaintext and starttls.offered is false
-            if session.transportMode == "plaintext" and not session.starttls.offered:
+            # Requires observed protocol capability/greeting exchange; incomplete/truncated sessions are not flagged
+            has_exchange = (session.starttls_offered_frame is not None) or (getattr(session, "stream", None) is None)
+            if session.transportMode == "plaintext" and not session.starttls.offered and has_exchange:
+                r02_pkt = session.starttls_offered_frame or (session.stream.firstFrame if getattr(session, "stream", None) else 1)
                 evs = [
                     Evidence(
                         sessionId=session.sessionId,
-                        packetNumber=1,
+                        packetNumber=r02_pkt,
                         note="Plaintext mail session with STARTTLS not offered",
                     )
                 ]
@@ -163,10 +172,11 @@ class RuleEvaluator:
                 and not session.starttls.attempted
                 and session.transportMode == "plaintext"
             ):
+                r03_pkt = session.starttls_offered_frame or stream_first_frame
                 evs = [
                     Evidence(
                         sessionId=session.sessionId,
-                        packetNumber=1,
+                        packetNumber=r03_pkt,
                         note="STARTTLS offered but client did not attempt it",
                     )
                 ]
@@ -178,10 +188,11 @@ class RuleEvaluator:
                 and session.starttls.outcome == "refused"
                 and session.transportMode == "plaintext"
             ):
+                r04_pkt = session.starttls_outcome_frame or session.starttls_attempted_frame or stream_first_frame
                 evs = [
                     Evidence(
                         sessionId=session.sessionId,
-                        packetNumber=1,
+                        packetNumber=r04_pkt,
                         note="STARTTLS was refused and session continued in plaintext",
                     )
                 ]
@@ -196,7 +207,7 @@ class RuleEvaluator:
                         evs = [
                             Evidence(
                                 sessionId=session.sessionId,
-                                packetNumber=1,
+                                packetNumber=sh_frame,
                                 note=f"Negotiated insecure SSL version below TLS 1.0: {session.tls.version}",
                             )
                         ]
@@ -207,7 +218,7 @@ class RuleEvaluator:
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
+                            packetNumber=sh_frame,
                             note=f"Deprecated TLS version negotiated: {session.tls.version}",
                         )
                     ]
@@ -229,7 +240,7 @@ class RuleEvaluator:
                         evs = [
                             Evidence(
                                 sessionId=session.sessionId,
-                                packetNumber=1,
+                                packetNumber=sh_frame,
                                 note=f"Insecure cipher suite class: {weak_class} ({session.tls.cipherSuiteName})",
                             )
                         ]
@@ -251,7 +262,7 @@ class RuleEvaluator:
                         evs = [
                             Evidence(
                                 sessionId=session.sessionId,
-                                packetNumber=1,
+                                packetNumber=sh_frame,
                                 note=f"Insecure cipher suite negotiated: {session.tls.cipherSuiteName}",
                             )
                         ]
@@ -272,7 +283,7 @@ class RuleEvaluator:
                         evs = [
                             Evidence(
                                 sessionId=session.sessionId,
-                                packetNumber=1,
+                                packetNumber=sh_frame,
                                 note=f"Non-forward-secret key exchange: {session.tls.kxType or 'static'}",
                             )
                         ]
@@ -287,7 +298,7 @@ class RuleEvaluator:
                         evs = [
                             Evidence(
                                 sessionId=session.sessionId,
-                                packetNumber=1,
+                                packetNumber=ske_frame,
                                 note=f"DHE key exchange prime below 2048 bits: {bits} bits",
                             )
                         ]
@@ -306,7 +317,7 @@ class RuleEvaluator:
                         evs = [
                             Evidence(
                                 sessionId=session.sessionId,
-                                packetNumber=1,
+                                packetNumber=cert_frame,
                                 note=f"Certificate SAN does not match requested SNI '{session.tls.sni}'",
                             )
                         ]
@@ -327,7 +338,7 @@ class RuleEvaluator:
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
+                            packetNumber=sh_frame,
                             note=f"Certificate not observable: {reason}",
                         )
                     ]
@@ -337,13 +348,13 @@ class RuleEvaluator:
             for cert in session.certificates:
                 # R11 High: any observed certificate has notAfter earlier than capture time
                 if "expired" in cert.verdicts or (
-                    cert.notAfter is not None and session.firstPacketTs > cert.notAfter
+                    cert.notAfter is not None and cert_ts > cert.notAfter
                 ):
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
-                            note=f"Certificate expired at capture time (notAfter={cert.notAfter}, captureTs={session.firstPacketTs})",
+                            packetNumber=cert_frame,
+                            note=f"Certificate expired at capture time (notAfter={cert.notAfter}, captureTs={cert_ts})",
                         )
                     ]
                     record("R11", session, evs, {"certificateSha256": cert.sha256, "notAfter": cert.notAfter})
@@ -355,7 +366,7 @@ class RuleEvaluator:
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
+                            packetNumber=cert_frame,
                             note=f"Weak key size: {cert.keyAlgorithm} {cert.keySize} bits",
                         )
                     ]
@@ -367,14 +378,14 @@ class RuleEvaluator:
                     )
 
                 # R13 High: any observed certificate that is not self-signed has an MD5 or SHA-1 signature hash
-                is_self_signed = "selfSigned" in cert.verdicts or (cert.subject == cert.issuer)
+                is_self_signed = "selfSigned" in cert.verdicts
                 sig_lower = cert.signatureAlgorithm.lower()
                 is_weak_sig = any(bad in sig_lower for bad in ["md5", "sha1", "sha-1"])
                 if not is_self_signed and ("weakSignature" in cert.verdicts or is_weak_sig):
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
+                            packetNumber=cert_frame,
                             note=f"Weak signature on certificate: {cert.signatureAlgorithm}",
                         )
                     ]
@@ -390,7 +401,7 @@ class RuleEvaluator:
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
+                            packetNumber=cert_frame,
                             note=f"Untrusted issuer: {cert.issuer}",
                         )
                     ]
@@ -401,14 +412,14 @@ class RuleEvaluator:
                         {"certificateSha256": cert.sha256, "issuer": cert.issuer},
                     )
 
-            # R16 Medium: the leaf certificate is self-signed
+            # R16 Medium: the leaf certificate is self-signed (cryptographically verified)
             if session.certificates:
                 leaf = session.certificates[0]
-                if "selfSigned" in leaf.verdicts or leaf.subject == leaf.issuer:
+                if "selfSigned" in leaf.verdicts:
                     evs = [
                         Evidence(
                             sessionId=session.sessionId,
-                            packetNumber=1,
+                            packetNumber=cert_frame,
                             note=f"Self-signed leaf certificate: {leaf.subject}",
                         )
                     ]
@@ -426,27 +437,33 @@ class RuleEvaluator:
 
         for server_ep, s_list in by_server.items():
             # R17 Medium: STARTTLS advertised in some sessions and not in others for same serverEndpoint
+            # Sessions that terminated before server capability advertisement are incomplete and excluded
             plain_sessions = [s for s in s_list if s.transportMode in ("plaintext", "starttls")]
             advertised = sorted([s.sessionId for s in plain_sessions if s.starttls.offered])
-            not_advertised = sorted([s.sessionId for s in plain_sessions if not s.starttls.offered])
+            not_advertised = sorted([
+                s.sessionId for s in plain_sessions
+                if not s.starttls.offered and (s.starttls_offered_frame is not None or getattr(s, "stream", None) is None)
+            ])
 
             if advertised and not_advertised:
                 evs = []
                 for s in plain_sessions:
+                    s_frame = s.starttls_offered_frame or (s.stream.firstFrame if getattr(s, "stream", None) else 1)
                     if not s.starttls.offered and len(evs) < 5:
                         evs.append(
                             Evidence(
                                 sessionId=s.sessionId,
-                                packetNumber=1,
+                                packetNumber=s_frame,
                                 note="STARTTLS not advertised in this session",
                             )
                         )
                 for s in plain_sessions:
+                    s_frame = s.starttls_offered_frame or (s.stream.firstFrame if getattr(s, "stream", None) else 1)
                     if s.starttls.offered and len(evs) < 5:
                         evs.append(
                             Evidence(
                                 sessionId=s.sessionId,
-                                packetNumber=1,
+                                packetNumber=s_frame,
                                 note="STARTTLS advertised in this session",
                             )
                         )
@@ -475,10 +492,12 @@ class RuleEvaluator:
                 for fp, s_ids in sorted(leaf_fps.items()):
                     all_cert_sessions.update(s_ids)
                     if len(evs) < 5:
+                        matching_sess = next((s for s in s_list if s.sessionId == s_ids[0]), None)
+                        s_cframe = (getattr(matching_sess, "_certificate_frame", None) or (matching_sess.stream.firstFrame if matching_sess and getattr(matching_sess, "stream", None) else 1)) if matching_sess else 1
                         evs.append(
                             Evidence(
                                 sessionId=s_ids[0],
-                                packetNumber=1,
+                                packetNumber=s_cframe,
                                 note=f"Leaf certificate fingerprint: {fp[:16]}... ({len(s_ids)} sessions)",
                             )
                         )

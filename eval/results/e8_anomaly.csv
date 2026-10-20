@@ -1,6 +1,6 @@
 scenario,name,ground_truth,session_id,ml_score,ml_anomaly,ml_top_deviating,rules_detected,ml_detected,rule_detected
 A1,Server Certificate Change,ANOMALY,0,0.1196,False,ja3_rarity_bucket=0 (baseline_freq=0.0%),R18,True,True
-A1,Server Certificate Change,ANOMALY,1,0.1196,False,ja3_rarity_bucket=0 (baseline_freq=0.0%); cert_differs_from_baseline=1 (baseline_freq=0.0%),R18,True,True
+A1,Server Certificate Change,ANOMALY,1,0.1196,False,ja3_rarity_bucket=0 (baseline_freq=0.0%); cert_differs_from_baseline=1 (baseline_freq=0.0%); handshake_size_bucket=3 (baseline_freq=0.0%),R18,True,True
 A2,TLS 1.0 Downgrade,ANOMALY,0,0.1196,False,tls_version=3 (baseline_freq=0.0%); ja3_rarity_bucket=0 (baseline_freq=0.0%),R06,True,True
 A3,Unseen Client JA3 Profile,ANOMALY,0,0.0000,True,cipher_suite_code=156 (baseline_freq=0.0%); ja3_rarity_bucket=0 (baseline_freq=0.0%),R09,True,True
 S01a,Valid STARTTLS (Clean),CLEAN,0,0.1196,False,none,none,False,False

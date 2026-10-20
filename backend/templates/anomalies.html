@@ -30,6 +30,7 @@
   </div>
 
   {% if anomalies %}
+  <div class="table-responsive">
   <table class="data-table">
     <thead>
       <tr>
@@ -78,6 +79,7 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
   {% else %}
   <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
     <p>Zero anomalous sessions detected. All mail traffic aligns with baseline behavioral parameters.</p>

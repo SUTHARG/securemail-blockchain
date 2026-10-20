@@ -16,28 +16,40 @@
 
 <!-- Status Timeline -->
 <div class="card">
-  <h3>Case Status Machine Timeline</h3>
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem; overflow-x: auto; padding-bottom: 1rem; gap: 0.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem;">
+    <h3>Workflow Lifecycle Timeline</h3>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">
+      Timeline Source: <strong>Local Engine Workflow Status</strong> (Consensus stages 3–10 tracked on-chain)
+    </span>
+  </div>
+  {% if not onchain_id %}
+  <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #e3b341; background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.3); border-radius: 4px; padding: 0.4rem 0.75rem;">
+    ⚠️ <strong>Off-Chain Only:</strong> This case has not been opened on the blockchain. Stages 3–10 represent on-chain quorum consensus and remain inactive until opened on-chain.
+  </div>
+  {% endif %}
+  <div class="timeline-scroller">
     {% set stages = [
       ('uploaded', '1. Uploaded'),
       ('analyzed', '2. Analyzed'),
-      ('opened', '3. Opened'),
-      ('claimed', '4. Claimed'),
+      ('opened', '3. Opened (Chain)'),
+      ('claimed', '4. Claimed (Chain)'),
       ('distributed', '5. Distributed'),
-      ('committing', '6. Committing'),
-      ('revealing', '7. Revealing'),
-      ('Finalized', '8. Finalized'),
-      ('recorded', '9. Recorded'),
-      ('report_anchored', '10. Anchored')
+      ('committing', '6. Committing (Chain)'),
+      ('revealing', '7. Revealing (Chain)'),
+      ('Finalized', '8. Finalized (Chain)'),
+      ('recorded', '9. Recorded (Chain)'),
+      ('report_anchored', '10. Anchored (Chain)')
     ] %}
     {% for key, label in stages %}
+      {% set is_active = (current_status == key) if (onchain_id or loop.index0 <= 1) else false %}
+      {% set is_past = (stage_index >= loop.index0) if (onchain_id or loop.index0 <= 1) else false %}
       <div style="text-align: center; min-width: 90px;">
         <div style="
           width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 0.5rem;
           display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;
-          {% if current_status == key %}
+          {% if is_active %}
             background: #238636; color: #fff; box-shadow: 0 0 10px rgba(46,160,67,0.5);
-          {% elif stage_index >= loop.index0 %}
+          {% elif is_past %}
             background: rgba(56, 139, 253, 0.2); color: #58a6ff; border: 1px solid #388bfd;
           {% else %}
             background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border);
@@ -45,47 +57,84 @@
         ">
           {{ loop.index }}
         </div>
-        <div style="font-size: 0.75rem; font-weight: 600; color: {% if current_status == key %}#fff{% else %}var(--text-muted){% endif %};">
+        <div style="font-size: 0.75rem; font-weight: 600; color: {% if is_active %}#fff{% else %}var(--text-muted){% endif %};">
           {{ label }}
         </div>
       </div>
       {% if not loop.last %}
-        <div style="flex: 1; height: 2px; background: {% if stage_index > loop.index0 %}#388bfd{% else %}var(--border){% endif %}; min-width: 20px; margin-top: -1.2rem;"></div>
+        <div style="flex: 1; height: 2px; background: {% if (stage_index > loop.index0) and (onchain_id or loop.index0 < 1) %}#388bfd{% else %}var(--border){% endif %}; min-width: 20px; margin-top: -1.2rem;"></div>
       {% endif %}
     {% endfor %}
   </div>
 </div>
 
+<!-- Notifications / Errors -->
+{% if error %}
+<div class="alert alert-error" style="background: rgba(248, 81, 73, 0.15); border: 1px solid #f85149; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; color: #ff7b72;">
+  <strong>Action Failed:</strong> {{ error }}
+</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success" style="background: rgba(46, 160, 67, 0.15); border: 1px solid #2ea043; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; color: #56d364;">
+  {{ success }}
+</div>
+{% endif %}
+
 <!-- Metadata Grid -->
 <div class="grid">
   <div class="card">
     <h3>Identifiers & Checksums</h3>
-    <table class="data-table">
-      <tr>
-        <th style="width: 140px;">Case ID</th>
-        <td class="mono">{{ case_id }}</td>
-      </tr>
-      <tr>
-        <th>PCAP SHA-256</th>
-        <td class="mono">{{ pcap_sha256 }}</td>
-      </tr>
-      <tr>
-        <th>Result Root</th>
-        <td class="mono">{{ result_root or 'Analysis Pending' }}</td>
-      </tr>
-      <tr>
-        <th>Ruleset Hash</th>
-        <td class="mono">{{ ruleset_hash or 'Pending' }}</td>
-      </tr>
-      <tr>
-        <th>On-Chain ID</th>
-        <td class="mono">{{ onchain_id or 'Not Registered' }}</td>
-      </tr>
-      <tr>
-        <th>Current Status</th>
-        <td><span class="badge badge-Info">{{ current_status }}</span></td>
-      </tr>
-    </table>
+    <div class="table-responsive">
+      <table class="data-table">
+        <tr>
+          <th style="width: 160px; min-width: 120px;">Case ID</th>
+          <td class="mono">{{ case_id }}</td>
+        </tr>
+        <tr>
+          <th>PCAP SHA-256</th>
+          <td class="mono">{{ pcap_sha256 }}</td>
+        </tr>
+        <tr>
+          <th>Result Root</th>
+          <td class="mono">{{ result_root or 'Analysis Pending' }}</td>
+        </tr>
+        <tr>
+          <th>Ruleset Hash</th>
+          <td class="mono">{{ ruleset_hash or 'Pending' }}</td>
+        </tr>
+        <tr>
+          <th>On-Chain ID</th>
+          <td class="mono">
+            {% if onchain_id %}
+              {{ onchain_id }}
+            {% else %}
+              <span style="color: var(--text-muted);">Not Registered (Off-Chain Only)</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Local Processing Status</th>
+          <td>
+            <span class="badge badge-info">{{ current_status }} (Local Engine)</span>
+            {% if current_status == 'Finalized' and not onchain_id %}
+              <span style="font-size: 0.75rem; color: #e3b341; margin-left: 0.5rem; display: block; margin-top: 0.25rem;">[Local analysis complete; not finalized on-chain]</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>On-Chain Consensus State</th>
+          <td>
+            {% if not onchain_id %}
+              <span class="badge badge-secondary">Not Opened (No On-Chain Case)</span>
+            {% elif onchain_status == 'Finalized' %}
+              <span class="badge badge-pass">Finalized (Quorum Agreed)</span>
+            {% else %}
+              <span class="badge badge-secondary">{{ onchain_status or 'Not Opened' }}</span>
+            {% endif %}
+          </td>
+        </tr>
+      </table>
+    </div>
   </div>
 
   <!-- Lifecycle Actions Panel -->
@@ -98,54 +147,100 @@
     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
       {% if current_status == 'uploaded' %}
       <form action="/cases/{{ case_id }}/action/analyze" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           ⚡ Run Engine Analysis (analyze)
         </button>
       </form>
       {% endif %}
 
-      {% if current_status == 'analyzed' %}
+      {% if current_status == 'analyzed' and not onchain_id %}
       <form action="/cases/{{ case_id }}/action/open" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           🔗 Open Case On-Chain (openCase)
         </button>
       </form>
       {% endif %}
 
-      {% if current_status == 'opened' %}
+      {% if current_status == 'opened' or (onchain_status == 'Opened' and not current_status in ('claimed', 'committing', 'revealing', 'Finalized', 'recorded')) %}
       <form action="/cases/{{ case_id }}/action/claim" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           ✍️ Submit Claim On-Chain (submitClaim)
         </button>
       </form>
       {% endif %}
 
-      {% if current_status == 'claimed' %}
+      {% if current_status == 'claimed' or onchain_status == 'Claimed' %}
       <form action="/cases/{{ case_id }}/action/distribute" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           📦 Distribute Bundles to Validators (distribute)
         </button>
       </form>
       {% endif %}
 
-      {% if current_status in ('committing', 'revealing') %}
+      {% if (current_status == 'distributed' or onchain_status in ('Committing', 'Revealing')) and not can_finalize and onchain_status != 'Finalized' %}
+      <div style="background: rgba(56, 139, 253, 0.08); padding: 0.75rem; border-radius: 6px; border: 1px solid rgba(56, 139, 253, 0.25); font-size: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+          <span>Validator Consensus:</span>
+          <strong>{{ matching_reveals }}/{{ quorum_k }} Reveals ({{ 'QUORUM REACHED' if quorum_reached else 'PENDING' }})</strong>
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.78rem;">
+          {% if onchain_status == 'Committing' %}
+            Round state is <strong>Committing</strong>. Independent validator nodes must submit commitments and advance to Revealing.
+          {% elif onchain_status == 'Revealing' %}
+            Round state is <strong>Revealing</strong>. Validators must reveal result roots to reach quorum ($k \ge {{ quorum_k }}$).
+          {% else %}
+            Bundles distributed. Run validator consensus to commit and reveal on-chain votes.
+          {% endif %}
+        </div>
+      </div>
+      <form action="/cases/{{ case_id }}/action/validate" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+        <button type="submit" class="btn btn-action" style="width: 100%;">
+          🗳️ Run Validator Consensus Round (commit & reveal)
+        </button>
+      </form>
+      {% endif %}
+
+      {% if can_finalize %}
+      <div style="background: rgba(46, 160, 67, 0.1); padding: 0.6rem 0.75rem; border-radius: 6px; border: 1px solid rgba(46, 160, 67, 0.3); font-size: 0.85rem; color: #56d364;">
+        ✅ <strong>Quorum Achieved:</strong> {{ matching_reveals }}/{{ quorum_k }} validators agreed on the forensic result root. Ready to finalize on-chain.
+      </div>
       <form action="/cases/{{ case_id }}/action/finalize" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           🏁 Finalize Round On-Chain (finalize)
         </button>
       </form>
+      {% elif onchain_status in ('Committing', 'Revealing') and onchain_status != 'Finalized' %}
+      <div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; border: 1px dashed var(--border); font-size: 0.85rem; color: var(--text-muted);">
+        ℹ️ Finalize Round On-Chain is locked until validator quorum is reached (currently <strong>{{ matching_reveals }}/{{ quorum_k }}</strong> reveals). Run validator consensus above to proceed.
+      </div>
       {% endif %}
 
-      {% if current_status == 'Finalized' %}
+      {% if onchain_status == 'Finalized' %}
       <form action="/cases/{{ case_id }}/action/record" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           📝 Record Host Posture to PostureLedger (record)
         </button>
       </form>
+      {% elif onchain_id and onchain_status != 'Finalized' %}
+      <div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; border: 1px dashed var(--border); font-size: 0.85rem; color: var(--text-muted);">
+        ℹ️ On-chain status is <strong>{{ onchain_status }}</strong>. Posture recording on PostureLedger is only permitted after consensus is Finalized.
+      </div>
+      {% elif not onchain_id %}
+      <div style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; border: 1px dashed var(--border); font-size: 0.85rem; color: var(--text-muted);">
+        ⚠️ This case has not been opened on-chain. Open the case on-chain before recording posture.
+      </div>
       {% endif %}
 
-      {% if current_status == 'recorded' %}
+      {% if current_status == 'recorded' or onchain_status == 'Recorded' %}
       <form action="/cases/{{ case_id }}/action/anchor" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
         <button type="submit" class="btn btn-action" style="width: 100%;">
           ⚓ Anchor Custody Report Hash (anchor)
         </button>
@@ -156,6 +251,7 @@
         🔍 Run 5-Step Independent Verification
       </a>
     </div>
+  </div>
 </div>
 
 <!-- Direct Access Findings & Evidence Preview (1-Click Reachable) -->
@@ -165,39 +261,41 @@
     <h3>Key Cryptographic Findings & Direct Evidence</h3>
     <a href="/cases/{{ case_id }}/findings" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.3rem 0.7rem;">View All Findings →</a>
   </div>
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Severity</th>
-        <th>Rule</th>
-        <th>Description</th>
-        <th>Host</th>
-        <th>1-Click Evidence Inspection</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for f in top_findings %}
-      <tr>
-        <td><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span></td>
-        <td class="mono"><strong>{{ f.ruleId }}</strong></td>
-        <td>{{ f.title }}</td>
-        <td class="mono"><a href="/cases/{{ case_id }}/hosts/{{ f.serverEndpoint }}" style="color: #58a6ff;">{{ f.serverEndpoint }}</a></td>
-        <td>
-          <details style="cursor: pointer;">
-            <summary style="color: var(--accent); font-weight: 600; outline: none;">Inspect {{ f.evidence|length }} Evidence Frame(s)</summary>
-            <div style="margin-top: 0.4rem; padding: 0.5rem; background: var(--code-bg); border-radius: 6px; font-size: 0.85rem;" class="mono">
-              {% for ev in f.evidence %}
-              <div>
-                &bull; Frame #{{ ev.packetNumber }} | Session #{{ ev.sessionId }} | {{ ev.note }}
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Rule</th>
+          <th>Description</th>
+          <th>Host</th>
+          <th>1-Click Evidence Inspection</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in top_findings %}
+        <tr>
+          <td><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span></td>
+          <td class="mono"><strong>{{ f.ruleId }}</strong></td>
+          <td>{{ f.title }}</td>
+          <td class="mono"><a href="/cases/{{ case_id }}/hosts/{{ f.serverEndpoint }}" style="color: #58a6ff;">{{ f.serverEndpoint }}</a></td>
+          <td>
+            <details style="cursor: pointer;">
+              <summary style="color: var(--accent); font-weight: 600; outline: none;">Inspect {{ f.evidence|length }} Evidence Frame(s)</summary>
+              <div style="margin-top: 0.4rem; padding: 0.5rem; background: var(--code-bg); border-radius: 6px; font-size: 0.85rem;" class="mono">
+                {% for ev in f.evidence %}
+                <div>
+                  &bull; Frame #{{ ev.packetNumber }} | Session #{{ ev.sessionId }} | {{ ev.note }}
+                </div>
+                {% endfor %}
               </div>
-              {% endfor %}
-            </div>
-          </details>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            </details>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endif %}
 
@@ -208,34 +306,36 @@
     <h3>Assessed Hosts Posture Summary</h3>
     <a href="/cases/{{ case_id }}/hosts" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.3rem 0.7rem;">View All Hosts & SVG Distribution →</a>
   </div>
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Server Endpoint</th>
-        <th>Score</th>
-        <th>Grade</th>
-        <th>Drill-Down Inspection</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for h in top_hosts %}
-      <tr>
-        <td class="mono">
-          <a href="/cases/{{ case_id }}/hosts/{{ h.serverEndpoint }}" style="color: #58a6ff; font-weight: 600;">
-            {{ h.serverEndpoint }}
-          </a>
-        </td>
-        <td style="font-weight: 700;">{{ h.score }}/100</td>
-        <td><span class="badge-grade grade-{{ h.grade }}" style="font-size: 0.9rem; padding: 0.2rem 0.5rem;">{{ h.grade }}</span></td>
-        <td>
-          <a href="/cases/{{ case_id }}/hosts/{{ h.serverEndpoint }}" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
-            Host Details →
-          </a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Server Endpoint</th>
+          <th>Score</th>
+          <th>Grade</th>
+          <th>Drill-Down Inspection</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in top_hosts %}
+        <tr>
+          <td class="mono">
+            <a href="/cases/{{ case_id }}/hosts/{{ h.serverEndpoint }}" style="color: #58a6ff; font-weight: 600;">
+              {{ h.serverEndpoint }}
+            </a>
+          </td>
+          <td style="font-weight: 700;">{{ h.score }}/100</td>
+          <td><span class="badge-grade grade-{{ h.grade }}" style="font-size: 0.9rem; padding: 0.2rem 0.5rem;">{{ h.grade }}</span></td>
+          <td>
+            <a href="/cases/{{ case_id }}/hosts/{{ h.serverEndpoint }}" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+              Host Details →
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

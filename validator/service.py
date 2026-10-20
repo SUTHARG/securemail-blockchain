@@ -11,6 +11,7 @@ Strict-mode: Enforces engine container digest and ruleset hash pinning.
 Faulty-mode: Supports --faulty flag for consensus adversarial evaluation.
 """
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -26,6 +27,13 @@ from typing import Any, Dict, List, Optional, Tuple
 from eth_abi import encode
 from eth_account import Account
 from web3 import Web3
+
+try:
+    from dotenv import load_dotenv
+    repo_root = Path(__file__).resolve().parents[1]
+    load_dotenv(repo_root / ".env")
+except ImportError:
+    pass
 
 # Optional local imports
 try:
@@ -43,9 +51,7 @@ logging.basicConfig(
 logger = logging.getLogger("service")
 
 
-class StrictModeError(RuntimeError):
-    """Raised when strict pinning verification fails prior to commit."""
-    pass
+from validator.crypto import StrictModeError, parse_and_validate_engine_digest
 
 
 def resolve_path(p: str, base_dir: Path) -> Path:
@@ -217,7 +223,10 @@ class ValidatorService:
     # -----------------------------------------------------------------------
 
     def verify_strict_mode(self, case_id_bytes: bytes, manifest_data: Dict[str, Any]) -> None:
-        """Verify local ruleset and engine image hashes against on-chain pinning."""
+        """
+        Verify local ruleset and engine image hashes against on-chain pinning.
+        Fails before committing if engine digest or ruleset hash is missing, malformed, or mismatched.
+        """
         onchain_ruleset_hash = self.case_registry.functions.rulesetHash(case_id_bytes).call()
         onchain_engine_hash = self.case_registry.functions.engineHash(case_id_bytes).call()
 
@@ -231,14 +240,13 @@ class ValidatorService:
             )
 
         env_engine_digest = os.environ.get("ENGINE_IMAGE_DIGEST")
-        if env_engine_digest:
-            clean_env_engine = env_engine_digest.lower().replace("0x", "")
-            onchain_engine_hex = onchain_engine_hash.hex().lower().replace("0x", "")
-            if clean_env_engine != onchain_engine_hex:
-                raise StrictModeError(
-                    f"Strict mode violation: ENGINE_IMAGE_DIGEST (0x{clean_env_engine}) differs from "
-                    f"on-chain case engineHash (0x{onchain_engine_hex})"
-                )
+        clean_env_engine = parse_and_validate_engine_digest(env_engine_digest)
+        onchain_engine_hex = onchain_engine_hash.hex().lower().replace("0x", "")
+        if clean_env_engine != onchain_engine_hex:
+            raise StrictModeError(
+                f"Strict mode violation: ENGINE_IMAGE_DIGEST (0x{clean_env_engine}) differs from "
+                f"on-chain case engineHash (0x{onchain_engine_hex})"
+            )
 
         logger.info("Strict mode pre-commit checks passed for case 0x%s", case_id_bytes.hex())
 
@@ -263,6 +271,13 @@ class ValidatorService:
 
         docker_mode = is_docker_available() if self.use_docker is None else self.use_docker
         engine_image = os.environ.get("ENGINE_DOCKER_IMAGE", "smscope:latest")
+        if docker_mode:
+            try:
+                insp = subprocess.run(["docker", "image", "inspect", engine_image], capture_output=True, timeout=3)
+                if insp.returncode != 0:
+                    docker_mode = False
+            except Exception:
+                docker_mode = False
 
         try:
             if docker_mode:
@@ -454,6 +469,17 @@ class ValidatorService:
 
         current_time = self.w3.eth.get_block("latest").timestamp
         while current_time < commit_deadline:
+            if getattr(self.w3.provider, "make_request", None):
+                try:
+                    if self.w3.eth.chain_id in (31337, 1337):
+                        diff = commit_deadline - current_time + 1
+                        if diff > 0:
+                            self.w3.provider.make_request("evm_increaseTime", [int(diff)])
+                            self.w3.provider.make_request("evm_mine", [])
+                    else:
+                        self.w3.provider.make_request("evm_mine", [])
+                except Exception:
+                    pass
             time.sleep(0.5)
             current_time = self.w3.eth.get_block("latest").timestamp
 
@@ -539,6 +565,27 @@ class ValidatorService:
             bundle_bytes = enc_file.read_bytes()
             pcap_bytes, decrypted_secret, onchain_id = decrypt_validator_bundle(bundle_bytes, val_priv)
 
+            if not onchain_id:
+                if self.strict:
+                    raise ValueError("Encrypted bundle metadata missing onchain_case_id in strict mode")
+            else:
+                clean_decrypted = onchain_id.lower().replace("0x", "")
+                clean_target = case_id_bytes.hex().lower().replace("0x", "")
+                if clean_decrypted != clean_target:
+                    raise ValueError(
+                        f"Delivered bundle case ID (0x{clean_decrypted}) does not match target case ID (0x{clean_target})"
+                    )
+
+            # Validate delivered PCAP SHA-256 against on-chain pcapHash (fail-closed)
+            pcap_sha256 = hashlib.sha256(pcap_bytes).digest()
+            onchain_pcap_hash = self.case_registry.functions.pcapHash(case_id_bytes).call()
+            if not onchain_pcap_hash or onchain_pcap_hash == b"\x00" * 32:
+                raise ValueError("Target case has missing or zero on-chain pcapHash")
+            if pcap_sha256 != onchain_pcap_hash:
+                raise ValueError(
+                    f"Delivered PCAP hash (0x{pcap_sha256.hex()}) does not match on-chain case pcapHash (0x{onchain_pcap_hash.hex()})"
+                )
+
             temp_dir = tempfile.mkdtemp(prefix="val_sec_")
             try:
                 os.chmod(temp_dir, 0o700)
@@ -559,6 +606,31 @@ class ValidatorService:
                 shutil.rmtree(temp_path, ignore_errors=True)
         else:
             pcap_path = bundle_dir / "pcap.bin"
+            pcap_bytes = pcap_path.read_bytes()
+
+            # Check onchain_case_id.txt if present
+            case_id_txt = bundle_dir / "onchain_case_id.txt"
+            if case_id_txt.exists():
+                txt_id = case_id_txt.read_text(encoding="utf-8").strip()
+                clean_txt = txt_id.lower().replace("0x", "")
+                clean_target = case_id_bytes.hex().lower().replace("0x", "")
+                if clean_txt != clean_target:
+                    raise ValueError(
+                        f"Delivered bundle case ID (0x{clean_txt}) does not match target case ID (0x{clean_target})"
+                    )
+            elif self.strict:
+                raise ValueError("Plaintext bundle missing onchain_case_id.txt in strict mode")
+
+            # Validate delivered PCAP SHA-256 against on-chain pcapHash (fail-closed)
+            pcap_sha256 = hashlib.sha256(pcap_bytes).digest()
+            onchain_pcap_hash = self.case_registry.functions.pcapHash(case_id_bytes).call()
+            if not onchain_pcap_hash or onchain_pcap_hash == b"\x00" * 32:
+                raise ValueError("Target case has missing or zero on-chain pcapHash")
+            if pcap_sha256 != onchain_pcap_hash:
+                raise ValueError(
+                    f"Delivered PCAP hash (0x{pcap_sha256.hex()}) does not match on-chain case pcapHash (0x{onchain_pcap_hash.hex()})"
+                )
+
             result_root_bytes, result_data, manifest_data = self.run_engine_analysis(
                 bundle_dir=bundle_dir,
                 pcap_path=pcap_path,
@@ -569,6 +641,12 @@ class ValidatorService:
         # 2. Strict mode checks BEFORE commit
         if self.strict:
             self.verify_strict_mode(case_id_bytes, manifest_data)
+        else:
+            logger.warning(
+                "Strict mode explicitly DISABLED (--faulty or non-strict) for validator %s on case 0x%s; proceeding without digest/ruleset verification",
+                self.validator_id,
+                case_id_bytes.hex(),
+            )
 
         # 3. Generate random salt and compute commitment
         salt_bytes = os.urandom(32)
@@ -587,6 +665,7 @@ class ValidatorService:
             "salt": f"0x{salt_bytes.hex()}",
             "resultRoot": f"0x{result_root_bytes.hex()}",
             "commitment": f"0x{commitment_bytes.hex()}",
+            "strict": self.strict,
             "committedAt": int(time.time()),
             "revealed": False,
         }
@@ -604,6 +683,17 @@ class ValidatorService:
 
         current_time = self.w3.eth.get_block("latest").timestamp
         while current_time < commit_deadline:
+            if getattr(self.w3.provider, "make_request", None):
+                try:
+                    if self.w3.eth.chain_id in (31337, 1337):
+                        diff = commit_deadline - current_time + 1
+                        if diff > 0:
+                            self.w3.provider.make_request("evm_increaseTime", [int(diff)])
+                            self.w3.provider.make_request("evm_mine", [])
+                    else:
+                        self.w3.provider.make_request("evm_mine", [])
+                except Exception:
+                    pass
             time.sleep(0.5)
             current_time = self.w3.eth.get_block("latest").timestamp
 
@@ -689,9 +779,12 @@ def main() -> None:
         private_key = args.key
 
     if not private_key:
-        # Fallback to VALIDATOR_<id>_KEY convention
+        # Fallback to VALIDATOR_<id>_KEY or VALIDATOR_KEY_<id> convention
         default_env = f"VALIDATOR_{args.id}_KEY"
-        private_key = os.environ.get(default_env)
+        alt_env = f"VALIDATOR_KEY_{args.id}"
+        private_key = os.environ.get(default_env) or os.environ.get(alt_env)
+        if not private_key and config is not None:
+            private_key = getattr(config, default_env, None) or getattr(config, alt_env, None)
 
     if not private_key:
         logger.error("No private key provided via --key-env, --key, or VALIDATOR_%s_KEY", args.id)

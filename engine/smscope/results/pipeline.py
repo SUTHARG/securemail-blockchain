@@ -159,7 +159,11 @@ def process_results(
     )
 
     # 7. Write all output files in canonical JSON
-    sessions_payload = [s.to_dict() for s in sorted(sessions, key=lambda s: s.sessionId)]
+    legacy_sessions = os.environ.get("SMSCOPE_LEGACY_SESSIONS", "").lower() in ("1", "true", "yes")
+    sessions_payload = [
+        s.to_dict(include_extended=not legacy_sessions)
+        for s in sorted(sessions, key=lambda s: s.sessionId)
+    ]
     findings_payload = [f.to_dict() for f in sorted(findings, key=lambda f: f.findingId)]
     host_scores_payload = [h.to_dict() for h in host_scores]
     result_payload = {

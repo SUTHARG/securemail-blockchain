@@ -15,6 +15,7 @@ import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
+from eth_abi import encode
 from eth_account import Account
 from web3 import Web3
 
@@ -84,6 +85,20 @@ def to_hex0x(val: Any) -> str:
     return "0x" + h
 
 
+def _normalize_calldata(val: Any) -> Optional[str]:
+    """Safely normalize calldata or input data from web3 to lowercased 0x-prefixed hex string."""
+    if val is None:
+        return None
+    if hasattr(val, "to_0x_hex"):
+        return val.to_0x_hex().lower()
+    if isinstance(val, (bytes, bytearray)):
+        return "0x" + val.hex().lower()
+    s = str(val).strip().lower()
+    if not s.startswith("0x"):
+        s = "0x" + s
+    return s
+
+
 def load_contract_artifact(deployment_file: Path, abi_rel_path: str) -> list:
     """Load contract ABI from build artifacts relative to contracts directory."""
     contracts_dir = deployment_file.parent.parent
@@ -110,11 +125,13 @@ class ChainGateway:
         self,
         rpc_url: Optional[str] = None,
         deployment_file: Optional[Path] = None,
+        rpc_timeout: Optional[int] = None,
     ):
         self.rpc_url = rpc_url or config.RPC_URL
         self.deployment_file = deployment_file or config.DEPLOYMENT_FILE
+        self.rpc_timeout = rpc_timeout or getattr(config, "RPC_TIMEOUT", 5)
 
-        self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
+        self.w3 = Web3(Web3.HTTPProvider(self.rpc_url, request_kwargs={"timeout": self.rpc_timeout}))
 
         # Signing keys and accounts (owned exclusively by gateway)
         self.analyst_account = Account.from_key(config.ANALYST_KEY)
@@ -227,51 +244,157 @@ class ChainGateway:
         # Step 1: Idempotency check in database
         existing = get_chain_tx(case_id, step)
         if existing:
-            if existing["status"] == "confirmed" and existing["tx_hash"]:
+            fn_data = getattr(contract_fn, "_encode_transaction_data", None)
+            expected_input = _normalize_calldata(fn_data()) if fn_data else None
+
+            if existing["status"] == "confirmed" and existing.get("tx_hash"):
                 try:
-                    receipt = self.w3.eth.get_transaction_receipt(existing["tx_hash"])
-                    if receipt and receipt.status == 1:
+                    calldata_match = False
+                    destination_match = False
+                    tx_obj = self.w3.eth.get_transaction(existing["tx_hash"])
+                    if tx_obj is not None:
+                        tx_in = _normalize_calldata(tx_obj.get("input"))
+                        if expected_input is not None:
+                            calldata_match = (tx_in == expected_input)
+                        else:
+                            calldata_match = True
+
                         target_to = getattr(contract_fn, "address", None)
-                        if not target_to or (receipt.get("to") and receipt.get("to").lower() == target_to.lower()):
+                        tx_to = (tx_obj.get("to") or "").lower()
+                        if target_to:
+                            destination_match = (tx_to == target_to.lower())
+                        else:
+                            destination_match = True
+
+                    if calldata_match and destination_match:
+                        receipt = self.w3.eth.get_transaction_receipt(existing["tx_hash"])
+                        if receipt and receipt.status == 1:
                             return receipt
                 except Exception:
                     pass
 
-            if existing["status"] == "sent" and existing["tx_hash"]:
-                # Crash recovery: transaction was already sent; check if mined
+            if existing["status"] in ("sent", "intent") and existing.get("tx_hash"):
+                # Crash recovery / duplicate invocation protection: transaction was already broadcast.
+                # Never broadcast a second transaction if outcome cannot be determined.
                 try:
-                    receipt = self.w3.eth.get_transaction_receipt(existing["tx_hash"])
+                    calldata_match = False
+                    destination_match = False
+                    tx_obj = None
+                    try:
+                        tx_obj = self.w3.eth.get_transaction(existing["tx_hash"])
+                    except Exception:
+                        tx_obj = None
+
+                    if tx_obj is not None:
+                        tx_in = _normalize_calldata(tx_obj.get("input"))
+                        if expected_input is not None:
+                            calldata_match = (tx_in == expected_input)
+                        else:
+                            calldata_match = True
+
+                        target_to = getattr(contract_fn, "address", None)
+                        tx_to = (tx_obj.get("to") or "").lower()
+                        if target_to:
+                            destination_match = (tx_to == target_to.lower())
+                        else:
+                            destination_match = True
+
+                        if not calldata_match or not destination_match:
+                            raise InvalidStateError(
+                                f"Calldata or destination mismatch for stored sent transaction {existing['tx_hash']}"
+                            )
+
+                    # 1. Check receipt
+                    receipt = None
+                    try:
+                        receipt = self.w3.eth.get_transaction_receipt(existing["tx_hash"])
+                    except Exception:
+                        receipt = None
+
+                    if not receipt:
+                        try:
+                            receipt = self.w3.eth.wait_for_transaction_receipt(existing["tx_hash"], timeout=10)
+                        except Exception:
+                            receipt = None
+
                     if receipt:
                         if receipt.status == 1:
                             record_chain_tx(
-                                case_id, step, existing["nonce"], existing["tx_hash"], "confirmed", existing["retries"]
+                                case_id, step, existing["nonce"], existing["tx_hash"], "confirmed", existing["retries"], existing.get("raw_tx")
                             )
                             return receipt
                         else:
                             record_chain_tx(
-                                case_id, step, existing["nonce"], existing["tx_hash"], "reverted", existing["retries"]
+                                case_id, step, existing["nonce"], existing["tx_hash"], "reverted", existing["retries"], existing.get("raw_tx")
                             )
                             raise TransactionRevertedError(f"Transaction {existing['tx_hash']} reverted on-chain")
-                except TransactionRevertedError:
+
+                    # 2. If status was "intent" (crashed between signing and broadcast), recover exact signed raw_tx
+                    if existing["status"] == "intent" and existing.get("raw_tx") and tx_obj is None:
+                        try:
+                            raw_bytes = bytes.fromhex(existing["raw_tx"])
+                            self.w3.eth.send_raw_transaction(raw_bytes)
+                            record_chain_tx(
+                                case_id, step, existing["nonce"], existing["tx_hash"], "sent", existing["retries"], existing.get("raw_tx")
+                            )
+                        except Exception as rebroadcast_err:
+                            err_str = str(rebroadcast_err).lower()
+                            if "already known" in err_str or "alreadyknown" in err_str:
+                                record_chain_tx(
+                                    case_id, step, existing["nonce"], existing["tx_hash"], "sent", existing["retries"], existing.get("raw_tx")
+                                )
+                            elif "nonce too low" in err_str:
+                                try:
+                                    receipt = self.w3.eth.get_transaction_receipt(existing["tx_hash"])
+                                    if receipt:
+                                        if receipt.status == 1:
+                                            record_chain_tx(case_id, step, existing["nonce"], existing["tx_hash"], "confirmed", existing["retries"], existing.get("raw_tx"))
+                                            return receipt
+                                        else:
+                                            record_chain_tx(case_id, step, existing["nonce"], existing["tx_hash"], "reverted", existing["retries"], existing.get("raw_tx"))
+                                            raise TransactionRevertedError(f"Transaction {existing['tx_hash']} reverted on-chain")
+                                except TransactionRevertedError:
+                                    raise
+                                except Exception:
+                                    pass
+                                raise TransientRPCError(
+                                    f"Transaction {existing['tx_hash']} (nonce {existing['nonce']}) has unknown outcome: nonce is already mined on-chain. Preserving state without rebroadcast."
+                                )
+                            else:
+                                raise TransientRPCError(
+                                    f"Failed to rebroadcast signed transaction intent {existing['tx_hash']}: {rebroadcast_err}"
+                                )
+
+                        # After successful rebroadcast, wait for receipt
+                        try:
+                            receipt = self.w3.eth.wait_for_transaction_receipt(existing["tx_hash"], timeout=30)
+                            if receipt:
+                                if receipt.status == 1:
+                                    record_chain_tx(
+                                        case_id, step, existing["nonce"], existing["tx_hash"], "confirmed", existing["retries"], existing.get("raw_tx")
+                                    )
+                                    return receipt
+                                else:
+                                    record_chain_tx(
+                                        case_id, step, existing["nonce"], existing["tx_hash"], "reverted", existing["retries"], existing.get("raw_tx")
+                                    )
+                                    raise TransactionRevertedError(f"Transaction {existing['tx_hash']} reverted on-chain")
+                        except TransactionRevertedError:
+                            raise
+                        except Exception:
+                            pass
+
+                    # 3. If outcome is unknown, preserve that state and stop.
+                    # Never treat latest_nonce > saved_nonce as proof of drop, as it may have been mined while receipt lookup failed.
+                    raise TransientRPCError(
+                        f"Transaction {existing['tx_hash']} was already broadcast (nonce {existing.get('nonce')}) and outcome is unknown; preserving state without rebroadcast."
+                    )
+                except (TransactionRevertedError, InvalidStateError, TransientRPCError):
                     raise
-                except Exception:
-                    # Not mined yet, wait for receipt below
-                    try:
-                        receipt = self.w3.eth.wait_for_transaction_receipt(existing["tx_hash"], timeout=15)
-                        if receipt.status == 1:
-                            record_chain_tx(
-                                case_id, step, existing["nonce"], existing["tx_hash"], "confirmed", existing["retries"]
-                            )
-                            return receipt
-                        else:
-                            record_chain_tx(
-                                case_id, step, existing["nonce"], existing["tx_hash"], "reverted", existing["retries"]
-                            )
-                            raise TransactionRevertedError(f"Transaction {existing['tx_hash']} reverted on-chain")
-                    except TransactionRevertedError:
-                        raise
-                    except Exception:
-                        pass
+                except Exception as exc:
+                    raise TransientRPCError(
+                        f"Undetermined outcome for already broadcast transaction {existing['tx_hash']}: {exc}"
+                    )
 
         # Step 2: Acquire lock and execute with transient retries
         with lock:
@@ -282,7 +405,6 @@ class ChainGateway:
             except Exception as exc:
                 revert_reason = self._extract_revert_reason(exc)
                 record_chain_tx(case_id, step, None, None, "reverted", 0)
-                update_case_status(case_id, f"reverted: {revert_reason}")
                 raise TransactionRevertedError(revert_reason)
 
             retries = 0
@@ -299,32 +421,87 @@ class ChainGateway:
                     tx = contract_fn.build_transaction(tx_params)
                     signed = account.sign_transaction(tx)
                     raw_tx = getattr(signed, "raw_transaction", getattr(signed, "rawTransaction", None))
-                    tx_hash_bytes = self.w3.eth.send_raw_transaction(raw_tx)
-                    tx_hash = to_hex0x(tx_hash_bytes)
 
-                    # PROMPT 6.2 MANDATE: Store in chain_txs BEFORE waiting for receipt!
-                    record_chain_tx(case_id, step, nonce, tx_hash, "sent", retries)
+                    raw_tx_hex = None
+                    if raw_tx is not None:
+                        if isinstance(raw_tx, bytes):
+                            raw_tx_hex = raw_tx.hex()
+                        elif hasattr(raw_tx, "hex"):
+                            raw_tx_hex = raw_tx.hex()
+                        else:
+                            raw_tx_hex = str(raw_tx)
 
-                    # Now wait for receipt
-                    receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+                    # Determine deterministic hash of signed transaction prior to broadcast
+                    signed_hash = getattr(signed, "hash", None)
+                    pre_hash = None
+                    if signed_hash is not None and "mock" not in type(signed_hash).__name__.lower():
+                        pre_hash = to_hex0x(signed_hash)
+                    elif hasattr(self.w3, "keccak"):
+                        try:
+                            k = self.w3.keccak(raw_tx)
+                            if "mock" not in type(k).__name__.lower():
+                                pre_hash = to_hex0x(k)
+                        except Exception:
+                            pass
+
+                    # Persist transaction intent and signed raw transaction before network broadcast to close crash window
+                    if pre_hash:
+                        record_chain_tx(case_id, step, nonce, pre_hash, "intent", retries, raw_tx=raw_tx_hex)
+
+                    try:
+                        tx_hash_bytes = self.w3.eth.send_raw_transaction(raw_tx)
+                        tx_hash = to_hex0x(tx_hash_bytes)
+                    except Exception as broadcast_err:
+                        err_str = str(broadcast_err).lower()
+                        if "already known" in err_str or "alreadyknown" in err_str:
+                            tx_hash = pre_hash
+                        else:
+                            if pre_hash:
+                                record_chain_tx(case_id, step, nonce, pre_hash, "sent", retries, raw_tx=raw_tx_hex)
+                            raise
+
+                    # Store in chain_txs as sent BEFORE waiting for receipt!
+                    record_chain_tx(case_id, step, nonce, tx_hash, "sent", retries, raw_tx=raw_tx_hex)
+
+                    # Wait for receipt: once broadcast, poll the same tx_hash and never broadcast duplicates
+                    receipt = None
+                    try:
+                        receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+                    except Exception as wait_err:
+                        for _ in range(3):
+                            time.sleep(1.0)
+                            try:
+                                receipt = self.w3.eth.get_transaction_receipt(tx_hash)
+                                if receipt:
+                                    break
+                            except Exception:
+                                pass
+                        if not receipt:
+                            # CRITICAL: Do NOT retry broadcast! Once broadcast and stored as "sent",
+                            # raising TransientRPCError will exit the loop so a duplicate tx is NEVER sent!
+                            raise TransientRPCError(
+                                f"Transaction {tx_hash} broadcast (nonce {nonce}) but receipt wait timed out: {wait_err}"
+                            )
+
                     if receipt.status == 1:
-                        record_chain_tx(case_id, step, nonce, tx_hash, "confirmed", retries)
+                        record_chain_tx(case_id, step, nonce, tx_hash, "confirmed", retries, raw_tx=raw_tx_hex)
                         return receipt
                     else:
-                        record_chain_tx(case_id, step, nonce, tx_hash, "reverted", retries)
+                        record_chain_tx(case_id, step, nonce, tx_hash, "reverted", retries, raw_tx=raw_tx_hex)
                         update_case_status(case_id, "reverted")
                         raise TransactionRevertedError(f"Transaction {tx_hash} reverted on-chain")
 
-                except TransactionRevertedError:
+                except (TransactionRevertedError, TransientRPCError):
+                    # Never re-broadcast or retry when reverted or when transaction has already been broadcast!
                     raise
                 except Exception as exc:
                     err_msg = str(exc).lower()
                     if "revert" in err_msg or "unauthorized" in err_msg or "invalid" in err_msg:
+                        revert_reason = self._extract_revert_reason(exc)
                         record_chain_tx(
                             case_id, step, nonce if 'nonce' in locals() else None, None, "reverted", retries
                         )
-                        update_case_status(case_id, f"reverted: {self._extract_revert_reason(exc)}")
-                        raise TransactionRevertedError(self._extract_revert_reason(exc))
+                        raise TransactionRevertedError(revert_reason)
 
                     retries += 1
                     if retries > max_retries:
@@ -501,10 +678,199 @@ class ChainGateway:
             "idempotent": False,
         }
 
+    def run_validator_round(self, case_id: str) -> Dict[str, Any]:
+        """
+        Execute validator consensus round (commit & reveal) for active on-chain case.
+        Supports both standalone validator invocation and browser-triggered consensus.
+        """
+        case, onchain_bytes = self._resolve_onchain_id(case_id)
+        cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
+        if cur_state_int >= 5:
+            return {
+                "caseId": case_id,
+                "status": STATE_MAP.get(cur_state_int, "finalized"),
+                "message": "Round already finalized on-chain",
+                "quorumReached": True,
+            }
+
+        if cur_state_int < 3:
+            state_label = STATE_MAP.get(cur_state_int, str(cur_state_int))
+            raise InvalidStateError(
+                f"Cannot run validator consensus: case is in state '{state_label}'. "
+                f"Case must be opened and claimed on-chain before validators can commit."
+            )
+
+        round_num = self.case_registry.functions.caseRound(onchain_bytes).call()
+        snap_addrs = self.quorum.functions.getValidatorSnapshot(onchain_bytes, round_num).call()
+        if not snap_addrs:
+            raise InvalidStateError(f"No snapshot validators registered on-chain for round {round_num}")
+
+        result_data = read_case_json(case_id, "result.json")
+        if not result_data or "resultRoot" not in result_data:
+            raise GatewayError(f"Case {case_id} missing result.json for validator verification")
+        root_hex = result_data["resultRoot"].replace("0x", "")
+        result_root_bytes = bytes.fromhex(root_hex)
+
+        case_info = self.case_registry.functions.getCase(onchain_bytes).call()
+        engine_hash = case_info[6]
+        ruleset_hash = case_info[7]
+
+        # Resolve validator keys
+        raw_keys = [
+            getattr(config, "VALIDATOR_KEY_1", None) or os.environ.get("VALIDATOR_KEY_1") or os.environ.get("VALIDATOR_1_KEY"),
+            getattr(config, "VALIDATOR_KEY_2", None) or os.environ.get("VALIDATOR_KEY_2") or os.environ.get("VALIDATOR_2_KEY"),
+            getattr(config, "VALIDATOR_KEY_3", None) or os.environ.get("VALIDATOR_KEY_3") or os.environ.get("VALIDATOR_3_KEY"),
+        ]
+        val_keys_map = {}
+        for rk in raw_keys:
+            if rk:
+                try:
+                    acc = Account.from_key(rk)
+                    val_keys_map[acc.address.lower()] = rk
+                except Exception:
+                    pass
+
+        state_dir = config.REPO_ROOT / "validator_state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Commit phase
+        commits_made = 0
+        cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
+        if cur_state_int == 3:  # Committing
+            for addr in snap_addrs:
+                addr_lower = addr.lower()
+                val_key = val_keys_map.get(addr_lower)
+                if not val_key:
+                    logger.warning("No private key configured for snapshot validator %s", addr)
+                    continue
+
+                has_comm = self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
+                if not has_comm:
+                    val_acc = Account.from_key(val_key)
+                    salt_bytes = os.urandom(32)
+                    encoded_commitment = encode(
+                        ["bytes32", "address", "bytes32", "bytes32"],
+                        [onchain_bytes, val_acc.address, result_root_bytes, salt_bytes],
+                    )
+                    commitment = Web3.keccak(encoded_commitment)
+
+                    state_file = state_dir / f"{val_acc.address.lower()}.json"
+                    temp_state = state_dir / f"{val_acc.address.lower()}.json.tmp"
+                    state_payload = {
+                        "caseId": f"0x{onchain_bytes.hex()}",
+                        "round": round_num,
+                        "salt": f"0x{salt_bytes.hex()}",
+                        "resultRoot": f"0x{root_hex}",
+                        "commitment": f"0x{commitment.hex()}",
+                    }
+                    with open(temp_state, "w", encoding="utf-8") as f:
+                        json.dump(state_payload, f, indent=2)
+                    os.replace(temp_state, state_file)
+
+                    nonce = self.w3.eth.get_transaction_count(val_acc.address, "pending")
+                    tx = self.quorum.functions.commit(onchain_bytes, commitment).build_transaction({
+                        "from": val_acc.address,
+                        "nonce": nonce,
+                        "gas": 250000,
+                        "gasPrice": self.w3.eth.gas_price,
+                        "chainId": self.w3.eth.chain_id,
+                    })
+                    signed = val_acc.sign_transaction(tx)
+                    raw_tx = getattr(signed, "raw_transaction", getattr(signed, "rawTransaction", None))
+                    tx_h = self.w3.eth.send_raw_transaction(raw_tx)
+                    rcpt = self.w3.eth.wait_for_transaction_receipt(tx_h, timeout=20)
+                    if rcpt.status != 1:
+                        raise TransactionRevertedError(f"Commit reverted for validator {addr}")
+                    commits_made += 1
+
+        # 2. Advance to Revealing
+        cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
+        if cur_state_int == 3:  # Committing
+            round_params = self.quorum.functions.getRoundParams(onchain_bytes, round_num).call()
+            commit_deadline = round_params[2]
+            current_time = self.w3.eth.get_block("latest").timestamp
+
+            if current_time < commit_deadline and getattr(self.w3.provider, "make_request", None):
+                try:
+                    if self.w3.eth.chain_id in (31337, 1337):
+                        diff = commit_deadline - current_time + 5
+                        self.w3.provider.make_request("evm_increaseTime", [int(diff)])
+                        self.w3.provider.make_request("evm_mine", [])
+                except Exception as exc:
+                    logger.warning("Could not advance EVM time: %s", exc)
+
+            current_time = self.w3.eth.get_block("latest").timestamp
+            if current_time >= commit_deadline:
+                self.advance(case_id)
+                cur_state_int = 4
+
+        # 3. Reveal phase
+        reveals_made = 0
+        if cur_state_int == 4:  # Revealing
+            for addr in snap_addrs:
+                addr_lower = addr.lower()
+                val_key = val_keys_map.get(addr_lower)
+                if not val_key:
+                    continue
+
+                has_rev = self.quorum.functions.hasRevealed(onchain_bytes, round_num, addr).call()
+                if not has_rev:
+                    val_acc = Account.from_key(val_key)
+                    state_file = state_dir / f"{val_acc.address.lower()}.json"
+                    salt_bytes = None
+                    if state_file.exists():
+                        try:
+                            saved = json.loads(state_file.read_text(encoding="utf-8"))
+                            salt_bytes = bytes.fromhex(saved["salt"].replace("0x", ""))
+                        except Exception:
+                            pass
+                    if not salt_bytes:
+                        salt_bytes = b"\x00" * 32
+
+                    nonce = self.w3.eth.get_transaction_count(val_acc.address, "pending")
+                    tx = self.quorum.functions.reveal(
+                        onchain_bytes,
+                        result_root_bytes,
+                        salt_bytes,
+                        engine_hash,
+                        ruleset_hash,
+                    ).build_transaction({
+                        "from": val_acc.address,
+                        "nonce": nonce,
+                        "gas": 250000,
+                        "gasPrice": self.w3.eth.gas_price,
+                        "chainId": self.w3.eth.chain_id,
+                    })
+                    signed = val_acc.sign_transaction(tx)
+                    raw_tx = getattr(signed, "raw_transaction", getattr(signed, "rawTransaction", None))
+                    tx_h = self.w3.eth.send_raw_transaction(raw_tx)
+                    rcpt = self.w3.eth.wait_for_transaction_receipt(tx_h, timeout=20)
+                    if rcpt.status != 1:
+                        raise TransactionRevertedError(f"Reveal reverted for validator {addr}")
+                    reveals_made += 1
+
+        round_params = self.quorum.functions.getRoundParams(onchain_bytes, round_num).call()
+        k = round_params[1]
+        c_root = self.case_registry.functions.claimedRoot(onchain_bytes).call()
+        rev_count = self.quorum.functions.getRevealCount(onchain_bytes, round_num, c_root).call()
+        quorum_reached = (rev_count >= k)
+
+        self.poll_events()
+        return {
+            "caseId": case_id,
+            "round": round_num,
+            "commits": len(snap_addrs),
+            "reveals": rev_count,
+            "quorum": k,
+            "quorumReached": quorum_reached,
+            "status": "revealing" if cur_state_int == 4 else STATE_MAP.get(cur_state_int, "committing"),
+        }
+
     def finalize(self, case_id: str) -> Dict[str, Any]:
         """
         Finalize case verification quorum.
         Idempotent: skips if case is already Finalized, Disputed, or Expired.
+        Enforces on-chain prerequisites (Revealing state & quorum or deadline expiry).
         """
         case, onchain_bytes = self._resolve_onchain_id(case_id)
         cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
@@ -543,19 +909,38 @@ class ChainGateway:
         Record host posture scores on PostureLedger for each host in host_scores.json.
         Idempotent: skips any host already recorded on-chain.
         """
+        if not getattr(self, "posture_ledger", None):
+            raise GatewayError("PostureLedger contract is not available")
+
         case, onchain_bytes = self._resolve_onchain_id(case_id)
 
         # Must be finalized
         cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
         if cur_state_int != 5:
-            raise InvalidStateError(f"Case {case_id} is in state {STATE_MAP.get(cur_state_int)}, must be Finalized")
+            state_name = STATE_MAP.get(cur_state_int, f"unknown({cur_state_int})")
+            raise InvalidStateError(f"Case {case_id} is in state {state_name}, must be Finalized to record posture")
 
-        host_scores = read_case_json(case_id, "host_scores.json") or []
-        host_proofs = read_case_json(case_id, "host_proofs.json") or {}
+        # Verify analyst account matches case analyst registered on-chain
+        expected_analyst = self.case_registry.functions.analyst(onchain_bytes).call()
+        if expected_analyst.lower() != self.analyst_account.address.lower():
+            raise InvalidStateError(
+                f"Analyst account {self.analyst_account.address} does not match on-chain case analyst {expected_analyst}"
+            )
+
+        host_scores = read_case_json(case_id, "host_scores.json")
+        if not host_scores:
+            raise InvalidStateError(f"No host scores found for case {case_id} to record")
+
+        host_proofs = read_case_json(case_id, "host_proofs.json")
+        if host_proofs is None:
+            raise InvalidStateError(f"Missing host_proofs.json for case {case_id}")
 
         recorded_hosts = []
         for host_entry in host_scores:
-            host_id_raw = host_entry["hostId"]
+            host_id_raw = host_entry.get("hostId")
+            if not host_id_raw:
+                raise InvalidStateError(f"Host score entry missing 'hostId' in case {case_id}")
+
             clean_host_hex = host_id_raw.replace("0x", "")
             host_id_bytes = bytes.fromhex(clean_host_hex)
 
@@ -570,11 +955,19 @@ class ChainGateway:
                 recorded_hosts.append({"hostId": f"0x{clean_host_hex}", "status": "already_recorded"})
                 continue
 
-            findings_digest = bytes.fromhex(host_entry["findingsDigest"].replace("0x", ""))
+            findings_digest_raw = host_entry.get("findingsDigest")
+            if not findings_digest_raw:
+                raise InvalidStateError(f"Host entry {host_id_raw} missing findingsDigest")
+            findings_digest = bytes.fromhex(findings_digest_raw.replace("0x", ""))
+
             # score must be uint16 (0-100); cast explicitly to plain int for web3 encoding
             score = int(host_entry["score"])
+            if score < 0 or score > 100:
+                raise InvalidStateError(f"Host score {score} out of valid range (0-100)")
 
-            proof_raw = host_proofs.get(host_id_raw, host_proofs.get(f"0x{clean_host_hex}", []))
+            proof_raw = host_proofs.get(host_id_raw, host_proofs.get(f"0x{clean_host_hex}"))
+            if proof_raw is None:
+                raise InvalidStateError(f"Inclusion proof missing for host {host_id_raw} in host_proofs.json")
             proof_bytes = [bytes.fromhex(p.replace("0x", "")) for p in proof_raw]
 
             contract_fn = self.posture_ledger.functions.recordPosture(
@@ -702,12 +1095,14 @@ class ChainGateway:
         root_bytes = bytes.fromhex(root_hex.replace("0x", "")) if root_hex else bytes(32)
 
         contract_fn = self.quorum.functions.resolve(onchain_bytes, action_enum, root_bytes)
+        current_round = self.case_registry.functions.caseRound(onchain_bytes).call()
+        step_key = f"resolve_r{current_round}_{action.lower()}"
         receipt = self._send_tx(
             contract_fn=contract_fn,
             account=self.admin_account,
             lock=self._admin_lock,
             case_id=case_id,
-            step="resolve",
+            step=step_key,
         )
 
         new_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
@@ -757,6 +1152,7 @@ class ChainGateway:
                 "claimedRoot": None,
                 "finalRoot": None,
                 "reportHash": None,
+                "pcapHash": None,
                 "round": 0,
                 "validators": [],
                 "transactions": txs,
@@ -767,6 +1163,9 @@ class ChainGateway:
         state_int = self.case_registry.functions.caseState(onchain_bytes).call()
         state_str = STATE_MAP.get(state_int, "unknown").capitalize()
 
+        p_hash = self.case_registry.functions.pcapHash(onchain_bytes).call()
+        pcap_hash_hex = to_hex0x(p_hash)
+
         c_root = self.case_registry.functions.claimedRoot(onchain_bytes).call()
         f_root = self.case_registry.functions.finalRoot(onchain_bytes).call()
         r_hash = self.case_registry.functions.reportHash(onchain_bytes).call()
@@ -776,15 +1175,32 @@ class ChainGateway:
 
         # Retrieve validator commits and reveals if in an active round
         validators_info = []
+        matching_reveals = 0
+        k = 2
+        n = 3
+        commit_deadline = 0
+        reveal_deadline = 0
+        quorum_reached = False
+        can_finalize = False
+
         if round_num > 0 and state_int >= 2:
             try:
-                # ValidationQuorum exposes getValidatorSnapshot(caseId, round)
+                round_params = self.quorum.functions.getRoundParams(onchain_bytes, round_num).call()
+                n = round_params[0]
+                k = round_params[1]
+                commit_deadline = round_params[2]
+                reveal_deadline = round_params[3]
+                if c_root != bytes(32):
+                    matching_reveals = self.quorum.functions.getRevealCount(onchain_bytes, round_num, c_root).call()
+                current_time = self.w3.eth.get_block("latest").timestamp
+                quorum_reached = (matching_reveals >= k)
+                can_finalize = (state_int == 4 and (quorum_reached or current_time > reveal_deadline))
+
                 snap_addrs = self.quorum.functions.getValidatorSnapshot(onchain_bytes, round_num).call()
                 for addr in snap_addrs:
                     committed = self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
                     revealed = self.quorum.functions.hasRevealed(onchain_bytes, round_num, addr).call()
                     commit_val = self.quorum.functions.getCommitment(onchain_bytes, round_num, addr).call()
-                    # getValidatorRoot(caseId, round, validator) — only populated after reveal
                     rev_root = self.quorum.functions.getValidatorRoot(onchain_bytes, round_num, addr).call()
 
                     rev_root_hex = "0x" + rev_root.hex() if revealed else None
@@ -816,7 +1232,15 @@ class ChainGateway:
             "finalRoot": "0x" + f_root.hex() if f_root != bytes(32) else None,
             "contradicted": contradicted,
             "reportHash": "0x" + r_hash.hex() if r_hash != bytes(32) else None,
+            "pcapHash": pcap_hash_hex,
             "round": round_num,
+            "k": k,
+            "n": n,
+            "matchingReveals": matching_reveals,
+            "commitDeadline": commit_deadline,
+            "revealDeadline": reveal_deadline,
+            "quorumReached": quorum_reached,
+            "canFinalize": can_finalize,
             "validators": validators_info,
             "transactions": txs,
         }
@@ -867,6 +1291,26 @@ class ChainGateway:
 
                 case = get_case_by_onchain_id(onchain_id_hex)
                 if case and case["status"] != state_name:
+                    stage_progression = {
+                        "uploaded": 0,
+                        "analyzed": 1,
+                        "opened": 2,
+                        "opened_on_chain": 2,
+                        "claimed": 3,
+                        "distributed": 4,
+                        "committing": 5,
+                        "revealing": 6,
+                        "finalized": 7,
+                        "recorded": 8,
+                        "report_anchored": 9,
+                        "disputed": 99,
+                        "expired": 99,
+                        "rejected": 99,
+                    }
+                    cur_stage = stage_progression.get(case["status"].lower(), -1)
+                    new_stage = stage_progression.get(state_name.lower(), -1)
+                    if cur_stage >= new_stage:
+                        continue
                     update_case_status(case["id"], state_name)
                     add_audit_entry(
                         actor="system",

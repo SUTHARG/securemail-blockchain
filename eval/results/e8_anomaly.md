@@ -20,7 +20,7 @@
 | Scenario | Ground Truth | ML Score | ML Flag | Top Deviating Features (<5% Freq) | Rule Engine Detections | Assessment |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `A1` (#0) | **ANOMALY** | `0.1196` | `ANOMALY` | `ja3_rarity_bucket=0 (baseline_freq=0.0%)` | `R18` | Server certificate fingerprint replaced between sessions in the same capture |
-| `A1` (#1) | **ANOMALY** | `0.1196` | `ANOMALY` | `ja3_rarity_bucket=0 (baseline_freq=0.0%); cert_differs_from_baseline=1 (baseline_freq=0.0%)` | `R18` | Server certificate fingerprint replaced between sessions in the same capture |
+| `A1` (#1) | **ANOMALY** | `0.1196` | `ANOMALY` | `ja3_rarity_bucket=0 (baseline_freq=0.0%); cert_differs_from_baseline=1 (baseline_freq=0.0%); handshake_size_bucket=3 (baseline_freq=0.0%)` | `R18` | Server certificate fingerprint replaced between sessions in the same capture |
 | `A2` (#0) | **ANOMALY** | `0.1196` | `ANOMALY` | `tls_version=3 (baseline_freq=0.0%); ja3_rarity_bucket=0 (baseline_freq=0.0%)` | `R06` | Client negotiates deprecated TLS 1.0 where baseline used TLS 1.2 |
 | `A3` (#0) | **ANOMALY** | `0.0000` | `ANOMALY` | `cipher_suite_code=156 (baseline_freq=0.0%); ja3_rarity_bucket=0 (baseline_freq=0.0%)` | `R09` | Client connects with completely unseen JA3 fingerprint / unusual cipher list |
 | `S01a` (#0) | **CLEAN** | `0.1196` | `CLEAN` | `none` | `none` | Clean valid STARTTLS with TLS 1.2 and trusted certificate |

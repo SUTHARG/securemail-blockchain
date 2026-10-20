@@ -367,6 +367,95 @@ def test_wrong_engine_digest_aborts_before_commit(client, hardhat_node, setup_en
     assert gateway.quorum.functions.hasCommitted(onchain_bytes, 1, service1.account.address).call() is False
 
 
+def test_missing_engine_digest_aborts_in_strict_mode(client, hardhat_node, setup_env, monkeypatch):
+    """In strict mode, missing ENGINE_IMAGE_DIGEST must fail before committing."""
+    case_id, onchain_case_id, onchain_bytes = prepare_claimed_case(client, hardhat_node, setup_env)
+    gateway = hardhat_node["gateway"]
+    monkeypatch.delenv("ENGINE_IMAGE_DIGEST", raising=False)
+
+    val1_inbox = setup_env["inbox_dir"] / "1" / onchain_case_id.replace("0x", "")
+    val1_inbox.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(CAPTURES_DIR / "S01a.pcap", val1_inbox / "pcap.bin")
+
+    service1 = ValidatorService(
+        validator_id="1",
+        private_key=VALIDATOR_KEYS[0],
+        inbox_dir=setup_env["inbox_dir"] / "1",
+        state_dir=setup_env["state_dir"],
+        rpc_url=hardhat_node["rpc_url"],
+        deployment_file=DEPLOYMENTS_FILE,
+        strict=True,
+    )
+
+    root_bytes, res_data, man_data = service1.run_engine_analysis(
+        val1_inbox, val1_inbox / "pcap.bin", config.ORG_SECRET_HEX, onchain_bytes.hex()
+    )
+
+    with pytest.raises(StrictModeError, match="missing or empty"):
+        service1.verify_strict_mode(onchain_bytes, man_data)
+
+    assert gateway.quorum.functions.hasCommitted(onchain_bytes, 1, service1.account.address).call() is False
+
+
+def test_malformed_engine_digest_aborts_in_strict_mode(client, hardhat_node, setup_env, monkeypatch):
+    """In strict mode, malformed ENGINE_IMAGE_DIGEST must fail before committing."""
+    case_id, onchain_case_id, onchain_bytes = prepare_claimed_case(client, hardhat_node, setup_env)
+    gateway = hardhat_node["gateway"]
+    monkeypatch.setenv("ENGINE_IMAGE_DIGEST", "not-a-valid-hex-digest-at-all")
+
+    val1_inbox = setup_env["inbox_dir"] / "1" / onchain_case_id.replace("0x", "")
+    val1_inbox.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(CAPTURES_DIR / "S01a.pcap", val1_inbox / "pcap.bin")
+
+    service1 = ValidatorService(
+        validator_id="1",
+        private_key=VALIDATOR_KEYS[0],
+        inbox_dir=setup_env["inbox_dir"] / "1",
+        state_dir=setup_env["state_dir"],
+        rpc_url=hardhat_node["rpc_url"],
+        deployment_file=DEPLOYMENTS_FILE,
+        strict=True,
+    )
+
+    root_bytes, res_data, man_data = service1.run_engine_analysis(
+        val1_inbox, val1_inbox / "pcap.bin", config.ORG_SECRET_HEX, onchain_bytes.hex()
+    )
+
+    with pytest.raises(StrictModeError, match="malformed"):
+        service1.verify_strict_mode(onchain_bytes, man_data)
+
+    assert gateway.quorum.functions.hasCommitted(onchain_bytes, 1, service1.account.address).call() is False
+
+
+def test_matching_engine_digest_passes_strict_mode(client, hardhat_node, setup_env, monkeypatch):
+    """In strict mode, matching ENGINE_IMAGE_DIGEST passes verification."""
+    case_id, onchain_case_id, onchain_bytes = prepare_claimed_case(client, hardhat_node, setup_env)
+    gateway = hardhat_node["gateway"]
+    onchain_engine_hash = gateway.case_registry.functions.engineHash(onchain_bytes).call()
+    monkeypatch.setenv("ENGINE_IMAGE_DIGEST", "0x" + onchain_engine_hash.hex())
+
+    val1_inbox = setup_env["inbox_dir"] / "1" / onchain_case_id.replace("0x", "")
+    val1_inbox.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(CAPTURES_DIR / "S01a.pcap", val1_inbox / "pcap.bin")
+
+    service1 = ValidatorService(
+        validator_id="1",
+        private_key=VALIDATOR_KEYS[0],
+        inbox_dir=setup_env["inbox_dir"] / "1",
+        state_dir=setup_env["state_dir"],
+        rpc_url=hardhat_node["rpc_url"],
+        deployment_file=DEPLOYMENTS_FILE,
+        strict=True,
+    )
+
+    root_bytes, res_data, man_data = service1.run_engine_analysis(
+        val1_inbox, val1_inbox / "pcap.bin", config.ORG_SECRET_HEX, onchain_bytes.hex()
+    )
+
+    # Must pass without raising StrictModeError
+    service1.verify_strict_mode(onchain_bytes, man_data)
+
+
 # ---------------------------------------------------------------------------
 # Test 4: A faulty validator is outvoted
 # ---------------------------------------------------------------------------

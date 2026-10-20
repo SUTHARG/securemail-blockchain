@@ -88,37 +88,147 @@ def decrypt_validator_bundle(
 # Storage Encryption at Rest
 # ---------------------------------------------------------------------------
 
-def get_storage_at_rest_key() -> bytes:
-    """Derives or retrieves the 32-byte AES key for data-at-rest encryption."""
-    key_hex = os.environ.get("CASE_STORAGE_KEY_HEX")
-    if key_hex:
-        return bytes.fromhex(key_hex.strip())[:32]
+class StorageKeyError(ValueError):
+    """Raised when CASE_STORAGE_KEY_HEX is missing, malformed, or wrong size."""
+    pass
 
-    org_secret = os.environ.get("ORG_SECRET_HEX", "00" * 32)
-    import hashlib
-    return hashlib.sha256(b"SecureMailScopeStorageAtRest:" + bytes.fromhex(org_secret[:64])).digest()
+
+class StorageDecryptionError(RuntimeError):
+    """Raised when decryption of stored PCAP fails."""
+    pass
+
+
+class StorageEncryptionError(RuntimeError):
+    """Raised when encryption of stored PCAP fails."""
+    pass
+
+
+VALID_PCAP_MAGICS = [
+    b"\xa1\xb2\xc3\xd4",  # Classic PCAP big-endian
+    b"\xd4\xc3\xb2\xa1",  # Classic PCAP little-endian
+    b"\xa1\xb2\x3c\x4d",  # Nanosecond PCAP big-endian
+    b"\x4d\x3c\xb2\xa1",  # Nanosecond PCAP little-endian
+    b"\x0a\x0d\x0d\x0a",  # PCAP-NG Section Header
+]
+
+
+def get_storage_at_rest_key() -> bytes:
+    """
+    Retrieves and validates the explicitly configured 32-byte AES key for data-at-rest encryption.
+    Fails closed if missing, malformed, or wrong size.
+    """
+    key_hex = os.environ.get("CASE_STORAGE_KEY_HEX")
+    if not key_hex or not key_hex.strip():
+        raise StorageKeyError(
+            "CASE_STORAGE_KEY_HEX is required for PCAP storage at rest but not configured."
+        )
+    key_str = key_hex.strip()
+    if len(key_str) != 64:
+        raise StorageKeyError(
+            f"CASE_STORAGE_KEY_HEX must be exactly 64 hex characters (32 bytes), got {len(key_str)}"
+        )
+    try:
+        key_bytes = bytes.fromhex(key_str)
+    except ValueError as e:
+        raise StorageKeyError(f"CASE_STORAGE_KEY_HEX is malformed hex: {e}") from e
+    if len(key_bytes) != 32:
+        raise StorageKeyError(f"CASE_STORAGE_KEY_HEX must decode to 32 bytes, got {len(key_bytes)}")
+    return key_bytes
 
 
 def encrypt_at_rest(data: bytes, key: Optional[bytes] = None) -> bytes:
-    """Encrypts binary data with AES-256-GCM for storage at rest."""
+    """
+    Encrypts binary data with AES-256-GCM for storage at rest.
+    Fails closed on any error.
+    """
     if key is None:
         key = get_storage_at_rest_key()
-    nonce = os.urandom(12)
-    aesgcm = AESGCM(key)
-    ciphertext = aesgcm.encrypt(nonce, data, None)
-    # Magic prefix 0x534D5345 ('SMSE') + nonce (12 bytes) + ciphertext
-    return b"SMSE" + nonce + ciphertext
+    elif len(key) != 32:
+        raise StorageKeyError(f"Storage key must be exactly 32 bytes, got {len(key)}")
+    try:
+        nonce = os.urandom(12)
+        aesgcm = AESGCM(key)
+        ciphertext = aesgcm.encrypt(nonce, data, None)
+        # Magic prefix 0x534D5345 ('SMSE') + nonce (12 bytes) + ciphertext
+        return b"SMSE" + nonce + ciphertext
+    except Exception as exc:
+        if isinstance(exc, StorageKeyError):
+            raise
+        raise StorageEncryptionError(f"AES-256-GCM encryption failed: {exc}") from exc
 
 
 def decrypt_at_rest(encrypted_data: bytes, key: Optional[bytes] = None) -> bytes:
-    """Decrypts binary data stored at rest. If not encrypted with SMSE magic, returns as-is."""
-    if not encrypted_data.startswith(b"SMSE") or len(encrypted_data) < 16:
-        # Plaintext fallback
+    """
+    Decrypts binary data stored at rest.
+    If file starts with SMSE magic, it MUST be successfully decrypted with AES-256-GCM.
+    Decryption failure raises StorageDecryptionError. Never returns encrypted bytes.
+    If file does not start with SMSE magic, it is treated as legacy plaintext ONLY IF
+    it starts with a valid PCAP magic number; otherwise raises StorageDecryptionError.
+    """
+    if encrypted_data.startswith(b"SMSE"):
+        if len(encrypted_data) < 32:  # 4 magic + 12 nonce + 16 min tag
+            raise StorageDecryptionError("Corrupted encrypted file: payload shorter than minimum header and tag")
+        if key is None:
+            key = get_storage_at_rest_key()
+        elif len(key) != 32:
+            raise StorageKeyError(f"Storage key must be exactly 32 bytes, got {len(key)}")
+        nonce = encrypted_data[4:16]
+        ciphertext = encrypted_data[16:]
+        aesgcm = AESGCM(key)
+        try:
+            return aesgcm.decrypt(nonce, ciphertext, None)
+        except Exception as exc:
+            raise StorageDecryptionError(f"Failed to decrypt encrypted PCAP at rest: {exc}") from exc
+
+    # Legacy plaintext check: only allowed if content begins with valid PCAP magic
+    if any(encrypted_data.startswith(m) for m in VALID_PCAP_MAGICS):
         return encrypted_data
 
-    if key is None:
-        key = get_storage_at_rest_key()
-    nonce = encrypted_data[4:16]
-    ciphertext = encrypted_data[16:]
-    aesgcm = AESGCM(key)
-    return aesgcm.decrypt(nonce, ciphertext, None)
+    raise StorageDecryptionError("Unrecognized file format: neither SMSE encrypted nor valid legacy PCAP")
+
+
+# ---------------------------------------------------------------------------
+# Strict Mode Pinning Verification
+# ---------------------------------------------------------------------------
+
+class StrictModeError(RuntimeError):
+    """Raised when strict pinning verification fails prior to commit."""
+    pass
+
+
+def parse_and_validate_engine_digest(env_engine_digest: Optional[str]) -> str:
+    """
+    Parses and validates ENGINE_IMAGE_DIGEST string.
+    Supports formats: '0x<64-hex>', 'sha256:<64-hex>', or '<64-hex>'.
+    Returns lowercase 64-hex string.
+    Raises StrictModeError if missing, empty, malformed, or incorrect length.
+
+    LIMITATION / ASSUMPTION DOCUMENTATION:
+    Checking an environment-provided digest (ENGINE_IMAGE_DIGEST) validates
+    administrative configuration claim alignment against the pinned on-chain engineHash.
+    It does not cryptographically or independently prove which container image or binary
+    actually ran inside the host runtime (such proof would require verifiable execution,
+    such as TPM-based remote attestation or cryptographic execution enclaves).
+    """
+    if not env_engine_digest or not env_engine_digest.strip():
+        raise StrictModeError(
+            "Strict mode violation: ENGINE_IMAGE_DIGEST is missing or empty. "
+            "In strict validator mode, ENGINE_IMAGE_DIGEST must be explicitly set and match the pinned on-chain engineHash."
+        )
+    clean = env_engine_digest.strip().lower()
+    if clean.startswith("sha256:"):
+        clean = clean[7:]
+    elif clean.startswith("0x"):
+        clean = clean[2:]
+
+    if len(clean) != 64:
+        raise StrictModeError(
+            f"Strict mode violation: ENGINE_IMAGE_DIGEST is malformed. Expected 64 hex characters (32 bytes), got {len(clean)}."
+        )
+    try:
+        bytes.fromhex(clean)
+    except ValueError as e:
+        raise StrictModeError(
+            f"Strict mode violation: ENGINE_IMAGE_DIGEST is not valid hexadecimal: {e}."
+        ) from e
+    return clean

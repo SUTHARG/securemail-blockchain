@@ -1,0 +1,201 @@
+"""Integration test verifying stream completion semantics through the real pipeline,
+report builder, and HTML sessions page rendering.
+"""
+import hashlib
+import json
+from pathlib import Path
+import pytest
+from fastapi.testclient import TestClient
+import jsonschema
+
+from backend.app import app
+import backend.config as config
+from backend.database import create_case, init_db
+from backend.reports.builder import build_case_report
+from backend.storage import get_case_dir
+from engine.smscope.ingest.reassembly import Stream
+from engine.smscope.models import SessionRecord, StarttlsInfo
+from engine.smscope.results.pipeline import process_results
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SCHEMAS_DIR = REPO_ROOT / "spec" / "schemas"
+
+
+def load_schema(name: str) -> dict:
+    with open(SCHEMAS_DIR / f"{name}.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def test_real_pipeline_session_json_and_report_rendering(tmp_path, monkeypatch):
+    """
+    1. Runs real pipeline.
+    2. Inspects generated sessions.json.
+    3. Builds report and verifies counts are not silently zero.
+    4. Renders sessions.html and verifies badges.
+    """
+    test_cases_dir = tmp_path / "cases"
+    test_cases_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(config, "CASES_DIR", test_cases_dir)
+    test_db = tmp_path / "test_pipeline.db"
+    monkeypatch.setattr(config, "DB_PATH", test_db)
+    init_db()
+
+    case_id = "test_stream_integ_001"
+    case_dir = get_case_dir(case_id)
+    case_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. Complete stream
+    stream1 = Stream(
+        index=0,
+        client="10.0.0.1:50001",
+        server="192.168.1.10:25",
+        firstFrame=1,
+        firstTs=1700000001,
+        complete=True,
+        clientInferred=False,
+        clientBytes=b"EHLO client.test\r\nQUIT\r\n",
+        serverBytes=b"220 mail.test ESMTP\r\n221 Bye\r\n",
+        contiguous=True,
+        terminated=True,
+        confirmed_complete=True,
+    )
+    s1 = SessionRecord(
+        sessionId=0,
+        clientEndpoint=stream1.client,
+        serverEndpoint=stream1.server,
+        protocol="smtp",
+        protocolSource="content",
+        transportMode="plaintext",
+        streamComplete=True,
+        firstPacketTs=stream1.firstTs,
+        starttls=StarttlsInfo(offered=False, attempted=False, outcome="notOffered"),
+        stream=stream1,
+    )
+
+    # 2. Contiguous partial capture with no observed FIN/RST
+    stream2 = Stream(
+        index=1,
+        client="10.0.0.2:50002",
+        server="192.168.1.10:25",
+        firstFrame=10,
+        firstTs=1700000010,
+        complete=True,
+        clientInferred=False,
+        clientBytes=b"EHLO client.test\r\nMAIL FROM:<alice@test>\r\n",
+        serverBytes=b"220 mail.test ESMTP\r\n250 Ok\r\n",
+        contiguous=True,
+        terminated=False,
+        confirmed_complete=False,
+    )
+    s2 = SessionRecord(
+        sessionId=1,
+        clientEndpoint=stream2.client,
+        serverEndpoint=stream2.server,
+        protocol="smtp",
+        protocolSource="content",
+        transportMode="plaintext",
+        streamComplete=True,
+        firstPacketTs=stream2.firstTs,
+        starttls=StarttlsInfo(offered=False, attempted=False, outcome="notOffered"),
+        stream=stream2,
+    )
+
+    # 3. Stream with sequence gaps
+    stream3 = Stream(
+        index=2,
+        client="10.0.0.3:50003",
+        server="192.168.1.10:25",
+        firstFrame=20,
+        firstTs=1700000020,
+        complete=False,
+        clientInferred=False,
+        clientBytes=b"EHLO client.test\r\n",
+        serverBytes=b"220 mail.test ESMTP\r\n",
+        contiguous=False,
+        terminated=False,
+        confirmed_complete=False,
+    )
+    s3 = SessionRecord(
+        sessionId=2,
+        clientEndpoint=stream3.client,
+        serverEndpoint=stream3.server,
+        protocol="smtp",
+        protocolSource="content",
+        transportMode="plaintext",
+        streamComplete=False,
+        firstPacketTs=stream3.firstTs,
+        starttls=StarttlsInfo(offered=False, attempted=False, outcome="notOffered"),
+        stream=stream3,
+    )
+
+    sessions = [s1, s2, s3]
+    org_secret = bytes.fromhex("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+    pcap_sha = hashlib.sha256(b"dummy_pcap").hexdigest()
+
+    # Create dummy encrypted pcap for report builder
+    from validator.crypto import encrypt_at_rest
+    (case_dir / "pcap.bin").write_bytes(encrypt_at_rest(b"dummy_pcap"))
+
+    create_case(case_id=case_id, pcap_sha256=pcap_sha, status="analyzed")
+
+    # Execute the real pipeline
+    process_results(
+        sessions=sessions,
+        findings=[],
+        org_secret=org_secret,
+        pcap_sha256=pcap_sha,
+        out_dir=case_dir,
+        case_id=case_id,
+    )
+
+    # Step A: Inspect generated sessions.json
+    sessions_json_path = case_dir / "sessions.json"
+    assert sessions_json_path.exists(), "sessions.json was not generated by pipeline!"
+    raw_sessions_data = json.loads(sessions_json_path.read_text(encoding="utf-8"))
+    assert len(raw_sessions_data) == 3
+
+    schema = load_schema("session_record")
+    for session_dict in raw_sessions_data:
+        assert "streamContiguous" in session_dict, "streamContiguous missing from generated sessions.json!"
+        assert "streamTerminated" in session_dict, "streamTerminated missing from generated sessions.json!"
+        assert "confirmedComplete" in session_dict, "confirmedComplete missing from generated sessions.json!"
+        jsonschema.validate(instance=session_dict, schema=schema)
+
+    # Verify specific semantics in generated JSON
+    assert raw_sessions_data[0]["confirmedComplete"] is True
+    assert raw_sessions_data[0]["streamContiguous"] is True
+    assert raw_sessions_data[0]["streamTerminated"] is True
+
+    assert raw_sessions_data[1]["confirmedComplete"] is False
+    assert raw_sessions_data[1]["streamContiguous"] is True
+    assert raw_sessions_data[1]["streamTerminated"] is False
+
+    assert raw_sessions_data[2]["confirmedComplete"] is False
+    assert raw_sessions_data[2]["streamContiguous"] is False
+    assert raw_sessions_data[2]["streamTerminated"] is False
+
+    # Step B: Build report and verify visibilityLimits counts
+    rep_dict, rep_bytes, rep_sha, rep_html = build_case_report(case_id=case_id, save=True)
+    v_limits = rep_dict["visibilityLimits"]
+
+    assert v_limits["incompleteStreamsCount"] == 1  # Session 3
+    assert v_limits["contiguousStreamsCount"] == 2  # Sessions 1 and 2
+    assert v_limits["terminatedStreamsCount"] == 1  # Session 1
+    assert v_limits["confirmedCompleteStreamsCount"] == 1  # Session 1
+    # Verify they are not silently zero
+    assert v_limits["contiguousStreamsCount"] > 0
+    assert v_limits["confirmedCompleteStreamsCount"] > 0
+
+    # Step C: Verify sessions HTML page rendering
+    client = TestClient(app)
+    client.cookies.set("api_key", config.ANALYST_API_KEY)
+    res = client.get(f"/cases/{case_id}/sessions", headers={"Accept": "text/html"})
+    assert res.status_code == 200
+    html = res.text
+
+    # Complete stream badge
+    assert "Complete" in html
+    # Contiguous partial capture with no observed FIN/RST
+    assert "Partial capture (Contiguous payload, no FIN/RST observed)" in html
+    # Stream with sequence gaps
+    assert "Not evaluable (Sequence gaps / dropped packets)" in html

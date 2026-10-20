@@ -5,7 +5,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Solidity 0.8.24](https://img.shields.io/badge/solidity-0.8.24-lightgrey.svg)](https://soliditylang.org/)
 [![Hardhat](https://img.shields.io/badge/framework-Hardhat-yellow.svg)](https://hardhat.org/)
-[![Tests Passing](https://img.shields.io/badge/tests-394%20passing-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-536%20passing-brightgreen.svg)]()
 [![E1 Ground Truth](https://img.shields.io/badge/parsing%20agreement-100%25-success.svg)]()
 [![Zero External CDN](https://img.shields.io/badge/privacy-zero%20CDN-orange.svg)]()
 
@@ -536,33 +536,71 @@ Open your browser at **`http://127.0.0.1:8000`** to access the dashboard.
 
 ### Step 5: Start Validator Nodes
 
-In three separate terminals (or as background tasks), launch the independent validator daemon services:
+The validator daemon services monitor their inboxes and the blockchain, executing forensic engine analysis, blinded commitments, and on-chain reveals. Because `validator/service.py` automatically loads keys from `.env` (supporting both `VALIDATOR_KEY_<id>` and `VALIDATOR_<id>_KEY`), you can launch them directly:
 
 ```bash
 # Terminal 3: Validator Node 1
-export VALIDATOR_1_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
-python validator/service.py --id 1 --key-env VALIDATOR_1_KEY
+python validator/service.py --id 1
 
 # Terminal 4: Validator Node 2
-export VALIDATOR_2_KEY=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
-python validator/service.py --id 2 --key-env VALIDATOR_2_KEY
+python validator/service.py --id 2
 
 # Terminal 5: Validator Node 3
-export VALIDATOR_3_KEY=0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
-python validator/service.py --id 3 --key-env VALIDATOR_3_KEY
+python validator/service.py --id 3
 ```
+
+Alternatively, specify custom environment variables or direct keys:
+```bash
+# On Linux/macOS:
+export VALIDATOR_KEY_1="<YOUR_VALIDATOR_1_KEY_HEX>"
+python validator/service.py --id 1 --key-env VALIDATOR_KEY_1
+
+# On Windows PowerShell:
+$env:VALIDATOR_KEY_1="<YOUR_VALIDATOR_1_KEY_HEX>"
+python validator/service.py --id 1 --key-env VALIDATOR_KEY_1
+```
+*Note: You can also trigger the multi-validator consensus round directly from the Web Dashboard by clicking "Run Validator Consensus Round".*
 
 ---
 
-### Step 6: Run Automated Demonstration
+### Step 6: Run Automated Demonstration (Clean Isolated Demo)
 
-To observe the entire lifecycle—uploading a PCAP, creating an on-chain case, distributing sealed envelopes, achieving multi-validator quorum, updating the posture ledger, and anchoring the report—run:
+> [!IMPORTANT]
+> **Demonstration Environment Context:**
+> The live demonstration and test suites execute strictly against a **local Hardhat EVM development node** (Chain ID `31337`, JSON-RPC `http://127.0.0.1:8545`) and parse **synthetic forensic PCAP captures** (`lab/captures/`). It does not connect to a public Ethereum network or monitor live production mail servers.
+
+To observe the entire lifecycle—registering the engine and validator set on-chain, uploading a PCAP, creating an on-chain case, distributing sealed envelopes, achieving multi-validator quorum, updating the posture ledger, anchoring the report, and executing the 5-step mathematical verification—run the clean demo runner:
 
 ```bash
-make demo
-# Alternatively:
-bash scripts/demo_full.sh
+python scripts/run_clean_demo.py
 ```
+
+**Key Execution Features:**
+1. **Engine & Validator Registration:** Automatically checks and registers the engine image digest, ruleset catalog hash, and all 3 validator addresses on-chain.
+2. **On-Chain Consensus & Finalization:** Submits case claim, collects commitments and reveals from Validators 1, 2, and 3, reaches quorum, finalizes outcome, appends to `PostureLedger`, and anchors `reportHash`.
+3. **5-Step Independent Verification:** Executes Section 8 verification (PCAP hash check, Merkle root recomputation, on-chain finalRoot comparison, PostureLedger hash-chain verification, and report hash match).
+4. **Data Isolation:** All demo run database rows and case files are created in an isolated run folder (`data/demo_runs/run_<timestamp>/`), completely preserving `data/smscope.db` and existing case files.
+
+#### Viewing the Demo Case in the Dashboard
+To explore the newly generated demo case within the web interface:
+
+1. Launch the backend pointing to the isolated demo data directory. `DATA_DIR` selects the cases folder and the default database location; `DB_PATH` selects the database file. `DATABASE_PATH` and `CASES_DIR` are not configuration variables in this backend.
+   - **On Linux / macOS:**
+     ```bash
+     DATA_DIR=data/demo_runs/run_<timestamp> DB_PATH=data/demo_runs/run_<timestamp>/smscope.db uvicorn backend.app:app --host 127.0.0.1 --port 8000
+     ```
+   - **On Windows (PowerShell):**
+     ```powershell
+     $env:DATA_DIR = (Resolve-Path ".\data\demo_runs\run_<timestamp>").Path
+     $env:DB_PATH = Join-Path $env:DATA_DIR "smscope.db"
+     python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
+     ```
+2. Navigate to **`http://127.0.0.1:8000`** in your browser.
+3. When prompted on `/login`, enter the Analyst API key from `.env`:
+   - **API Key:** the value of `ANALYST_API_KEY` in `.env`. The application has no default analyst API key; configure one with at least 16 characters before starting the backend.
+4. Access the Case Overview, Sessions, Findings, Host Scores, and On-Chain Verification pages.
+
+The demo backend also requires `CASE_STORAGE_KEY_HEX` to be set to 64 hexadecimal characters (32 bytes). Keep the same key when reopening an existing demo data directory; changing it makes previously stored encrypted case data unreadable.
 
 ---
 
@@ -572,32 +610,31 @@ SecureMailScope maintains strict, comprehensive automated test coverage across a
 
 | Test Suite | Directory | Tests Passing | Description |
 |---|---|---|---|
-| **Forensic Engine** | `engine/tests/` | **245 passed** | SMTP/IMAP/POP3 parsers, TLS 1.2/1.3 handshakes, X.509 PKI, ruleset R01–R19, Merkle tree, canonical JSON, limits. |
+| **Forensic Engine** | `engine/tests/` | **302 passed** | SMTP/IMAP/POP3 parsers, TLS 1.2/1.3 handshakes, X.509 PKI, stream semantics (contiguity & termination), ruleset R01–R19, Merkle tree, canonical JSON, limits. |
 | **Smart Contracts** | `contracts/test/` | **90 passed** | Solidity unit tests, commit-reveal state machine, quorum thresholds, posture ledger hash-chains, disputes. |
-| **Backend API & Web** | `backend/tests/` | **50 passed** | REST endpoints, authentication RBAC, PDF/HTML reports, inline SVG charts, chain gateway, regression tests. |
-| **Validator Service** | `validator/tests/` | **9 passed** | Curve25519 sealed box encryption, sealed PCAP delivery, multi-validator decryption, consensus submission. |
-| **TOTAL** | — | **394 passed** | **100% test pass rate across all suites.** |
+| **Backend API & Web** | `backend/tests/` | **123 passed** | REST endpoints, authentication RBAC, CSRF protection, PDF/HTML reports, data directory isolation, chain gateway, stream pipeline integration. |
+| **Validator Service** | `validator/tests/` | **21 passed** | Curve25519 sealed box encryption, sealed PCAP delivery, multi-validator decryption, consensus submission, fail-closed binding. |
+| **TOTAL** | — | **536 passed** | **100% test pass rate across all suites (0 failures, 0 errors).** |
 
 ### Running the Tests
-Execute the full test suite with a single command:
+Execute the test suites with:
+
 ```bash
-make test
+# Run Engine forensic tests (302 tests)
+python -m pytest engine/tests -v
+
+# Run Backend web and API tests (123 tests)
+python -m pytest backend/tests -v
+
+# Run Validator crypto and sealed delivery tests (21 tests)
+python -m pytest validator/tests -v
+
+# Run Smart Contract EVM tests (90 tests)
+cd contracts && npx hardhat test && cd ..
 ```
 
-Or execute test components individually:
-```bash
-# Run Engine forensic tests
-python -m pytest engine/tests -q
-
-# Run Backend web and API tests
-python -m pytest backend/tests -q
-
-# Run Validator crypto and sealed delivery tests
-python -m pytest validator/tests -q
-
-# Run Smart Contract EVM tests
-cd contracts && npm test && cd ..
-```
+> [!TIP]
+> **Windows pytest note:** When running pytest on Windows with a custom temporary directory, ensure the root directory exists before specifying a nested `--basetemp` path (e.g. `--basetemp=.pytest_tmp/run1`), or let pytest use its default workspace sandbox.
 
 ---
 

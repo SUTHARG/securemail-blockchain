@@ -28,6 +28,8 @@ env/
 !/lab/ca/out/*.der
 /data/
 /validator_state/
+/validator_inbox/
+.pytest_tmp/
 
 # Hardhat build artifacts
 contracts/artifacts/

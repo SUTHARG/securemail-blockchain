@@ -3,6 +3,7 @@
 CLI: python -m validator.node --case-id <hex> --pcap <path> --org-secret-hex <hex> --key-env <ENV_VAR_NAME> [--no-strict]
 """
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -15,6 +16,15 @@ from typing import Any, Dict, Optional, Tuple
 from eth_abi import encode
 from eth_account import Account
 from web3 import Web3
+
+try:
+    from dotenv import load_dotenv
+    repo_root = Path(__file__).resolve().parents[1]
+    load_dotenv(repo_root / ".env")
+except ImportError:
+    pass
+
+from validator.crypto import StrictModeError, parse_and_validate_engine_digest
 
 
 def resolve_path(p: str, base_dir: Path) -> Path:
@@ -75,7 +85,8 @@ def run_validator(
     case_id_hex: str,
     pcap_path: Path,
     org_secret_hex: str,
-    key_env: str,
+    key_env: Optional[str] = None,
+    private_key_hex: Optional[str] = None,
     strict: bool = True,
     rpc_url: str = "http://127.0.0.1:8545",
     deployment_file: Optional[Path] = None,
@@ -83,10 +94,15 @@ def run_validator(
     state_dir: Optional[Path] = None,
     ruleset_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    # 1. Resolve private key from env
-    private_key = os.environ.get(key_env)
-    if not private_key:
-        raise ValueError(f"Environment variable '{key_env}' not set or empty")
+    # 1. Resolve private key from env or argument
+    if private_key_hex:
+        private_key = private_key_hex
+    elif key_env:
+        private_key = os.environ.get(key_env)
+        if not private_key:
+            raise ValueError(f"Environment variable '{key_env}' not set or empty")
+    else:
+        raise ValueError("Either private_key_hex or key_env must be provided")
     account = Account.from_key(private_key)
     validator_addr = Web3.to_checksum_address(account.address)
     print(f"[*] Validator Node running for address: {validator_addr}")
@@ -102,14 +118,22 @@ def run_validator(
         deployment_file = repo_root / "contracts" / "deployments" / "local.json"
 
     deployment = load_deployment(deployment_file)
-    contracts_meta = deployment["contracts"]
+    contracts_meta = deployment.get("contracts", deployment)
 
-    registry_abi = load_contract_abi(deployment_file.parent, contracts_meta["CaseRegistry"]["abiPath"])
-    registry_addr = Web3.to_checksum_address(contracts_meta["CaseRegistry"]["address"])
+    reg_entry = contracts_meta.get("CaseRegistry", {})
+    if "abi" in reg_entry:
+        registry_abi = reg_entry["abi"]
+    else:
+        registry_abi = load_contract_abi(deployment_file.parent, reg_entry.get("abiPath", ""))
+    registry_addr = Web3.to_checksum_address(reg_entry.get("address", "0x" + "0" * 40))
     case_registry = w3.eth.contract(address=registry_addr, abi=registry_abi)
 
-    quorum_abi = load_contract_abi(deployment_file.parent, contracts_meta["ValidationQuorum"]["abiPath"])
-    quorum_addr = Web3.to_checksum_address(contracts_meta["ValidationQuorum"]["address"])
+    quorum_entry = contracts_meta.get("ValidationQuorum", {})
+    if "abi" in quorum_entry:
+        quorum_abi = quorum_entry["abi"]
+    else:
+        quorum_abi = load_contract_abi(deployment_file.parent, quorum_entry.get("abiPath", ""))
+    quorum_addr = Web3.to_checksum_address(quorum_entry.get("address", "0x" + "0" * 40))
     quorum = w3.eth.contract(address=quorum_addr, abi=quorum_abi)
 
     # 4. Normalize caseId
@@ -126,6 +150,29 @@ def run_validator(
     case_round = case_registry.functions.caseRound(case_id_bytes).call()
     onchain_engine_hash = case_registry.functions.engineHash(case_id_bytes).call()
     onchain_ruleset_hash = case_registry.functions.rulesetHash(case_id_bytes).call()
+    onchain_pcap_hash = case_registry.functions.pcapHash(case_id_bytes).call()
+
+    # Check bundle metadata if present
+    case_id_txt = pcap_path.parent / "onchain_case_id.txt"
+    if case_id_txt.exists():
+        txt_id = case_id_txt.read_text(encoding="utf-8").strip()
+        clean_txt = txt_id.lower().replace("0x", "")
+        clean_target = case_id_bytes.hex().lower().replace("0x", "")
+        if clean_txt != clean_target:
+            raise ValueError(
+                f"Delivered bundle case ID (0x{clean_txt}) does not match target case ID (0x{clean_target})"
+            )
+    elif strict and pcap_path.name == "pcap.bin" and (pcap_path.parent / "org_secret.hex").exists():
+        raise ValueError("Plaintext bundle missing onchain_case_id.txt in strict mode")
+
+    # Validate delivered PCAP SHA-256 against on-chain pcapHash (fail-closed)
+    pcap_sha256 = hashlib.sha256(pcap_path.read_bytes()).digest()
+    if not onchain_pcap_hash or onchain_pcap_hash == b"\x00" * 32:
+        raise ValueError("Target case has missing or zero on-chain pcapHash")
+    if pcap_sha256 != onchain_pcap_hash:
+        raise ValueError(
+            f"Delivered PCAP hash (0x{pcap_sha256.hex()}) does not match on-chain case pcapHash (0x{onchain_pcap_hash.hex()})"
+        )
 
     # 6. Run smscope analysis
     temp_dir_obj = None
@@ -178,23 +225,22 @@ def run_validator(
         if strict:
             onchain_ruleset_hex = onchain_ruleset_hash.hex().lower().replace("0x", "")
             if local_ruleset_hex != onchain_ruleset_hex:
-                raise RuntimeError(
+                raise StrictModeError(
                     f"Strict mode violation: local rulesetHash (0x{local_ruleset_hex}) differs from "
                     f"on-chain case rulesetHash (0x{onchain_ruleset_hex})"
                 )
 
             env_engine_digest = os.environ.get("ENGINE_IMAGE_DIGEST")
-            if env_engine_digest:
-                clean_env_engine = env_engine_digest.lower().replace("0x", "")
-                onchain_engine_hex = onchain_engine_hash.hex().lower().replace("0x", "")
-                if clean_env_engine != onchain_engine_hex:
-                    raise RuntimeError(
-                        f"Strict mode violation: ENGINE_IMAGE_DIGEST (0x{clean_env_engine}) differs from "
-                        f"on-chain case engineHash (0x{onchain_engine_hex})"
-                    )
+            clean_env_engine = parse_and_validate_engine_digest(env_engine_digest)
+            onchain_engine_hex = onchain_engine_hash.hex().lower().replace("0x", "")
+            if clean_env_engine != onchain_engine_hex:
+                raise StrictModeError(
+                    f"Strict mode violation: ENGINE_IMAGE_DIGEST (0x{clean_env_engine}) differs from "
+                    f"on-chain case engineHash (0x{onchain_engine_hex})"
+                )
             print("[+] Strict mode pre-commit checks passed")
         else:
-            print("[!] Strict mode DISABLED (--no-strict)")
+            print("[!] Strict mode DISABLED (--no-strict); proceeding without digest/ruleset verification")
 
         # 8. Check validator snapshot eligibility
         is_in_snapshot = quorum.functions.isSnapshotValidator(case_id_bytes, case_round, validator_addr).call()
@@ -231,6 +277,7 @@ def run_validator(
                 "salt": f"0x{salt_hex}",
                 "resultRoot": f"0x{local_root_hex}",
                 "commitment": f"0x{commitment_bytes.hex()}",
+                "strict": strict,
             }
             with open(temp_state_file, "w", encoding="utf-8") as f:
                 json.dump(state_payload, f, indent=2)
@@ -257,6 +304,17 @@ def run_validator(
             current_block = w3.eth.get_block("latest")
             if current_block.timestamp >= commit_deadline:
                 break
+            if getattr(w3.provider, "make_request", None):
+                try:
+                    if w3.eth.chain_id in (31337, 1337):
+                        diff = commit_deadline - current_block.timestamp + 1
+                        if diff > 0:
+                            w3.provider.make_request("evm_increaseTime", [int(diff)])
+                            w3.provider.make_request("evm_mine", [])
+                    else:
+                        w3.provider.make_request("evm_mine", [])
+                except Exception:
+                    pass
             time.sleep(0.5)
 
         # 11. Advance case state to Revealing if needed
@@ -297,6 +355,9 @@ def run_validator(
     finally:
         if temp_dir_obj is not None:
             temp_dir_obj.cleanup()
+
+
+process_case = run_validator
 
 
 def build_parser() -> argparse.ArgumentParser:
