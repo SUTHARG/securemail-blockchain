@@ -19,7 +19,7 @@
   <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem;">
     <h3>Workflow Lifecycle Timeline</h3>
     <span style="font-size: 0.8rem; color: var(--text-muted);">
-      Timeline Source: <strong>Local Engine Workflow Status</strong> (Consensus stages 3–10 tracked on-chain)
+      Timeline Source: <strong>Local workflow + on-chain report anchor</strong>
     </span>
   </div>
   {% if not onchain_id %}
@@ -41,7 +41,7 @@
       ('report_anchored', '10. Anchored (Chain)')
     ] %}
     {% for key, label in stages %}
-      {% set is_active = (current_status == key) if (onchain_id or loop.index0 <= 1) else false %}
+      {% set is_active = (timeline_status == key) if (onchain_id or loop.index0 <= 1) else false %}
       {% set is_past = (stage_index >= loop.index0) if (onchain_id or loop.index0 <= 1) else false %}
       <div style="text-align: center; min-width: 90px;">
         <div style="

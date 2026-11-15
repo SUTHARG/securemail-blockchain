@@ -1,0 +1,1 @@
+[{"certificates":[],"cleartextAuth":[{"mechanism":"LOGIN","packetNumber":5}],"clientEndpoint":"172.28.0.20:45000","firstPacketTs":1792000000,"protocol":"imap","protocolSource":"content","serverEndpoint":"172.28.0.10:143","sessionId":0,"starttls":{"attempted":false,"offered":false,"outcome":"notOffered"},"streamComplete":true,"tls":null,"transportMode":"plaintext"}]

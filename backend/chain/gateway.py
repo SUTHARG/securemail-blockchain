@@ -1043,6 +1043,10 @@ class ChainGateway:
         # Idempotence check on-chain
         existing_report = self.case_registry.functions.reportHash(onchain_bytes).call()
         if existing_report != bytes(32):
+            # The contract is authoritative. Bring the local case record forward
+            # when this idempotent path observes an anchor created by an earlier
+            # request whose local status update did not complete.
+            update_case_status(case_id, "report_anchored")
             return {
                 "caseId": case_id,
                 "status": "report_anchored",

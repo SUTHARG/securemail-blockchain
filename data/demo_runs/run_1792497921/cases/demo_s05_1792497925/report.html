@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureMailScope Posture Report - demo_s05_179</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --heading: #f0f6fc;
+      --primary: #58a6ff;
+      --critical: #f85149;
+      --high: #db61a2;
+      --medium: #d29922;
+      --low: #3fb950;
+      --info: #8b949e;
+      --pass: #2ea043;
+      --fail: #f85149;
+      --pending: #d29922;
+      --code-bg: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 { color: var(--heading); font-size: 2rem; margin-bottom: 0.5rem; }
+    h2 { color: var(--heading); font-size: 1.4rem; margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    h3 { color: var(--heading); font-size: 1.1rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+    .badge-Critical { background: rgba(248,81,73,0.15); color: var(--critical); border: 1px solid var(--critical); }
+    .badge-High { background: rgba(219,97,162,0.15); color: var(--high); border: 1px solid var(--high); }
+    .badge-Medium { background: rgba(210,153,34,0.15); color: var(--medium); border: 1px solid var(--medium); }
+    .badge-Low { background: rgba(63,185,80,0.15); color: var(--low); border: 1px solid var(--low); }
+    .badge-Info { background: rgba(139,148,158,0.15); color: var(--info); border: 1px solid var(--info); }
+    .badge-pass { background: rgba(46,160,67,0.15); color: var(--pass); border: 1px solid var(--pass); }
+    .badge-fail { background: rgba(248,81,73,0.15); color: var(--fail); border: 1px solid var(--fail); }
+    .badge-pending { background: rgba(210,153,34,0.15); color: var(--pending); border: 1px solid var(--pending); }
+    .badge-grade {
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+    }
+    .grade-A { background: rgba(46,160,67,0.2); color: #3fb950; border: 2px solid #3fb950; }
+    .grade-B { background: rgba(88,166,255,0.2); color: #58a6ff; border: 2px solid #58a6ff; }
+    .grade-C { background: rgba(210,153,34,0.2); color: #d29922; border: 2px solid #d29922; }
+    .grade-D { background: rgba(219,97,162,0.2); color: #db61a2; border: 2px solid #db61a2; }
+    .grade-F { background: rgba(248,81,73,0.2); color: #f85149; border: 2px solid #f85149; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    .meta-table { width: 100%; border-collapse: collapse; }
+    .meta-table th, .meta-table td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-table th { color: var(--text-muted); width: 220px; font-weight: 500; }
+    .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 0.85rem; word-break: break-all; }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table.data-table th, table.data-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    table.data-table th { background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+    .finding-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .finding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .recommendation-box {
+      margin-top: 1rem;
+      background: rgba(88,166,255,0.05);
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #e6edf3;
+      margin: 0.5rem 0;
+    }
+    .evidence-list { list-style: none; margin: 0.5rem 0; }
+    .evidence-list li {
+      padding: 0.4rem 0.6rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+    }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .verification-step {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .verification-step:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>SecureMailScope Posture Assessment Report</h1>
+    <p style="color: var(--text-muted);">Cryptographic and Protocol Hygiene Analysis for Email Communications</p>
+  </header>
+
+  <!-- 1. Metadata and Case Identity -->
+  <div class="grid">
+    <div class="card" style="grid-column: 1 / -1;">
+      <h3>Case Identity & Chain Integrity</h3>
+      <table class="meta-table">
+        <tr><th>Case ID</th><td class="mono">demo_s05_1792497925</td></tr>
+        <tr><th>PCAP SHA-256</th><td class="mono">5390a5d6c444997d796831dfce08c3416fdf757c65f58981bed6f8e95092cdfc</td></tr>
+        <tr><th>Engine Version</th><td class="mono">dev</td></tr>
+        <tr><th>Ruleset Hash</th><td class="mono">7512b53d76785f5e991f48a75afb2738815c3160cd1431413dcd805146dfdf86</td></tr>
+        <tr><th>Merkle Result Root</th><td class="mono">361dc9aab940a6e7d2ee58990a058fad5eb06934b76ccd5bcbe9e68b0402c740</td></tr>
+        <tr><th>Anchored Report Hash</th><td class="mono">0x1ad1bbc2ed9a986f408e928b6f7cb584889d5c92de47daf4180a46ee66b3dc24</td></tr>
+        <tr><th>On-Chain Status</th><td><span class="badge badge-Info">Finalized</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. Independent Verifier Steps -->
+  <h2>Section 8: Independent Verification Suite</h2>
+  <div class="card" style="padding: 0;">
+    
+    <div class="verification-step">
+      <div>
+        <strong>Step 1: PCAP SHA-256 vs On-Chain pcapHash</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">PCAP SHA-256 matches on-chain pcapHash: 5390a5d6c444997d...</div>
+      </div>
+      <div>
+        
+          <span class="badge badge-pass">PASS</span>
+        
+      </div>
+    </div>
+    
+    <div class="verification-step">
+      <div>
+        <strong>Step 2: Off-Chain Leaves &amp; Root Rebuild</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Rebuilt Root matches resultRoot: 361dc9aab940a6e7...</div>
+      </div>
+      <div>
+        
+          <span class="badge badge-pass">PASS</span>
+        
+      </div>
+    </div>
+    
+    <div class="verification-step">
+      <div>
+        <strong>Step 3: Result Root vs On-Chain finalRoot</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Verified against CaseRegistry</div>
+      </div>
+      <div>
+        
+          <span class="badge badge-pass">PASS</span>
+        
+      </div>
+    </div>
+    
+    <div class="verification-step">
+      <div>
+        <strong>Step 4: PostureLedger Hash Chain Walk</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Verified hash chain across 1 hosts on PostureLedger</div>
+      </div>
+      <div>
+        
+          <span class="badge badge-pass">PASS</span>
+        
+      </div>
+    </div>
+    
+    <div class="verification-step">
+      <div>
+        <strong>Step 5: Report SHA-256 vs Anchored reportHash</strong>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Report hash matches anchored reportHash</div>
+      </div>
+      <div>
+        
+          <span class="badge badge-pass">PASS</span>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 3. Host Posture Scores -->
+  <h2>Host Posture Scores</h2>
+  <div class="grid">
+    
+    <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <h3 class="mono">172.28.0.10:25</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">
+          Host ID: <span class="mono">ff975d7849bf3ac9...</span>
+        </p>
+        <p style="font-size: 1.1rem; font-weight: 600;">Score: 40/100</p>
+      </div>
+      <div>
+        <span class="badge-grade grade-D">D</span>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- 4. Prioritized Findings -->
+  <h2>Prioritized Cryptographic Findings</h2>
+  
+    
+    <div class="finding-card">
+      <div class="finding-header">
+        <div>
+          <span class="badge badge-Critical">Critical</span>
+          <span class="mono" style="font-weight: 700; margin-left: 0.5rem;">R01</span>: Cleartext credentials sent before encryption
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Endpoint: <span class="mono">172.28.0.10:25</span> | Sessions Affected: 1
+        </div>
+      </div>
+
+      <!-- Evidence references -->
+      <div>
+        <strong>Evidence Packet References:</strong>
+        <ul class="evidence-list">
+          
+          <li>
+            Session <strong>#0</strong> &mdash;
+            Packet <strong>#7</strong>:
+            <span style="color: var(--text-muted);">Cleartext PLAIN authentication</span>
+          </li>
+          
+        </ul>
+      </div>
+
+      <!-- Static Remediation Template -->
+      
+      <div class="recommendation-box">
+        <strong style="color: var(--heading);">Remediation Guidance (Postfix / Dovecot):</strong>
+        <p style="font-size: 0.9rem; margin-top: 0.25rem;">Disallow SASL authentication over unencrypted connections. Credentials will only be accepted after TLS negotiation.</p>
+        <pre># Postfix (main.cf):
+smtpd_tls_auth_only = yes
+
+# Dovecot (10-auth.conf):
+disable_plaintext_auth = yes
+</pre>
+        <div style="font-size: 0.8rem; margin-top: 0.5rem;">
+          <strong>Documentation:</strong>
+          
+            <a href="http://www.postfix.org/postconf.5.html#smtpd_tls_auth_only" target="_blank" rel="noopener noreferrer">http://www.postfix.org/postconf.5.html#smtpd_tls_auth_only</a> &bull; 
+          
+            <a href="https://doc.dovecot.org/configuration_manual/authentication/" target="_blank" rel="noopener noreferrer">https://doc.dovecot.org/configuration_manual/authentication/</a>
+          
+        </div>
+      </div>
+      
+
+      <!-- Advisory Generated Remediation (Prompt T3.2) -->
+      
+      <div class="recommendation-box" style="border-left-color: #d29922; background: rgba(210,153,34,0.06); margin-top: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+          <strong style="color: #d29922;">Advisory Generated Remediation</strong>
+          <span class="badge" style="background: rgba(210,153,34,0.2); color: #d29922; border: 1px solid rgba(210,153,34,0.4); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">ADVISORY (NON-CONSENSUS)</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-top: 0.25rem;">Advisory remediation guidance for R01 (Cleartext credentials sent before encryption).</p>
+        <ul style="font-size: 0.85rem; margin: 0.5rem 0 0.5rem 1.25rem; color: #e6edf3;">
+          
+          <li>Review service configuration for endpoint 172.28.0.10:25.</li>
+          
+          <li>Apply hardening directives specified in security baseline.</li>
+          
+          <li>Verify with a new passive capture.</li>
+          
+        </ul>
+      </div>
+      
+    </div>
+    
+    <div class="finding-card">
+      <div class="finding-header">
+        <div>
+          <span class="badge badge-High">High</span>
+          <span class="mono" style="font-weight: 700; margin-left: 0.5rem;">R02</span>: Mail session with no encryption and STARTTLS not offered
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Endpoint: <span class="mono">172.28.0.10:25</span> | Sessions Affected: 1
+        </div>
+      </div>
+
+      <!-- Evidence references -->
+      <div>
+        <strong>Evidence Packet References:</strong>
+        <ul class="evidence-list">
+          
+          <li>
+            Session <strong>#0</strong> &mdash;
+            Packet <strong>#6</strong>:
+            <span style="color: var(--text-muted);">Plaintext mail session with STARTTLS not offered</span>
+          </li>
+          
+        </ul>
+      </div>
+
+      <!-- Static Remediation Template -->
+      
+      <div class="recommendation-box">
+        <strong style="color: var(--heading);">Remediation Guidance (Postfix):</strong>
+        <p style="font-size: 0.9rem; margin-top: 0.25rem;">Enable opportunistic or mandatory TLS on the SMTP service by offering STARTTLS in EHLO responses with configured certificate keys.</p>
+        <pre># Postfix (main.cf):
+smtpd_tls_security_level = may
+smtpd_tls_cert_file = /etc/ssl/certs/mailserver.pem
+smtpd_tls_key_file = /etc/ssl/private/mailserver.key
+</pre>
+        <div style="font-size: 0.8rem; margin-top: 0.5rem;">
+          <strong>Documentation:</strong>
+          
+            <a href="http://www.postfix.org/postconf.5.html#smtpd_tls_security_level" target="_blank" rel="noopener noreferrer">http://www.postfix.org/postconf.5.html#smtpd_tls_security_level</a> &bull; 
+          
+            <a href="http://www.postfix.org/TLS_README.html" target="_blank" rel="noopener noreferrer">http://www.postfix.org/TLS_README.html</a>
+          
+        </div>
+      </div>
+      
+
+      <!-- Advisory Generated Remediation (Prompt T3.2) -->
+      
+      <div class="recommendation-box" style="border-left-color: #d29922; background: rgba(210,153,34,0.06); margin-top: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+          <strong style="color: #d29922;">Advisory Generated Remediation</strong>
+          <span class="badge" style="background: rgba(210,153,34,0.2); color: #d29922; border: 1px solid rgba(210,153,34,0.4); font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">ADVISORY (NON-CONSENSUS)</span>
+        </div>
+        <p style="font-size: 0.9rem; margin-top: 0.25rem;">Advisory remediation guidance for R02 (Mail session with no encryption and STARTTLS not offered).</p>
+        <ul style="font-size: 0.85rem; margin: 0.5rem 0 0.5rem 1.25rem; color: #e6edf3;">
+          
+          <li>Review service configuration for endpoint 172.28.0.10:25.</li>
+          
+          <li>Apply hardening directives specified in security baseline.</li>
+          
+          <li>Verify with a new passive capture.</li>
+          
+        </ul>
+      </div>
+      
+    </div>
+    
+  
+
+  <!-- 5. Session and TLS Traffic Summary -->
+  <h2>Session & Protocol Distribution</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Protocols</h3>
+      <table class="meta-table">
+        
+        <tr><th>smtp</th><td>1 sessions</td></tr>
+        
+      </table>
+    </div>
+    <div class="card">
+      <h3>TLS Versions</h3>
+      <table class="meta-table">
+        
+        <tr><th>None</th><td>1 sessions</td></tr>
+        
+      </table>
+    </div>
+    <div class="card">
+      <h3>Cipher Suites</h3>
+      <table class="meta-table">
+        
+      </table>
+    </div>
+    <div class="card">
+      <h3>Forward Secrecy Share</h3>
+      <table class="meta-table">
+        
+        <tr><th class="mono">172.28.0.10:25</th><td>0% (0/0)</td></tr>
+        
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. Observed Certificates -->
+  <h2>Observed X.509 Certificates</h2>
+  
+  <div class="card"><p>No X.509 certificates observable in this capture (e.g. cleartext sessions or TLS 1.3 encrypted handshakes).</p></div>
+  
+
+  <!-- 7. Visibility Limitations -->
+  <h2>Visibility Limitations</h2>
+  <div class="card">
+    <p>Passive network capture cannot observe X.509 certificates in TLS 1.3 encrypted handshakes or resumed sessions, and unobserved payload is never evaluated.</p>
+    <table class="meta-table">
+      <tr><th>TLS 1.3 Sessions (Encrypted Handshakes)</th><td>0</td></tr>
+      <tr><th>Resumed Sessions (Tickets/Cache)</th><td>0</td></tr>
+      <tr><th>Sessions Missing SNI</th><td>0</td></tr>
+      <tr><th>Incomplete / Truncated TCP Streams</th><td>0</td></tr>
+      <tr><th>Parse Errors Encountered</th><td>0</td></tr>
+    </table>
+  </div>
+
+  <!-- 8. Advisory Anomaly Detection (Non-Consensus / Off-Chain) -->
+  
+  <h2>Advisory Anomaly Detection <span class="badge badge-pending">Non-Consensus / Off-Chain</span></h2>
+  <div class="card">
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+      <strong>Notice:</strong> Advisory Anomaly Detection is off-chain, strictly outside consensus quorum, and not part of the Merkle result root.
+      Isolation Forest evaluates multidimensional feature isolation and does not provide intrinsic feature attribution;
+      listed deviating features reflect an empirical baseline frequency heuristic.
+    </p>
+    <p><strong>Flagged Anomalous Sessions:</strong> 1 of 1 total sessions</p>
+
+    
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Session ID</th>
+          <th>Server Endpoint</th>
+          <th>Anomaly Score</th>
+          <th>Top Deviating Features (< 5% Baseline Freq)</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="mono">#0</td>
+          <td class="mono">172.28.0.10:25</td>
+          <td><span class="badge badge-High">0.0000</span></td>
+          <td>
+            
+              <ul style="padding-left: 1.2rem; margin: 0; font-size: 0.85rem;">
+                
+                  <li>tls_version=0 (baseline_freq=0.0%)</li>
+                
+                  <li>cipher_suite_code=0 (baseline_freq=0.0%)</li>
+                
+                  <li>ja3_rarity_bucket=0 (baseline_freq=0.0%)</li>
+                
+                  <li>handshake_size_bucket=0 (baseline_freq=0.0%)</li>
+                
+                  <li>starttls_offered=0 (baseline_freq=0.0%)</li>
+                
+                  <li>starttls_used=0 (baseline_freq=0.0%)</li>
+                
+              </ul>
+            
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+  </div>
+  
+</div>
+</body>
+</html>

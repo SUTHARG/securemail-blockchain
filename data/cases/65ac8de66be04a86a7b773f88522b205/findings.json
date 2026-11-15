@@ -1,0 +1,1 @@
+[{"details":{"protocol":"smtp"},"evidence":[{"note":"Plaintext mail session with STARTTLS not offered","packetNumber":4,"sessionId":0}],"findingId":"be962f136f9087ff1d67662c4022e1d4fc68de99647f55bf6c075948598612b7","ruleId":"R02","serverEndpoint":"198.51.100.25:25","sessionCount":1,"severity":"High","sortedSessionIds":[0]}]

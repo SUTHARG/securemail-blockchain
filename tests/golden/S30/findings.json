@@ -1,0 +1,1 @@
+[{"details":{"outcome":"refused"},"evidence":[{"note":"STARTTLS was refused and session continued in plaintext","packetNumber":8,"sessionId":0}],"findingId":"507b6d3347200d3192500b7fef40f9d5edf6c0a7e66427957d3f9b2b23278e94","ruleId":"R04","serverEndpoint":"172.28.0.10:25","sessionCount":1,"severity":"High","sortedSessionIds":[0]}]

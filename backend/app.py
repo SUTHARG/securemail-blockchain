@@ -566,6 +566,8 @@ async def get_case_details(
         result = read_case_json(case_id, "result.json") or {}
         cur_status = case["status"]
         stage_idx = STATUS_STAGE_MAP.get(cur_status, 0)
+        timeline_status = cur_status
+        timeline_stage_idx = stage_idx
 
         # Direct 1-click evidence preview on overview
         findings = read_case_json(case_id, "findings.json") or []
@@ -600,6 +602,22 @@ async def get_case_details(
                 gateway = get_gateway()
                 chain_info = gateway.get_chain_status(case_id)
                 onchain_status = chain_info.get("stateName") or chain_info.get("state") or "Opened"
+                # The report anchor is authoritative on-chain state. A previous
+                # idempotent anchor call may have succeeded before the local case
+                # status was synchronized, so derive the final timeline step from
+                # the actual contract value as well as the local workflow status.
+                report_hash = chain_info.get("reportHash")
+                if isinstance(report_hash, str):
+                    normalized_report_hash = report_hash.strip().lower()
+                    if normalized_report_hash.startswith("0x"):
+                        normalized_report_hash = normalized_report_hash[2:]
+                    if (
+                        len(normalized_report_hash) == 64
+                        and any(char != "0" for char in normalized_report_hash)
+                        and all(char in "0123456789abcdef" for char in normalized_report_hash)
+                    ):
+                        timeline_status = "report_anchored"
+                        timeline_stage_idx = STATUS_STAGE_MAP["report_anchored"]
             except Exception:
                 onchain_status = "Unavailable"
 
@@ -610,6 +628,7 @@ async def get_case_details(
                 "case_id": case["id"],
                 "active_tab": "overview",
                 "current_status": cur_status,
+                "timeline_status": timeline_status,
                 "onchain_status": onchain_status,
                 "chain_info": chain_info,
                 "can_finalize": chain_info.get("canFinalize", False),
@@ -617,7 +636,7 @@ async def get_case_details(
                 "matching_reveals": chain_info.get("matchingReveals", 0),
                 "quorum_k": chain_info.get("k", 2),
                 "validators": chain_info.get("validators", []),
-                "stage_index": stage_idx,
+                "stage_index": timeline_stage_idx,
                 "pcap_sha256": case["pcap_sha256"],
                 "result_root": result.get("resultRoot") or manifest.get("resultRoot") or "",
                 "ruleset_hash": manifest.get("rulesetHash") or "",

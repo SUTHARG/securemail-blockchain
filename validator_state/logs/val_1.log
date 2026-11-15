@@ -1,0 +1,11 @@
+[*] Validator Node running for address: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+[*] Running analysis engine on C:\Users\gaura\AppData\Local\Temp\tmpnfgzbwr7\capture.pcap -> C:\Users\gaura\AppData\Local\Temp\tmpeaq121x1
+[*] Engine produced resultRoot: 0x145e6b02227db5cc3268f348e184ec721df71658fba895cbbba3085f70c8fb33
+[+] Strict mode pre-commit checks passed
+[*] Submitting commitment: 0x6f525475a7a906bdac7ad6557b332e657a826eea2b3e40ecae86c8235e8bbe5a
+[+] Commit transaction confirmed (tx: 1b6086bd66d4dd7b46fa4f662a6579eefe1acce51a01ce4d3f614796880946c7)
+[*] Waiting for commit deadline: 1792415227
+[*] Commit window passed. Calling advance()...
+[+] advance() succeeded. Case moved to Revealing.
+[*] Submitting reveal for root 0x145e6b02227db5cc3268f348e184ec721df71658fba895cbbba3085f70c8fb33...
+[+] Reveal transaction confirmed (tx: d4e68c5a9752f18136ee2bf3a85abf8e1f68dc1deb6083d18af233c6d0498428)

@@ -1,0 +1,1 @@
+[{"certificates":[],"cleartextAuth":[],"clientEndpoint":"172.28.0.20:45000","firstPacketTs":1792000000,"protocol":"smtp","protocolSource":"content","serverEndpoint":"172.28.0.10:25","sessionId":0,"starttls":{"attempted":true,"offered":true,"outcome":"refused"},"streamComplete":true,"tls":null,"transportMode":"plaintext"}]

@@ -1,0 +1,11 @@
+[*] Validator Node running for address: 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+[*] Running analysis engine on C:\Users\gaura\AppData\Local\Temp\tmpnfgzbwr7\capture.pcap -> C:\Users\gaura\AppData\Local\Temp\tmp_ds12592
+[*] Engine produced resultRoot: 0x145e6b02227db5cc3268f348e184ec721df71658fba895cbbba3085f70c8fb33
+[+] Strict mode pre-commit checks passed
+[*] Submitting commitment: 0x7521f5020bfcb90089b3f4759cfcb555842acab5d37c073520a9598b046934ae
+[+] Commit transaction confirmed (tx: 37b01bb43d7b6b8e5db7d6a42f29fd7a8dcf165bec8347af77b03b8ef38a53c8)
+[*] Waiting for commit deadline: 1792415227
+[*] Commit window passed. Calling advance()...
+[*] advance() note: {'code': -32603, 'message': 'Error: VM Exception while processing transaction: reverted with custom error \'InvalidCaseState("0xb94afacb77b5e593af46ab2f194a584e029a1d1cd43f4e62e007eece541ccd24", 4)\'', 'data': {'message': 'Error: VM Exception while processing transaction: reverted with custom error \'InvalidCaseState("0xb94afacb77b5e593af46ab2f194a584e029a1d1cd43f4e62e007eece541ccd24", 4)\'', 'txHash': '0x54d7a37490dd019e44260ec73068ec0be0998d7514cc62c9d8652d507cdec48a', 'data': '0xb2a58c43b94afacb77b5e593af46ab2f194a584e029a1d1cd43f4e62e007eece541ccd240000000000000000000000000000000000000000000000000000000000000004'}}
+[*] Submitting reveal for root 0x145e6b02227db5cc3268f348e184ec721df71658fba895cbbba3085f70c8fb33...
+[+] Reveal transaction confirmed (tx: e06c23dda6f564c22cbe2c8e4fd39a9087cf46d82259405973c05f9d8eb6c76f)

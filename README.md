@@ -723,28 +723,7 @@ python -m verifier.verify \
 
 ---
 
-## Deploying & Pushing to GitHub
 
-To push the repository to GitHub:
-
-```bash
-# 1. Initialize git remote (if not already set)
-git remote add origin https://github.com/SUTHARG/securemail-blockchain.git
-# Or update existing remote:
-git remote set-url origin https://github.com/SUTHARG/securemail-blockchain.git
-
-# 2. Stage updated files
-git add README.md
-
-# 3. Commit changes with a descriptive message
-git commit -m "docs: complete comprehensive technical documentation in README"
-
-# 4. Push to main branch
-git branch -M main
-git push -u origin main
-```
-
----
 
 ## License & Intellectual Property
 

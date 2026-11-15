@@ -218,10 +218,8 @@ def main():
         if active_ruleset != expected_ruleset or active_digest == bytes(32):
             print("[*] Registering active engine & ruleset hash on CaseRegistry...")
             engine_digest = active_digest if active_digest != bytes(32) else hashlib.sha256(b"smscope:latest").digest()
-            reg_fn = gateway.case_registry.functions.registerEngine(engine_digest, expected_ruleset)
-            rcpt = gateway._send_tx(reg_fn, gateway.admin_account, gateway._admin_lock)
-            assert rcpt.status == 1, "Failed to register engine on-chain"
-            print(f"[+] Engine registered on-chain: tx={rcpt.transactionHash.hex()}")
+            reg_res = gateway.register_engine(engine_digest, expected_ruleset)
+            print(f"[+] Engine registered on-chain: {reg_res}")
         else:
             print(f"[+] Active engine & ruleset verified on CaseRegistry:")
             print(f"    - activeImageDigest: 0x{active_digest.hex()}")
@@ -240,10 +238,8 @@ def main():
         for key in val_keys:
             val_addr = Account.from_key(key).address
             if not gateway.case_registry.functions.isValidator(val_addr).call():
-                add_fn = gateway.case_registry.functions.addValidator(val_addr)
-                rcpt = gateway._send_tx(add_fn, gateway.admin_account, gateway._admin_lock)
-                assert rcpt.status == 1, f"Failed to add validator {val_addr}"
-                print(f"[+] Added validator {val_addr}: tx={rcpt.transactionHash.hex()}")
+                add_res = gateway.add_validator(val_addr)
+                print(f"[+] Added validator {val_addr}: {add_res}")
 
     # 5. Open Case On-Chain
     print("\n[*] Step 1: Opening case on-chain via CaseRegistry.openCase()...")

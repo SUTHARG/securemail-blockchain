@@ -1,0 +1,10 @@
+{
+  "validatorId": "1",
+  "validatorAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "caseId": "0x98969c9935e95b95dc8419b764719255bfd8c790f2e676be484de17d79bd6bab",
+  "round": 1,
+  "salt": "0xe5c6581f4fc0713b689d249edb89c221c9b49bf749428267da345903b2496c8f",
+  "resultRoot": "0x8b65d9794db5c1f5d1c37374e5db6e5904bb5e5551742ef749042fca093308a3",
+  "commitment": "0x3311dc4eb37ee2dbb3e79c12f49aa0bd1c84740f5ebdabfa4f6862651b94641b",
+  "revealed": true
+}

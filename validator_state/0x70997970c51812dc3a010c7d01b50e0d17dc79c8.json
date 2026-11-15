@@ -1,0 +1,7 @@
+{
+  "caseId": "0xa4a4b4a4d7f27ae88966e8d42ccdcd86d47e85c9a67379c7f8a4ef89850c2648",
+  "round": 1,
+  "salt": "0x61a8bb71e43ee3ff338b39d6c011a98a0e664084d02d41ce67d125b8c452a4ed",
+  "resultRoot": "0x361dc9aab940a6e7d2ee58990a058fad5eb06934b76ccd5bcbe9e68b0402c740",
+  "commitment": "0x8f2aee8959f737353f6926d14595dd111680ef5a26d02ee76850d6e5fb12a15e"
+}

@@ -1,0 +1,1 @@
+[{"details":{"kxGroupOrDhBits":1024,"kxType":"DHE"},"evidence":[{"note":"DHE key exchange prime below 2048 bits: 1024 bits","packetNumber":10,"sessionId":0}],"findingId":"41ef904d829efad4e44c4adb5efee7c66004c37436427600976c303b00d793d8","ruleId":"R10","serverEndpoint":"172.28.0.10:25","sessionCount":1,"severity":"Medium","sortedSessionIds":[0]}]
