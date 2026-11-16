@@ -1,0 +1,124 @@
+%PDF-1.7
+%🖤
+1 0 obj
+<</Type /Pages/Kids []/Count 0>>
+endobj
+2 0 obj
+<</Type /Catalog/Pages 8 0 R>>
+endobj
+3 0 obj
+<</Type /Font/Subtype /Type1/BaseFont /Helvetica>>
+endobj
+4 0 obj
+<</Type /Font/Subtype /Type1/BaseFont /Helvetica-Bold>>
+endobj
+5 0 obj
+<</Type /Font/Subtype /Type1/BaseFont /Courier>>
+endobj
+6 0 obj
+<</Type /Page/MediaBox [0 0 595 842]/Contents 7 0 R/Resources <</Font <</F1 3 0 R/F2 4 0 R/F3 5 0 R>>>>>>
+endobj
+7 0 obj
+<</Length 2418>>
+stream
+BT
+/F2 18 Tf
+40 780 Td
+(SecureMailScope Posture Assessment Report) Tj
+/F1 11 Tf
+40 756 Td
+(Cryptographic Verification & Posture Certificate \\\(fallback rendering\\\)) Tj
+/F1 9 Tf
+40 742 Td
+(Notice: fallback rendering active \\\(pure-Python pydyf engine\\\)) Tj
+/F3 9 Tf
+40 720 Td
+(====================================================================) Tj
+/F3 9 Tf
+40 708 Td
+(Case Identifier:          081ffface902458a99556733524770d5) Tj
+/F3 9 Tf
+40 696 Td
+(Result Root \\\(On-Chain\\\):   81f4bd379559dfd80d4c821ca080474f3eb26ecc3513832ed0e3d5d78a5193f2) Tj
+/F3 9 Tf
+40 684 Td
+(Anchored Report SHA-256:  b7ee3ff2663b2443eb198e90e85cd4cdd30bdf5563b3bf444defefbf137ca84c) Tj
+/F3 9 Tf
+40 672 Td
+(PCAP Binary SHA-256:      13521eab4dc7df241b169a83061ce90a3aa8c2d14f65d4c4be50bd3158e930be) Tj
+/F3 9 Tf
+40 660 Td
+(Engine Version Digest:    0xa98817038b88caa7a3de113b7dbf205c2f75da4817b7a166ebcfc90468652c4f) Tj
+/F3 9 Tf
+40 648 Td
+(====================================================================) Tj
+/F2 13 Tf
+40 626 Td
+(Host Posture Scores & Compliance Grades) Tj
+/F1 10 Tf
+50 609 Td
+(Host ad71f798ddf84285... [198.51.100.25:25]: Score 80/100 \\\(Grade B\\\)) Tj
+/F2 13 Tf
+40 586 Td
+(Prioritized Cryptographic Findings \\\(1\\\)) Tj
+/F2 10 Tf
+50 569 Td
+(1. [HIGH] R02: Mail session with no encryption and STARTTLS not offered) Tj
+/F1 9 Tf
+60 556 Td
+(Endpoint: 198.51.100.25:25 | Sessions: 1 | Packets: 4) Tj
+/F2 13 Tf
+40 534 Td
+(Five-Step Posture Verification Status) Tj
+/F1 9 Tf
+50 517 Td
+(Step 1: [PASS] PCAP SHA-256 vs On-Chain pcapHash) Tj
+/F1 9 Tf
+50 505 Td
+(Step 2: [PASS] Off-Chain Leaves & Root Rebuild) Tj
+/F1 9 Tf
+50 493 Td
+(Step 3: [PENDING] Result Root vs On-Chain finalRoot) Tj
+/F1 9 Tf
+50 481 Td
+(Step 4: [PENDING] PostureLedger Hash Chain Walk) Tj
+/F1 9 Tf
+50 469 Td
+(Step 5: [PENDING] Report SHA-256 vs Anchored reportHash) Tj
+/F2 12 Tf
+40 447 Td
+(Advisory Anomaly Detection \\\(Non-Consensus / Off-Chain\\\)) Tj
+/F1 8 Tf
+50 431 Td
+(Note: Advisory model is off-chain and not part of the Merkle quorum.) Tj
+/F1 9 Tf
+50 421 Td
+(Flagged Sessions: 1 of 1) Tj
+/F3 8 Tf
+60 409 Td
+(- Session #0: Score 0.0000 | Deviations: tls_version=0 \\\(baseline_freq=0.0%\\\), cipher_suite_code=0 \\\(baseline_freq=0.0%\\\), ja3_rarity_bucket=0 \\\(baseline_freq=0.0%\\\), handshake_size_bucket=0 \\\(baseline_freq=0.0%\\\), starttls_offered=0 \\\(baseline_freq=0.0%\\\), starttls_used=0 \\\(baseline_freq=0.0%\\\)) Tj
+ET
+endstream
+endobj
+8 0 obj
+<</Type /Pages/Kids [6 0 R]/Count 1>>
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000015 00000 n 
+0000000063 00000 n 
+0000000109 00000 n 
+0000000175 00000 n 
+0000000246 00000 n 
+0000000310 00000 n 
+0000000431 00000 n 
+0000002899 00000 n 
+trailer
+<<
+/Size 9
+/Root 2 0 R
+>>
+startxref
+2952
+%%EOF

@@ -682,15 +682,30 @@ class ChainGateway:
         """
         Execute validator consensus round (commit & reveal) for active on-chain case.
         Supports both standalone validator invocation and browser-triggered consensus.
+
+        Enforces on-chain commit and reveal deadlines:
+        - Before submitting commits, reads round parameters and compares commitDeadline with latest block timestamp.
+        - If commit deadline has passed, does NOT submit commits; follows contract allowed state transitions
+          (advancing to Revealing, and finalizing to Expired if reveal deadline elapsed with insufficient quorum).
+        - Prevents failed commit attempts from appearing successful, verifies saved salt integrity, and NEVER
+          falls back to a zero salt.
+        - Strictly requires actual quorum (matching reveals >= k) before reporting consensus success.
         """
         case, onchain_bytes = self._resolve_onchain_id(case_id)
         cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
         if cur_state_int >= 5:
+            # 5: Finalized, 6: Disputed, 7: Expired, 8: Rejected
+            contradicted = self.case_registry.functions.isContradicted(onchain_bytes).call()
+            quorum_reached = (cur_state_int == 5 and not contradicted)
+            state_label = STATE_MAP.get(cur_state_int, "finalized")
+            msg = f"Round already {state_label} on-chain."
+            if cur_state_int in (6, 7):
+                msg += " An administrator must resolve the case or start a new round."
             return {
                 "caseId": case_id,
-                "status": STATE_MAP.get(cur_state_int, "finalized"),
-                "message": "Round already finalized on-chain",
-                "quorumReached": True,
+                "status": state_label,
+                "message": msg,
+                "quorumReached": quorum_reached,
             }
 
         if cur_state_int < 3:
@@ -715,7 +730,16 @@ class ChainGateway:
         engine_hash = case_info[6]
         ruleset_hash = case_info[7]
 
-        # Resolve validator keys
+        # Read on-chain round parameters and latest block timestamp
+        round_params = self.quorum.functions.getRoundParams(onchain_bytes, round_num).call()
+        n_validators = round_params[0]
+        quorum_k = round_params[1]
+        commit_deadline = round_params[2]
+        reveal_deadline = round_params[3]
+        latest_block = self.w3.eth.get_block("latest")
+        current_time = latest_block.timestamp
+
+        # Resolve validator signing keys
         raw_keys = [
             getattr(config, "VALIDATOR_KEY_1", None) or os.environ.get("VALIDATOR_KEY_1") or os.environ.get("VALIDATOR_1_KEY"),
             getattr(config, "VALIDATOR_KEY_2", None) or os.environ.get("VALIDATOR_KEY_2") or os.environ.get("VALIDATOR_2_KEY"),
@@ -733,19 +757,32 @@ class ChainGateway:
         state_dir = config.REPO_ROOT / "validator_state"
         state_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Commit phase
+        # -------------------------------------------------------------------
+        # 1. Commit Phase (Only if state is Committing)
+        # -------------------------------------------------------------------
         commits_made = 0
         cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
-        if cur_state_int == 3:  # Committing
-            for addr in snap_addrs:
-                addr_lower = addr.lower()
-                val_key = val_keys_map.get(addr_lower)
-                if not val_key:
-                    logger.warning("No private key configured for snapshot validator %s", addr)
-                    continue
+        commit_deadline_passed = (current_time >= commit_deadline)
 
-                has_comm = self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
-                if not has_comm:
+        if cur_state_int == 3:  # Committing
+            if commit_deadline_passed:
+                logger.warning(
+                    "Case %s round %s commit deadline passed (commitDeadline=%s, currentBlockTimestamp=%s). "
+                    "Skipping validator commits to follow on-chain consensus rules.",
+                    case_id, round_num, commit_deadline, current_time
+                )
+            else:
+                for addr in snap_addrs:
+                    addr_lower = addr.lower()
+                    val_key = val_keys_map.get(addr_lower)
+                    if not val_key:
+                        logger.warning("No private key configured for snapshot validator %s", addr)
+                        continue
+
+                    has_comm = self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
+                    if has_comm:
+                        continue
+
                     val_acc = Account.from_key(val_key)
                     salt_bytes = os.urandom(32)
                     encoded_commitment = encode(
@@ -754,78 +791,174 @@ class ChainGateway:
                     )
                     commitment = Web3.keccak(encoded_commitment)
 
-                    state_file = state_dir / f"{val_acc.address.lower()}.json"
-                    temp_state = state_dir / f"{val_acc.address.lower()}.json.tmp"
+                    # Isolated state file per case and round
+                    state_file = state_dir / f"{val_acc.address.lower()}_{onchain_bytes.hex()}_r{round_num}.json"
+                    temp_state = state_dir / f"{val_acc.address.lower()}_{onchain_bytes.hex()}_r{round_num}.json.tmp"
+                    legacy_state = state_dir / f"{val_acc.address.lower()}.json"
+
                     state_payload = {
                         "caseId": f"0x{onchain_bytes.hex()}",
                         "round": round_num,
+                        "validator": val_acc.address,
                         "salt": f"0x{salt_bytes.hex()}",
                         "resultRoot": f"0x{root_hex}",
                         "commitment": f"0x{commitment.hex()}",
+                        "status": "pending_commit",
                     }
                     with open(temp_state, "w", encoding="utf-8") as f:
                         json.dump(state_payload, f, indent=2)
                     os.replace(temp_state, state_file)
 
-                    nonce = self.w3.eth.get_transaction_count(val_acc.address, "pending")
-                    tx = self.quorum.functions.commit(onchain_bytes, commitment).build_transaction({
-                        "from": val_acc.address,
-                        "nonce": nonce,
-                        "gas": 250000,
-                        "gasPrice": self.w3.eth.gas_price,
-                        "chainId": self.w3.eth.chain_id,
-                    })
-                    signed = val_acc.sign_transaction(tx)
-                    raw_tx = getattr(signed, "raw_transaction", getattr(signed, "rawTransaction", None))
-                    tx_h = self.w3.eth.send_raw_transaction(raw_tx)
-                    rcpt = self.w3.eth.wait_for_transaction_receipt(tx_h, timeout=20)
-                    if rcpt.status != 1:
-                        raise TransactionRevertedError(f"Commit reverted for validator {addr}")
-                    commits_made += 1
+                    try:
+                        nonce = self.w3.eth.get_transaction_count(val_acc.address, "pending")
+                        tx = self.quorum.functions.commit(onchain_bytes, commitment).build_transaction({
+                            "from": val_acc.address,
+                            "nonce": nonce,
+                            "gas": 250000,
+                            "gasPrice": self.w3.eth.gas_price,
+                            "chainId": self.w3.eth.chain_id,
+                        })
+                        signed = val_acc.sign_transaction(tx)
+                        raw_tx = getattr(signed, "raw_transaction", getattr(signed, "rawTransaction", None))
+                        tx_h = self.w3.eth.send_raw_transaction(raw_tx)
+                        rcpt = self.w3.eth.wait_for_transaction_receipt(tx_h, timeout=20)
+                        if rcpt.status != 1:
+                            # Revert: mark state failed so failed attempt is not left looking successful
+                            state_payload["status"] = "failed"
+                            with open(state_file, "w", encoding="utf-8") as f:
+                                json.dump(state_payload, f, indent=2)
+                            raise TransactionRevertedError(f"Commit reverted on-chain for validator {addr}")
 
-        # 2. Advance to Revealing
+                        # Confirmed: record successful commit
+                        state_payload["status"] = "committed"
+                        state_payload["txHash"] = "0x" + rcpt.transactionHash.hex()
+                        with open(state_file, "w", encoding="utf-8") as f:
+                            json.dump(state_payload, f, indent=2)
+                        with open(legacy_state, "w", encoding="utf-8") as f:
+                            json.dump(state_payload, f, indent=2)
+                        commits_made += 1
+                    except TransactionRevertedError:
+                        raise
+                    except Exception as exc:
+                        # Before marking failed, check if tx confirmed on-chain despite exception/timeout
+                        try:
+                            if self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call():
+                                state_payload["status"] = "committed"
+                                with open(state_file, "w", encoding="utf-8") as f:
+                                    json.dump(state_payload, f, indent=2)
+                                with open(legacy_state, "w", encoding="utf-8") as f:
+                                    json.dump(state_payload, f, indent=2)
+                                commits_made += 1
+                                continue
+                        except Exception:
+                            pass
+                        # If not confirmed on-chain, mark state failed
+                        state_payload["status"] = "failed"
+                        state_payload["error"] = str(exc)
+                        with open(state_file, "w", encoding="utf-8") as f:
+                            json.dump(state_payload, f, indent=2)
+                        raise GatewayError(f"Commit failed for validator {addr}: {exc}")
+
+        # -------------------------------------------------------------------
+        # 2. Advance to Revealing (Allowed state transition after commit deadline)
+        # -------------------------------------------------------------------
         cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
-        if cur_state_int == 3:  # Committing
-            round_params = self.quorum.functions.getRoundParams(onchain_bytes, round_num).call()
-            commit_deadline = round_params[2]
-            current_time = self.w3.eth.get_block("latest").timestamp
+        current_time = self.w3.eth.get_block("latest").timestamp
 
+        if cur_state_int == 3:  # Committing
+            # On local Hardhat network, advance EVM time if deadline is active and all/quorum committed
             if current_time < commit_deadline and getattr(self.w3.provider, "make_request", None):
-                try:
-                    if self.w3.eth.chain_id in (31337, 1337):
+                committed_now = sum(
+                    1 for addr in snap_addrs
+                    if self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
+                )
+                if committed_now >= quorum_k and self.w3.eth.chain_id in (31337, 1337):
+                    try:
                         diff = commit_deadline - current_time + 5
                         self.w3.provider.make_request("evm_increaseTime", [int(diff)])
                         self.w3.provider.make_request("evm_mine", [])
-                except Exception as exc:
-                    logger.warning("Could not advance EVM time: %s", exc)
+                    except Exception as exc:
+                        logger.warning("Could not advance EVM time: %s", exc)
 
             current_time = self.w3.eth.get_block("latest").timestamp
             if current_time >= commit_deadline:
                 self.advance(case_id)
-                cur_state_int = 4
+                cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
 
-        # 3. Reveal phase
+        # -------------------------------------------------------------------
+        # 3. Reveal Phase (Only if state is Revealing)
+        # -------------------------------------------------------------------
         reveals_made = 0
         if cur_state_int == 4:  # Revealing
-            for addr in snap_addrs:
-                addr_lower = addr.lower()
-                val_key = val_keys_map.get(addr_lower)
-                if not val_key:
-                    continue
+            current_time = self.w3.eth.get_block("latest").timestamp
+            if current_time >= reveal_deadline:
+                logger.warning(
+                    "Case %s round %s reveal deadline passed (revealDeadline=%s, currentBlockTimestamp=%s). "
+                    "Skipping reveal submissions.",
+                    case_id, round_num, reveal_deadline, current_time
+                )
+            else:
+                for addr in snap_addrs:
+                    addr_lower = addr.lower()
+                    val_key = val_keys_map.get(addr_lower)
+                    if not val_key:
+                        continue
 
-                has_rev = self.quorum.functions.hasRevealed(onchain_bytes, round_num, addr).call()
-                if not has_rev:
+                    has_comm = self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
+                    if not has_comm:
+                        # Validator never committed on-chain, cannot reveal
+                        continue
+
+                    has_rev = self.quorum.functions.hasRevealed(onchain_bytes, round_num, addr).call()
+                    if has_rev:
+                        # Already revealed on-chain
+                        continue
+
                     val_acc = Account.from_key(val_key)
-                    state_file = state_dir / f"{val_acc.address.lower()}.json"
+                    state_file = state_dir / f"{val_acc.address.lower()}_{onchain_bytes.hex()}_r{round_num}.json"
+                    legacy_file = state_dir / f"{val_acc.address.lower()}.json"
+
                     salt_bytes = None
-                    if state_file.exists():
-                        try:
-                            saved = json.loads(state_file.read_text(encoding="utf-8"))
-                            salt_bytes = bytes.fromhex(saved["salt"].replace("0x", ""))
-                        except Exception:
-                            pass
+                    saved_payload = None
+                    for sf in (state_file, legacy_file):
+                        if sf.exists():
+                            try:
+                                data = json.loads(sf.read_text(encoding="utf-8"))
+                                if (
+                                    data.get("caseId", "").lower() == f"0x{onchain_bytes.hex()}".lower()
+                                    and data.get("round") == round_num
+                                ):
+                                    raw_salt = data.get("salt", "")
+                                    if raw_salt:
+                                        clean_hex = raw_salt.replace("0x", "")
+                                        if len(clean_hex) == 64:
+                                            salt_bytes = bytes.fromhex(clean_hex)
+                                            saved_payload = data
+                                            break
+                            except Exception:
+                                pass
+
                     if not salt_bytes:
-                        salt_bytes = b"\x00" * 32
+                        # Explicit, actionable error: DO NOT USE ZERO SALT!
+                        raise GatewayError(
+                            f"Validator {addr} is committed on-chain for case {case_id} (round {round_num}), "
+                            f"but saved validator salt is missing or invalid. Cannot safely reveal without original salt."
+                        )
+
+                    # Verify pre-image matches on-chain commitment before submitting reveal
+                    expected_commitment = self.quorum.functions.getCommitment(onchain_bytes, round_num, addr).call()
+                    computed_commitment = Web3.keccak(
+                        encode(
+                            ["bytes32", "address", "bytes32", "bytes32"],
+                            [onchain_bytes, val_acc.address, result_root_bytes, salt_bytes],
+                        )
+                    )
+                    if computed_commitment != expected_commitment:
+                        raise GatewayError(
+                            f"Validator {addr} saved salt produces commitment 0x{computed_commitment.hex()} "
+                            f"which does not match on-chain commitment 0x{expected_commitment.hex()} "
+                            f"for case {case_id} round {round_num}."
+                        )
 
                     nonce = self.w3.eth.get_transaction_count(val_acc.address, "pending")
                     tx = self.quorum.functions.reveal(
@@ -846,24 +979,78 @@ class ChainGateway:
                     tx_h = self.w3.eth.send_raw_transaction(raw_tx)
                     rcpt = self.w3.eth.wait_for_transaction_receipt(tx_h, timeout=20)
                     if rcpt.status != 1:
-                        raise TransactionRevertedError(f"Reveal reverted for validator {addr}")
+                        raise TransactionRevertedError(f"Reveal reverted on-chain for validator {addr}")
+
+                    if saved_payload and state_file.exists():
+                        saved_payload["status"] = "revealed"
+                        saved_payload["revealTxHash"] = "0x" + rcpt.transactionHash.hex()
+                        with open(state_file, "w", encoding="utf-8") as f:
+                            json.dump(saved_payload, f, indent=2)
                     reveals_made += 1
 
-        round_params = self.quorum.functions.getRoundParams(onchain_bytes, round_num).call()
-        k = round_params[1]
+        # -------------------------------------------------------------------
+        # 4. Assessment, Transition & Quorum Reporting
+        # -------------------------------------------------------------------
         c_root = self.case_registry.functions.claimedRoot(onchain_bytes).call()
-        rev_count = self.quorum.functions.getRevealCount(onchain_bytes, round_num, c_root).call()
-        quorum_reached = (rev_count >= k)
+        matching_reveals = self.quorum.functions.getRevealCount(onchain_bytes, round_num, c_root).call()
+        quorum_reached = (matching_reveals >= quorum_k)
+
+        onchain_commits = sum(
+            1 for addr in snap_addrs
+            if self.quorum.functions.hasCommitted(onchain_bytes, round_num, addr).call()
+        )
+
+        current_time = self.w3.eth.get_block("latest").timestamp
+        cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
+
+        msg = None
+        if quorum_reached:
+            # Condition A: Quorum achieved -> auto-finalize if in Revealing
+            if cur_state_int == 4:
+                try:
+                    self.finalize(case_id)
+                    cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
+                except Exception as exc:
+                    logger.warning("Could not auto-finalize case %s: %s", case_id, exc)
+            msg = f"Quorum achieved ({matching_reveals}/{quorum_k} matching reveals). Case finalized on-chain."
+        elif cur_state_int == 4 and current_time > reveal_deadline:
+            # Reveal window expired without quorum -> finalize to Expired / Disputed
+            try:
+                self.finalize(case_id)
+                cur_state_int = self.case_registry.functions.caseState(onchain_bytes).call()
+            except Exception as exc:
+                logger.warning("Could not finalize expired case %s: %s", case_id, exc)
+            state_label = STATE_MAP.get(cur_state_int, "expired")
+            msg = (
+                f"Validation round {round_num} failed to reach quorum ({matching_reveals}/{quorum_k} reveals) before deadline. "
+                f"Case is now on-chain state '{state_label}'. An administrator must start a new round (Admin Resolution: NewRound)."
+            )
+        elif commit_deadline_passed and onchain_commits < quorum_k:
+            state_label = STATE_MAP.get(cur_state_int, "revealing")
+            msg = (
+                f"Commit deadline passed with {onchain_commits}/{len(snap_addrs)} validator commits. "
+                f"Insufficient commits to achieve quorum ({quorum_k} required). "
+                f"Case is in state '{state_label}'. An administrator must start a new round (Admin Resolution: NewRound)."
+            )
+        elif cur_state_int == 4:
+            msg = (
+                f"Validation round {round_num} in Revealing: {matching_reveals}/{quorum_k} matching reveals "
+                f"({onchain_commits}/{len(snap_addrs)} committed). Quorum pending."
+            )
+        else:
+            msg = f"Validator consensus round {round_num}: {matching_reveals}/{quorum_k} reveals (commits: {onchain_commits}/{len(snap_addrs)})."
 
         self.poll_events()
         return {
             "caseId": case_id,
             "round": round_num,
-            "commits": len(snap_addrs),
-            "reveals": rev_count,
-            "quorum": k,
+            "commits": onchain_commits,
+            "reveals": matching_reveals,
+            "quorum": quorum_k,
             "quorumReached": quorum_reached,
-            "status": "revealing" if cur_state_int == 4 else STATE_MAP.get(cur_state_int, "committing"),
+            "status": STATE_MAP.get(cur_state_int, "unknown"),
+            "commitDeadlinePassed": bool(current_time >= commit_deadline),
+            "message": msg,
         }
 
     def finalize(self, case_id: str) -> Dict[str, Any]:
@@ -1347,6 +1534,98 @@ class ChainGateway:
             step=f"register_engine_{image_digest.hex()[:8]}",
         )
         return {"status": "registered", "txHash": "0x" + receipt.transactionHash.hex()}
+
+    def register_engine_for_case(
+        self,
+        case_id: Optional[str] = None,
+        image_digest_hex: Optional[str] = None,
+        ruleset_hash_hex: Optional[str] = None,
+        ensure_validators: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Idempotently register engine image digest and ruleset hash on CaseRegistry (Admin only).
+        Resolves image digest from parameter or config.ENGINE_IMAGE_DIGEST.
+        Resolves ruleset hash from parameter, case manifest, or local ruleset evaluator.
+        Optionally ensures validator quorum membership is populated.
+        """
+        # 1. Resolve image_digest
+        if image_digest_hex:
+            raw_img = image_digest_hex.strip().replace("0x", "")
+            image_digest = bytes.fromhex(raw_img)
+        elif config.ENGINE_IMAGE_DIGEST:
+            raw_img = config.ENGINE_IMAGE_DIGEST.strip().replace("0x", "")
+            image_digest = bytes.fromhex(raw_img)
+        else:
+            image_digest = hashlib.sha256(config.ENGINE_DOCKER_IMAGE.encode("utf-8")).digest()
+
+        if len(image_digest) != 32:
+            raise ValueError(f"image_digest must be 32 bytes, got {len(image_digest)}")
+
+        # 2. Resolve ruleset_hash
+        if ruleset_hash_hex:
+            raw_rule = ruleset_hash_hex.strip().replace("0x", "")
+            ruleset_hash = bytes.fromhex(raw_rule)
+        elif case_id:
+            manifest = read_case_json(case_id, "manifest.json")
+            if manifest and manifest.get("rulesetHash"):
+                raw_rule = manifest["rulesetHash"].strip().replace("0x", "")
+                ruleset_hash = bytes.fromhex(raw_rule)
+            else:
+                from engine.smscope.rules.ruleset_hash import compute_ruleset_hash
+                ruleset_hash = bytes.fromhex(compute_ruleset_hash())
+        else:
+            from engine.smscope.rules.ruleset_hash import compute_ruleset_hash
+            ruleset_hash = bytes.fromhex(compute_ruleset_hash())
+
+        if len(ruleset_hash) != 32:
+            raise ValueError(f"ruleset_hash must be 32 bytes, got {len(ruleset_hash)}")
+
+        # 3. Idempotency Check on-chain
+        cur_img, cur_ruleset = self.case_registry.functions.activeEngine().call()
+        is_already_registered = (cur_img == image_digest and cur_ruleset == ruleset_hash)
+
+        tx_hash = None
+        if not is_already_registered:
+            contract_fn = self.case_registry.functions.registerEngine(image_digest, ruleset_hash)
+            receipt = self._send_tx(
+                contract_fn=contract_fn,
+                account=self.admin_account,
+                lock=self._admin_lock,
+                case_id=case_id or "admin",
+                step=f"register_engine_{image_digest.hex()[:8]}",
+            )
+            tx_hash = "0x" + receipt.transactionHash.hex()
+
+        # 4. Ensure validator quorum count >= 3
+        added_validators = []
+        if ensure_validators:
+            val_keys = [
+                getattr(config, "VALIDATOR_KEY_1", None),
+                getattr(config, "VALIDATOR_KEY_2", None),
+                getattr(config, "VALIDATOR_KEY_3", None),
+            ]
+            for vk in val_keys:
+                if not vk:
+                    continue
+                try:
+                    val_addr = Account.from_key(vk).address
+                    if not self.case_registry.functions.isValidator(val_addr).call():
+                        val_res = self.add_validator(val_addr)
+                        added_validators.append(val_addr)
+                except Exception as exc:
+                    logger.warning("Error registering validator %s: %s", vk[:10], exc)
+
+        return {
+            "status": "already_registered" if is_already_registered else "registered",
+            "idempotent": is_already_registered,
+            "txHash": tx_hash,
+            "imageDigest": "0x" + image_digest.hex(),
+            "rulesetHash": "0x" + ruleset_hash.hex(),
+            "validatorsAdded": added_validators,
+            "message": "Engine and ruleset hash are already registered on CaseRegistry"
+            if is_already_registered
+            else "Engine and ruleset hash successfully registered on CaseRegistry",
+        }
 
     def add_validator(self, validator_address: str) -> Dict[str, Any]:
         """Register validator address and grant VALIDATOR_ROLE (Admin only)."""

@@ -18,8 +18,8 @@
   </div>
 </div>
 
-<!-- Verification Results Panel -->
-<div class="card" style="border: 2px solid {% if verification_result and verification_result.overall_status == 'PASS' %}var(--pass){% elif verification_result and verification_result.overall_status == 'PENDING' %}var(--pending){% elif verification_result and verification_result.overall_status == 'FAIL' %}var(--fail){% elif verification_result and verification_result.verified %}var(--pass){% elif verification_result %}var(--fail){% else %}var(--border){% endif %};">
+<!-- Section 8: Independent Verification Suite -->
+<div class="card" style="border: 2px solid {% if verification_result and verification_result.overall_status == 'PASS' %}var(--pass){% elif verification_result and verification_result.overall_status == 'PENDING' %}var(--pending){% elif verification_result and verification_result.overall_status == 'FAIL' %}var(--fail){% elif verification_result and verification_result.verified %}var(--pass){% elif verification_result %}var(--fail){% else %}var(--border){% endif %}; margin-bottom: 2rem;">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <div>
       <h2>Section 8: Independent Verification Suite</h2>
@@ -75,6 +75,208 @@
       </tbody>
     </table>
   </div>
+</div>
+
+<!-- Section 9: Client-Side MetaMask & Smart Contract Inspector (Read-Only) -->
+<div class="card" id="metamask-card" style="border: 1px solid var(--border); margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="font-size: 1.4rem;">🦊</span>
+        <h2 style="margin: 0; font-size: 1.25rem;">MetaMask Wallet & Smart Contract Inspector</h2>
+        <span class="badge" id="mm-status-badge" style="background: rgba(139, 148, 158, 0.2); color: var(--text-muted); border: 1px solid var(--border);">DISCONNECTED</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.35rem;">
+        Client-side read-only wallet verification directly querying on-chain smart contracts.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+      <button id="mm-connect-btn" type="button" class="btn btn-action" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.95rem;">
+        <span>🦊</span>
+        <span id="mm-connect-btn-text">Connect MetaMask</span>
+      </button>
+      <button id="mm-disconnect-btn" type="button" class="btn btn-secondary" style="display: none; padding: 0.6rem 1rem; font-size: 0.85rem;">
+        Disconnect
+      </button>
+      <button id="mm-switch-network-btn" type="button" class="btn btn-action" style="display: none; background: #d29922; border-color: #d29922; padding: 0.6rem 1rem; font-size: 0.85rem;">
+        Switch to {{ (deployment_info.network or 'localhost') }} ({{ deployment_info.chainId or 31337 }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Security Guarantee Notice (Explicit & Prominent) -->
+  <div style="background: rgba(46, 160, 67, 0.08); border-left: 3px solid var(--pass); padding: 0.65rem 0.9rem; border-radius: 4px; margin-bottom: 1.25rem; font-size: 0.82rem; color: #7ee787;">
+    🛡️ <strong>Read-Only Safety Guarantee:</strong> This inspector only performs read-only contract queries (<code>eth_call</code> / <code>eth_getCode</code>). It will never request your private keys, seed phrase, or passwords, and will never submit or sign transactions from your wallet. Backend signing continues to manage validator quorum consensus.
+  </div>
+
+  <!-- Dynamic Notification / Status Messages Box -->
+  <div id="mm-alert-box" style="display: none; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1.25rem; font-size: 0.9rem;">
+  </div>
+
+  <!-- Wallet Connection Details Grid -->
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <!-- Wallet State Card -->
+    <div style="background: rgba(13, 17, 23, 0.6); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem;">Connected Public Address</div>
+      <div id="mm-address-display" class="mono" style="font-size: 0.9rem; word-break: break-all; color: var(--text);">
+        Not connected
+      </div>
+    </div>
+
+    <!-- Network State Card -->
+    <div style="background: rgba(13, 17, 23, 0.6); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem;">Active Network / Chain ID</div>
+      <div id="mm-network-display" style="font-size: 0.9rem; color: var(--text);">
+        Not connected
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Expected: <span class="mono" style="color: #58a6ff;">{{ deployment_info.network or 'localhost' }} (Chain ID: {{ deployment_info.chainId or 31337 }})</span>
+      </div>
+    </div>
+
+    <!-- Client RPC / Provider State Card -->
+    <div style="background: rgba(13, 17, 23, 0.6); padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem;">MetaMask Provider Status</div>
+      <div id="mm-provider-display" style="font-size: 0.9rem; color: var(--text-muted);">
+        Waiting for user connection
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+        Local Library: <span class="mono">ethers.js v6 (Local &bull; Zero CDN)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deployed Smart Contracts Addresses Panel -->
+  <div style="margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+      <h3 style="font-size: 1rem; margin: 0;">Configured Smart Contract Deployments</h3>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">
+        Config Source: <span class="mono">{{ deployment_info.deploymentFile or 'contracts/deployments/local.json' }}</span>
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table" id="mm-contracts-table">
+        <thead>
+          <tr>
+            <th>Contract Name</th>
+            <th>Configured Deployed Address</th>
+            <th>Target Chain ID</th>
+            <th>On-Chain Bytecode Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cname in ['CaseRegistry', 'ValidationQuorum', 'PostureLedger', 'Roles'] %}
+          {% set cdata = (deployment_info.contracts or {}).get(cname, {}) %}
+          <tr data-contract="{{ cname }}">
+            <td style="font-weight: 600; color: #58a6ff;">{{ cname }}</td>
+            <td class="mono" style="font-size: 0.85rem;" id="mm-addr-{{ cname }}">{{ cdata.address or 'Not configured' }}</td>
+            <td><span class="badge badge-info">{{ deployment_info.chainId or 31337 }}</span></td>
+            <td id="mm-status-{{ cname }}">
+              <span class="badge" style="background: rgba(139, 148, 158, 0.15); color: var(--text-muted);">Connect wallet to inspect</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Read-Only On-Chain Case Inspector -->
+  <div style="margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+      <h3 style="font-size: 1rem; margin: 0;">Read-Only On-Chain Case Inspector</h3>
+      <span style="font-size: 0.75rem; color: var(--text-muted);">
+        Case ID: <span class="mono">{{ case_id }}</span>
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table" id="mm-case-table">
+        <tbody>
+          <tr>
+            <th style="width: 220px;">On-Chain Case ID</th>
+            <td class="mono" id="mm-case-onchain-id">
+              {{ chain_state.onchainCaseId or 'Not yet opened on-chain' }}
+            </td>
+          </tr>
+          <tr>
+            <th>Case State (On-Chain)</th>
+            <td id="mm-case-state">
+              <span class="badge badge-info">{{ chain_state.stateName or chain_state.state or 'Not Opened' }}</span>
+            </td>
+          </tr>
+          <tr>
+            <th>PCAP SHA-256 Hash</th>
+            <td class="mono" id="mm-case-pcap-hash">
+              {{ chain_state.pcapHash or (verifier_steps[0].details if verifier_steps else 'Pending') }}
+            </td>
+          </tr>
+          <tr>
+            <th>Final Consensus Root</th>
+            <td class="mono" id="mm-case-final-root">
+              {{ chain_state.finalRoot or 'Pending quorum consensus' }}
+            </td>
+          </tr>
+          <tr>
+            <th>Anchored Report Hash</th>
+            <td class="mono" id="mm-case-report-hash">
+              {{ chain_state.reportHash or 'Not yet anchored' }}
+            </td>
+          </tr>
+          <tr>
+            <th>Recorded Case Transactions</th>
+            <td id="mm-case-txs">
+              {% if transactions %}
+                <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem;">
+                  {% for tx in transactions %}
+                  <li style="margin-bottom: 0.25rem;">
+                    <strong>{{ tx.step }}:</strong>
+                    <span class="mono" style="color: #58a6ff;">{{ tx.tx_hash }}</span>
+                    {% if tx.block_number %}<span style="color: var(--text-muted);">(Block #{{ tx.block_number }})</span>{% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <span style="color: var(--text-muted);">No on-chain transactions recorded for this case yet.</span>
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Expandable Deployment & Remix Guide -->
+  <details style="background: rgba(13, 17, 23, 0.4); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem;">
+    <summary style="cursor: pointer; font-weight: 600; color: #58a6ff; font-size: 0.9rem;">
+      ⚙️ Network Configuration & Remix Deployment Guide (Click to expand)
+    </summary>
+    <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+      <h4 style="color: #fff; margin-bottom: 0.35rem; font-size: 0.9rem;">1. Setting up Local Hardhat Network in MetaMask</h4>
+      <p style="margin-bottom: 0.5rem;">To connect MetaMask to your local node, add a custom network in MetaMask settings:</p>
+      <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+        <li><strong>Network Name:</strong> <code>Hardhat Local</code></li>
+        <li><strong>New RPC URL:</strong> <code>http://127.0.0.1:8545</code></li>
+        <li><strong>Chain ID:</strong> <code>31337</code></li>
+        <li><strong>Currency Symbol:</strong> <code>ETH</code></li>
+      </ul>
+
+      <h4 style="color: #fff; margin-bottom: 0.35rem; font-size: 0.9rem;">2. How to Point SecureMailScope to Remix or Other Testnets</h4>
+      <p style="margin-bottom: 0.5rem;">
+        If you deployed your contracts via Remix (e.g. to Sepolia or a custom chain), you do <strong>not</strong> need to rewrite source code. Update your deployment file without overwriting local configurations:
+      </p>
+      <ol style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+        <li>Create or edit your deployment JSON file (e.g., <code>contracts/deployments/remix.json</code>) with the deployed addresses, chain ID, and network name.</li>
+        <li>In your <code>.env</code> file, set:
+          <pre style="background: #0d1117; padding: 0.5rem; border-radius: 4px; margin: 0.35rem 0; color: #58a6ff;">DEPLOYMENT_FILE=contracts/deployments/remix.json
+RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY</pre>
+        </li>
+        <li>Restart the backend server. The app and MetaMask inspector will automatically load the new contract addresses and chain ID without any manual code changes.</li>
+      </ol>
+    </div>
+  </details>
 </div>
 
 <!-- On-Chain State & Quorum Panel -->
@@ -180,4 +382,13 @@
   <p style="color: var(--text-muted);">No on-chain transactions recorded for this case yet.</p>
   {% endif %}
 </div>
+
+<!-- Client-side Configuration Payload -->
+<script id="chain-client-config" type="application/json">
+  {{ deployment_info | tojson }}
+</script>
+
+<!-- Local JavaScript Dependencies (Zero External CDN) -->
+<script src="/static/js/ethers.umd.min.js"></script>
+<script src="/static/js/metamask.js"></script>
 {% endblock %}

@@ -27,6 +27,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -38,6 +39,7 @@ from backend.auth import (
     require_analyst_html,
     verify_csrf,
 )
+from backend.chain.deployment import get_client_deployment_config
 from backend.chain.gateway import (
     ChainGateway,
     CaseNotFoundError,
@@ -98,6 +100,10 @@ app = FastAPI(
 
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 STATUS_STAGE_MAP = {
     "uploaded": 0,
@@ -621,6 +627,19 @@ async def get_case_details(
             except Exception:
                 onchain_status = "Unavailable"
 
+        engine_configured = False
+        commit_deadline_passed = False
+        try:
+            gw_inst = get_gateway()
+            active_img, active_rule = gw_inst.case_registry.functions.activeEngine().call()
+            engine_configured = bool(active_img != bytes(32) and active_rule != bytes(32))
+            if chain_info and chain_info.get("commitDeadline"):
+                now_ts = gw_inst.w3.eth.get_block("latest").timestamp
+                commit_deadline_passed = bool(now_ts >= chain_info["commitDeadline"])
+        except Exception:
+            engine_configured = False
+            commit_deadline_passed = False
+
         return templates.TemplateResponse(
             "overview.html",
             {
@@ -631,6 +650,8 @@ async def get_case_details(
                 "timeline_status": timeline_status,
                 "onchain_status": onchain_status,
                 "chain_info": chain_info,
+                "engine_configured": engine_configured,
+                "commit_deadline_passed": commit_deadline_passed,
                 "can_finalize": chain_info.get("canFinalize", False),
                 "quorum_reached": chain_info.get("quorumReached", False),
                 "matching_reveals": chain_info.get("matchingReveals", 0),
@@ -1494,6 +1515,16 @@ async def get_case_chain_state(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
 
     verifier_steps, chain_info, validators, txs, all_passed = _compute_verifier_steps_and_state(case_id)
+    deployment_info = get_client_deployment_config()
+    deployment_info["case"] = {
+        "caseId": case_id,
+        "onchainCaseId": chain_info.get("onchainCaseId") or case.get("onchain_case_id"),
+        "pcapHash": chain_info.get("pcapHash") or case.get("pcap_sha256"),
+        "finalRoot": chain_info.get("finalRoot"),
+        "reportHash": chain_info.get("reportHash"),
+        "status": chain_info.get("stateName") or case.get("status"),
+        "transactions": txs,
+    }
 
     if "text/html" in request.headers.get("accept", ""):
         return templates.TemplateResponse(
@@ -1507,6 +1538,7 @@ async def get_case_chain_state(
                 "verification_result": None,
                 "validator_submissions": validators,
                 "transactions": txs,
+                "deployment_info": deployment_info,
                 "csrf_token": _get_csrf_token(request),
             },
         )
@@ -1526,6 +1558,34 @@ async def get_case_chain_state(
     return chain_info
 
 
+@app.get("/cases/{case_id}/chain/config")
+async def get_case_chain_config(
+    case_id: str,
+    request: Request,
+    actor: str = Depends(require_analyst_html),
+) -> Dict[str, Any]:
+    """Return JSON deployment configuration, ABIs, and case details for client-side inspection."""
+    case = get_case(case_id)
+    if not case:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+
+    dep_cfg = get_client_deployment_config()
+    txs = get_chain_txs(case_id)
+    onchain_case_id = case.get("onchain_case_id")
+    pcap_sha = case.get("pcap_sha256") or ""
+
+    return {
+        **dep_cfg,
+        "case": {
+            "caseId": case_id,
+            "onchainCaseId": onchain_case_id,
+            "pcapHash": pcap_sha,
+            "status": case.get("status", "uploaded"),
+            "transactions": txs,
+        },
+    }
+
+
 @app.post("/cases/{case_id}/chain/verify")
 async def verify_case_browser(
     case_id: str,
@@ -1539,6 +1599,16 @@ async def verify_case_browser(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
 
     verifier_steps, chain_info, validators, txs, all_passed = _compute_verifier_steps_and_state(case_id)
+    deployment_info = get_client_deployment_config()
+    deployment_info["case"] = {
+        "caseId": case_id,
+        "onchainCaseId": chain_info.get("onchainCaseId") or case.get("onchain_case_id"),
+        "pcapHash": chain_info.get("pcapHash") or case.get("pcap_sha256"),
+        "finalRoot": chain_info.get("finalRoot"),
+        "reportHash": chain_info.get("reportHash"),
+        "status": chain_info.get("stateName") or case.get("status"),
+        "transactions": txs,
+    }
     return templates.TemplateResponse(
         "chain.html",
         {
@@ -1555,6 +1625,7 @@ async def verify_case_browser(
             },
             "validator_submissions": validators,
             "transactions": txs,
+            "deployment_info": deployment_info,
             "csrf_token": _get_csrf_token(request),
         },
     )
@@ -1588,6 +1659,15 @@ async def execute_case_browser_action(
         elif act == "open":
             gateway = _get_active_gateway()
             gateway.open_case(case_id)
+        elif act in ("register_engine", "register-engine"):
+            gateway = _get_active_gateway()
+            res = gateway.register_engine_for_case(case_id=case_id)
+            if res.get("idempotent"):
+                msg = "Engine and ruleset hash are already registered on-chain. Ready to submit claim."
+            else:
+                msg = f"Engine and ruleset successfully registered on CaseRegistry! Ready to submit claim."
+            encoded_msg = urllib.parse.quote(msg)
+            return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
         elif act == "claim":
             if not case.get("onchain_case_id"):
                 raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Claim action requires an on-chain case.")
@@ -1604,8 +1684,22 @@ async def execute_case_browser_action(
                 raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet. Validator consensus requires an on-chain case.")
             gateway = _get_active_gateway()
             val_res = gateway.run_validator_round(case_id)
+            if not val_res.get("quorumReached"):
+                msg = val_res.get("message") or f"Validator consensus did not reach quorum ({val_res.get('reveals', 0)}/{val_res.get('quorum', 2)} matching reveals)."
+                encoded_err = urllib.parse.quote(msg)
+                return RedirectResponse(url=f"/cases/{case_id}?error={encoded_err}", status_code=status.HTTP_303_SEE_OTHER)
             encoded_msg = urllib.parse.quote(
-                f"Validator consensus completed: {val_res.get('reveals', 0)}/{val_res.get('quorum', 2)} matching reveals on-chain (Quorum: {'Reached' if val_res.get('quorumReached') else 'In Progress'})"
+                f"Validator consensus achieved: {val_res.get('reveals', 0)}/{val_res.get('quorum', 2)} matching reveals on-chain (Quorum: Reached)"
+            )
+            return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
+        elif act in ("resolve_new_round", "new_round"):
+            if not case.get("onchain_case_id"):
+                raise InvalidStateError(f"Case {case_id} has not been opened on-chain yet.")
+            gateway = _get_active_gateway()
+            res = gateway.resolve(case_id, action="NewRound")
+            new_status = res.get("status", "committing")
+            encoded_msg = urllib.parse.quote(
+                f"Admin resolution completed: New round started on-chain! Case state is now '{new_status}'. Validators can now commit."
             )
             return RedirectResponse(url=f"/cases/{case_id}?success={encoded_msg}", status_code=status.HTTP_303_SEE_OTHER)
         elif act == "advance":
@@ -1888,6 +1982,31 @@ async def resolve_case_on_chain(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+class RegisterEngineRequest(BaseModel):
+    caseId: Optional[str] = None
+    imageDigest: Optional[str] = None
+    rulesetHash: Optional[str] = None
+    ensureValidators: bool = True
+
+
+@app.post("/api/admin/register-engine")
+async def admin_register_engine_api(
+    payload: RegisterEngineRequest = Body(default_factory=RegisterEngineRequest),
+    actor: str = Depends(require_admin),
+) -> Dict[str, Any]:
+    """Administrator endpoint to register approved engine release and ruleset hash on CaseRegistry."""
+    try:
+        gateway = get_gateway()
+        return gateway.register_engine_for_case(
+            case_id=payload.caseId,
+            image_digest_hex=payload.imageDigest,
+            ruleset_hash_hex=payload.rulesetHash,
+            ensure_validators=payload.ensureValidators,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @app.get("/cases/{case_id}/report")
